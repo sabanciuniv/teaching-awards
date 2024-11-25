@@ -291,7 +291,7 @@ const App = function () {
                   };
 
             scrollableContainer.on('scroll', function() { 
-                const scrollpos = scrollableContainer.scrollTop();
+                const scrollpos = $(this).scrollTop();
                 if (scrollpos >= scrollableDistance) {
                     add_class_on_scroll();
                 }
