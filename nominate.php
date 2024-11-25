@@ -81,6 +81,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -127,7 +128,7 @@
         document.querySelector('.upload-box').addEventListener('click', function() {
             document.getElementById('reference-doc').click();
         });
-        
+
     </script>
 </body>
 </html>
