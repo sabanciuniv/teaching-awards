@@ -16,11 +16,30 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teaching Awards</title>
 
-    <!-- Limitless Theme CSS -->
-    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/css/core.min.css">
-    <link rel="stylesheet" href="assets/css/components.min.css">
-    <link rel="stylesheet" href="assets/css/colors.min.css">
+	<!-- Global stylesheets -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+	<link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+	<link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
+	<!-- /global stylesheets -->
+
+
+	<!-- Core JS files -->
+	<script src="assets/js/jquery.min.js"></script>
+	<script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/global_assets/js/main/jquery.min.js"></script>
+	<script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
+	<!-- /core JS files -->
+
+	<!-- Theme JS files -->
+	<script src="assets/js/app.js"></script>
+	<script src="assets/js/custom.js"></script>
+	<!-- /theme JS files -->
 
     <!-- Custom CSS for page -->
     <style>
@@ -109,7 +128,7 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
                 <p class="login-subtitle">Click to View the Rules</p>
 
                 <!-- Rules Button -->
-                <button class="rules-button">⬇️ View the Rules ⬇️</button>
+                <button class="rules-button" data-toggle="modal" data-target="#rulesModal">⬇️ View the Rules ⬇️</button>
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
@@ -123,9 +142,44 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
         </div>
     </div>
 
+    <!-- Modal for Rules -->
+    <div class="modal fade" id="rulesModal" tabindex="-1" role="dialog" aria-labelledby="rulesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rulesModalLabel">Rules</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                <p>To vote, you must enter your e-mail Username and password. Students are authorized to vote in their category according to their class. You have the right to enter the application and <strong>VOTE ONLY ONCE.</strong></p>
+
+<p>Once logged in securely, you have <strong>30 minutes to complete your voting</strong> using the drop down menus provided. You can rank your choices in the order of 1, 2, and 3, where 1 represents your top choice. You may vote for 1, 2, or 3 candidates, but you cannot vote for more than 3 candidates or assign the same rank to multiple candidates.</p>
+
+<p>The points are distributed as follows:</p>
+<ul>
+    <li>If you vote for one person, they will receive 6 points.</li>
+    <li>If you vote for two people, your first choice will receive 4 points, and your second choice will receive 2 points.</li>
+    <li>If you vote for three people, your first choice will receive 3 points, your second choice will receive 2 points, and your third choice will receive 1 point.</li>
+</ul>
+
+<p>If the guidelines are not followed, you will see a warning message. Once you have finalized your selections, click "Submit" to save your vote and close the page.</p>
+
+<p>As per the rules, candidates who placed first in a category during the last three years are not eligible to be nominated in that same category.</p>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Limitless Theme JS -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/main/jquery.min.js"></script>
+    <script src="assets/js/main/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>
+
