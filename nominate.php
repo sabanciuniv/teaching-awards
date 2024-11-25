@@ -5,130 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nominate - Teaching Awards</title>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 
-    <!-- Custom Styles -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/app.js"></script>
+
     <style>
         body {
-            background-color: #f9f9f9;
-            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-
-        .container {
-            margin-top: 50px;
-            max-width: 600px;
-            background-color: #fff;
-            padding: 30px;
+        .card {
+            border: none;
             border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            padding: 20px;
         }
 
-        .header img {
-            max-height: 50px;
-            margin-bottom: 20px;
+        .form-title {
+            text-align: center;
+            margin-top: 40px; 
+            margin-bottom: 30px; 
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #3f51b5; 
         }
 
-        .header h1 {
-            font-size: 1.5rem;
+        .form-group label {
             font-weight: bold;
             color: #333;
-        }
-
-        label {
-            font-size: 1rem;
-            font-weight: bold;
-            margin-top: 15px;
         }
 
         .form-control {
-            border-radius: 10px;
+            border-radius: 6px;
+            background-color: #f7f7f9;
+            border: 1px solid #ddd;
             padding: 10px;
-            background-color: #f3f3f3;
         }
 
-        .upload-box {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            background-color: #f9f9f9;
-            margin-top: 15px;
+        .form-control:focus {
+            border-color: #3f51b5; 
+            box-shadow: 0 0 3px rgba(63, 81, 181, 0.5);
         }
 
-        .upload-box:hover {
-            background-color: #f1f1f1;
-            cursor: pointer;
-        }
-
-        .upload-box p {
-            font-size: 0.9rem;
-            color: #777;
-        }
-
-        .btn-submit {
-            background-color: #f4b4b4;
-            color: #333;
-            border: none;
+        .btn-indigo {
+            background-color: #3f51b5;
+            color: white;
             font-weight: bold;
-            border-radius: 8px;
-            padding: 10px 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
             width: 100%;
+            transition: all 0.3s ease;
         }
 
-        .btn-submit:hover {
-            background-color: #e49a9a;
+        .btn-indigo:hover {
+            background-color: #303f9f; 
+        }
+
+        .icon-paperplane {
+            margin-left: 8px;
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header text-center">
-            <img src="assets/images/screenshots/sabancilogo.png" alt="Sabanci University Logo">
-            <h1>TEACHING AWARDS</h1>
-        </div>
+    <!-- Nomination Form Card -->
+    <div class="card">
+        <!-- Form Title -->
+        <div class="form-title">Nomination Form</div>
 
-        <!-- Form -->
+        <!-- Form Body -->
         <form action="nominate_submit.php" method="post" enctype="multipart/form-data">
             <!-- Your Name -->
-            <label for="your-name">Your NAME</label>
-            <input type="text" id="your-name" name="your_name" class="form-control" required>
+            <div class="form-group">
+                <label for="your-name">Your Name</label>
+                <input type="text" id="your-name" name="your_name" class="form-control" placeholder="Enter your name" required>
+            </div>
 
             <!-- Your Surname -->
-            <label for="your-surname">Your SURNAME</label>
-            <input type="text" id="your-surname" name="your_surname" class="form-control" required>
+            <div class="form-group">
+                <label for="your-surname">Your Surname</label>
+                <input type="text" id="your-surname" name="your_surname" class="form-control" placeholder="Enter your surname" required>
+            </div>
 
             <!-- Nominee's Name -->
-            <label for="nominee-name">Nominee's NAME</label>
-            <input type="text" id="nominee-name" name="nominee_name" class="form-control" required>
+            <div class="form-group">
+                <label for="nominee-name">Nominee's Name</label>
+                <input type="text" id="nominee-name" name="nominee_name" class="form-control" placeholder="Enter nominee's name" required>
+            </div>
 
             <!-- Nominee's Surname -->
-            <label for="nominee-surname">Nominee's SURNAME</label>
-            <input type="text" id="nominee-surname" name="nominee_surname" class="form-control" required>
-
-            <!-- Upload Document -->
-            <label for="reference-doc">UPLOAD REFERENCE DOCUMENT</label>
-            <div class="upload-box">
-                <input type="file" id="reference-doc" name="reference_doc" class="form-control-file" style="display: none;" required>
-                <p>Drop your document here, or <span class="text-primary">click to browse</span></p>
-                <p><i class="bi bi-upload"></i></p>
+            <div class="form-group">
+                <label for="nominee-surname">Nominee's Surname</label>
+                <input type="text" id="nominee-surname" name="nominee_surname" class="form-control" placeholder="Enter nominee's surname" required>
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" class="btn btn-submit mt-4">SUBMIT</button>
+            <div class="form-group text-right">
+                <button type="submit" class="btn btn-indigo">
+                    Submit <i class="icon-paperplane"></i>
+                </button>
+            </div>
         </form>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Handle click event for upload box
-        document.querySelector('.upload-box').addEventListener('click', function() {
-            document.getElementById('reference-doc').click();
-        });
-
-    </script>
+    <script src="assets/js/main/jquery.min.js"></script>
+    <script src="assets/js/main/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html>
