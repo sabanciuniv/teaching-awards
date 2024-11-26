@@ -87,6 +87,24 @@
 			border-radius: 10px;
 			margin-bottom: 30px;
 		}
+
+		.submit-btn {
+        position: fixed; /* Fixes the button to the viewport */
+        bottom: 30px; /* Distance from the bottom edge */
+        right: 60px; /* Distance from the right edge */
+        background-color: #3f51b5; /* Indigo blue background */
+        color: white; /* White text */
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    }
+
+	.submit-btn:hover {
+        background-color: #3949ab; /* Darker indigo for hover effect */
+        cursor: pointer;
+    }
 	</style>
 </head>
 <body>
@@ -247,5 +265,10 @@
 			<!-- Add more cards as needed -->
 		</div>
 	</div>
+
+	<a href="index.php">
+    	<button class="btn btn-indigo submit-btn">Submit</button>
+	</a>
+
 </body>
 </html>
