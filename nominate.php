@@ -127,6 +127,6 @@
 
     <script src="assets/js/main/jquery.min.js"></script>
     <script src="assets/js/main/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/app.js"></script>
+    
 </body>
 </html>
