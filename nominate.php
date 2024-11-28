@@ -114,16 +114,20 @@
                 <input type="text" id="nominee-surname" name="nominee_surname" class="form-control" placeholder="Enter nominee's surname" required>
             </div>
 
+            <div class="form-group">
+                <label for="reference-document">Upload Reference Document</label>
+                <input type="file" id="reference-document" name="reference_document" class="form-control" accept=".pdf,.doc,.docx" required>
+            </div>
+
             <!-- Submit Button -->
             <div class="form-group text-right">
-    
                 <button type="submit" class="btn btn-indigo">
                     Submit <i class="icon-paperplane"></i>
                 </button>    
-    
             </div>
         </form>
     </div>
+    
 
     <script src="assets/js/main/jquery.min.js"></script>
     <script src="assets/js/main/bootstrap.bundle.min.js"></script>
