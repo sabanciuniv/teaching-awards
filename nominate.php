@@ -116,11 +116,11 @@
 
             <!-- Submit Button -->
             <div class="form-group text-right">
-                <a href="index.php">
+    
                 <button type="submit" class="btn btn-indigo">
                     Submit <i class="icon-paperplane"></i>
                 </button>    
-                </a>
+    
             </div>
         </form>
     </div>
