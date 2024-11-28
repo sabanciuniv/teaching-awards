@@ -114,6 +114,7 @@
                 <input type="text" id="nominee-surname" name="nominee_surname" class="form-control" placeholder="Enter nominee's surname" required>
             </div>
 
+            <!-- Upload References Form -->
             <div class="form-group">
                 <label for="reference-document">Upload Reference Document</label>
                 <input type="file" id="reference-document" name="reference_document" class="form-control" accept=".pdf,.doc,.docx" required>
