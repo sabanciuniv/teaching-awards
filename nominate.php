@@ -87,8 +87,9 @@
         <!-- Form Title -->
         <div class="form-title">Nomination Form</div>
 
-        <!-- Form Body -->
-        <form action="nominate_submit.php" method="post" enctype="multipart/form-data">
+        <!-- Form Body burası degistirildi, tekrar degistirilecek -->
+
+        <form action="index.php" method="post" enctype="multipart/form-data">
             <!-- Your Name -->
             <div class="form-group">
                 <label for="your-name">Your Name</label>
@@ -115,9 +116,11 @@
 
             <!-- Submit Button -->
             <div class="form-group text-right">
+                <a href="index.php">
                 <button type="submit" class="btn btn-indigo">
                     Submit <i class="icon-paperplane"></i>
-                </button>
+                </button>    
+                </a>
             </div>
         </form>
     </div>
