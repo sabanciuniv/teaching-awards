@@ -133,7 +133,7 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <a href="nominate.php" class="btn btn-nominate">Nominate</a>
-                    <a href="voteScreen.php" class="btn btn-login">Login</a>
+                    <a href="voteScreen.php" class="btn btn-login">Vote Page</a>
                 </div>
 
                 <!-- Footer Text -->
