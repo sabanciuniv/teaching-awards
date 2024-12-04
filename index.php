@@ -150,8 +150,8 @@ $_SESSION['user'] = $user;
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <a href="nominate.php" class="btn btn-nominate">Nominate</a>
-                    <a href="voteCategory.php" class="btn btn-login">Vote Page</a>
+                    <a href="nominate.php" class="btn btn-indigo">Nominate</a>
+                    <a href="voteCategory.php" class="btn btn-indigo">Vote Page</a>
                 </div>
 
                 <!-- Footer Text -->
