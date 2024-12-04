@@ -81,7 +81,6 @@
                     <h2 class="form-title">Select a Voting Category</h2>
                     <form action="submitVote.php" method="post">
                         <div class="form-group">
-                            <label for="category">Voting Category</label>
                             <div class="dropdown">
                                 <button class="btn btn-indigo dropdown-toggle form-control" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     Select a category
