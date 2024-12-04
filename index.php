@@ -1,13 +1,31 @@
 <?php
 // Start the session (optional if login tracking is required)
-session_start();
+require './phpCAS/source/CAS.php';
 
-// Redirect to another page if the user is already logged in
-if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) {
-    header("Location: dashboard.php");
-    exit();
-}
+// Configure phpCAS client
+$cas_host = 'login.sabanciuniv.edu'; // Replace with your university's CAS server
+$cas_context = '/cas';            // Replace with your CAS context
+$cas_port = 443;                  // Use 443 for HTTPS or 80 for HTTP
+$app_base_url = 'http://apps-local.sabanciuniv.edu'; 
+
+phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
+
+// Optional: Disable server validation (for testing only)
+phpCAS::setNoCasServerValidation();
+
+// Force CAS authentication
+phpCAS::forceAuthentication();
+
+// Retrieve the authenticated user's ID
+$user = phpCAS::getUser();
+
+// Example: Store user in a session
+session_start();
+$_SESSION['user'] = $user;
+//session_start();
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -128,7 +146,7 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
                 <p class="login-subtitle">Click to View the Rules</p>
 
                 <!-- Rules Button -->
-                <button class="rules-button" data-toggle="modal" data-target="#rulesModal">⬇️ View the Rules ⬇️</button>
+                <button class="rules-button" data-toggle="modal" data-target="#rulesModal">⬇ View the Rules ⬇</button>
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
@@ -182,4 +200,3 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
     <script src="assets/js/app.js"></script>
 </body>
 </html>
-
