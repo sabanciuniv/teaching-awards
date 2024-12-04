@@ -129,7 +129,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -147,7 +147,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH102 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -164,7 +164,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>CS201 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -181,7 +181,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -198,7 +198,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -215,7 +215,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -232,7 +232,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -249,7 +249,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -266,7 +266,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -283,7 +283,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -300,7 +300,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
@@ -317,7 +317,7 @@
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
-					<p>Photo retrieved from SU ID of instructor</p>
+					<p>MATH101 Instructor</p>
 					<div class="dropdown">
 						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							Rank here
