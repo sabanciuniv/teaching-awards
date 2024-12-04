@@ -33,7 +33,16 @@
 
 
 	<style>		
-		
+		html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: auto; /* Allows scrolling */
+    }
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
 		.header {
 			display: flex;
 			align-items: center;
