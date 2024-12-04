@@ -133,7 +133,7 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <a href="nominate.php" class="btn btn-nominate">Nominate</a>
-                    <a href="voteScreen.php" class="btn btn-login">Vote Page</a>
+                    <a href="voteScreen_A1.php" class="btn btn-login">Vote Page</a>
                 </div>
 
                 <!-- Footer Text -->
@@ -142,7 +142,7 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
         </div>
     </div>
 
-    <!-- Modal for Rules -->
+    <!-- Modal for Rules -->_
     <div class="modal fade" id="rulesModal" tabindex="-1" role="dialog" aria-labelledby="rulesModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">

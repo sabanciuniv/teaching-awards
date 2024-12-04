@@ -117,7 +117,7 @@
 
 		<!-- Award Category -->
 		<div class="award-category">
-			NAME OF THE AWARD CATEGORY
+        Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2 (Amfi dersleri)
 		</div>
 
 
@@ -125,7 +125,7 @@
 		<!-- Cards -->
 		<div class="row">
 			<!-- Card Template -->
-			<div class="col-md-2 mb-4">
+			<div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -143,7 +143,7 @@
 				</div>
 			</div>
 			<!-- Repeat Card for other instructors -->
-            <div class="col-md-2 mb-4">
+            <div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -160,7 +160,7 @@
 					</div>
 				</div>
 			</div>
-            <div class="col-md-2 mb-4">
+            <div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -177,7 +177,7 @@
 					</div>
 				</div>
 			</div>
-            <div class="col-md-2 mb-4">
+            <div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -194,7 +194,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-md-2 mb-4">
+			<div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -211,7 +211,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-md-2 mb-4">
+			<div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -228,7 +228,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-md-2 mb-4">
+			<div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
@@ -245,75 +245,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-md-2 mb-4">
-				<div class="card">
-					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-					<h6>Name Surname</h6>
-					<p>MATH101 Instructor</p>
-					<div class="dropdown">
-						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							Rank here
-						</button>
-						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-							<a class="dropdown-item" href="#">1st place</a>
-							<a class="dropdown-item" href="#">2nd place</a>
-							<a class="dropdown-item" href="#">3rd place</a>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="col-md-2 mb-4">
-				<div class="card">
-					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-					<h6>Name Surname</h6>
-					<p>MATH101 Instructor</p>
-					<div class="dropdown">
-						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							Rank here
-						</button>
-						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-							<a class="dropdown-item" href="#">1st place</a>
-							<a class="dropdown-item" href="#">2nd place</a>
-							<a class="dropdown-item" href="#">3rd place</a>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="col-md-2 mb-4">
-				<div class="card">
-					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-					<h6>Name Surname</h6>
-					<p>MATH101 Instructor</p>
-					<div class="dropdown">
-						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							Rank here
-						</button>
-						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-							<a class="dropdown-item" href="#">1st place</a>
-							<a class="dropdown-item" href="#">2nd place</a>
-							<a class="dropdown-item" href="#">3rd place</a>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="col-md-2 mb-4">
-				<div class="card">
-					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-					<h6>Name Surname</h6>
-					<p>MATH101 Instructor</p>
-					<div class="dropdown">
-						<button class="btn btn-indigo dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							Rank here
-						</button>
-						<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-							<a class="dropdown-item" href="#">1st place</a>
-							<a class="dropdown-item" href="#">2nd place</a>
-							<a class="dropdown-item" href="#">3rd place</a>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="col-md-2 mb-4">
+			<div class="col-md-3 mb-4">
 				<div class="card">
 					<img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
 					<h6>Name Surname</h6>
