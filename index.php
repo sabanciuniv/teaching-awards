@@ -1,16 +1,16 @@
 <?php
-// Start the session (optional if login tracking is required)
+// Start the session
 require './phpCAS/source/CAS.php';
 
 // Configure phpCAS client
-$cas_host = 'login.sabanciuniv.edu'; // Replace with your university's CAS server
-$cas_context = '/cas';            // Replace with your CAS context
-$cas_port = 443;                  // Use 443 for HTTPS or 80 for HTTP
+$cas_host = 'login.sabanciuniv.edu';
+$cas_context = '/cas';          
+$cas_port = 443;                 
 $app_base_url = 'http://apps-local.sabanciuniv.edu'; 
 
 phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 
-// Optional: Disable server validation (for testing only)
+//Disable server validation (for testing only)
 phpCAS::setNoCasServerValidation();
 
 // Force CAS authentication
@@ -19,7 +19,7 @@ phpCAS::forceAuthentication();
 // Retrieve the authenticated user's ID
 $user = phpCAS::getUser();
 
-// Example: Store user in a session
+
 session_start();
 $_SESSION['user'] = $user;
 //session_start();
@@ -150,8 +150,8 @@ $_SESSION['user'] = $user;
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <a href="nominate.php" class="btn btn-indigo">Nominate</a>
-                    <a href="voteCategory.php" class="btn btn-indigo">Vote Page</a>
+                    <a href="nominate.php" class="btn btn-nominate">Nominate</a>
+                    <a href="voteCategory.php" class="btn btn-login">Vote Page</a>
                 </div>
 
                 <!-- Footer Text -->
