@@ -1,28 +1,5 @@
 <?php
-// Start the session
-require './phpCAS/source/CAS.php';
-
-// Configure phpCAS client
-$cas_host = 'login.sabanciuniv.edu';
-$cas_context = '/cas';          
-$cas_port = 443;                 
-$app_base_url = 'http://apps-local.sabanciuniv.edu'; 
-
-phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
-
-//Disable server validation (for testing only)
-phpCAS::setNoCasServerValidation();
-
-// Force CAS authentication
-phpCAS::forceAuthentication();
-
-// Retrieve the authenticated user's ID
-$user = phpCAS::getUser();
-
-
 session_start();
-$_SESSION['user'] = $user;
-//session_start();
 ?>
 
 
