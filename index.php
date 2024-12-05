@@ -127,8 +127,13 @@ session_start();
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <a href="nominate.php" class="btn btn-nominate">Nominate</a>
-                    <a href="voteCategory.php" class="btn btn-login">Vote Page</a>
+                    <a href="loginCAS.php?redirect=nominate.php" class="btn btn-indigo">Nominate</a>
+                    <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-indigo">Vote Page</a>
+                    <!-- <a href="viewWinners.php" class="btn btn-indigo">View Winners</a> -->
+                </div>
+
+                <div class="action-buttons mt-1" style="text-align: center;">
+                    <a href="viewWinners.php" class="btn btn-indigo" style="width: 250px;">View Winners</a>
                 </div>
 
                 <!-- Footer Text -->
