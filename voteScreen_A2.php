@@ -276,9 +276,15 @@
 		</div>
 	</div>
 
-	<a href="index.php">
-    	<button class="btn btn-indigo submit-btn">Submit</button>
-	</a>
+	<button class="submit-btn" onclick="redirectToCategoryPage()">Submit</button>
+
+	<script>
+        function redirectToCategoryPage() {
+            // Redirect back to voteCategory.php with the completed category ID
+            const categoryId = 'A2'; // Replace with the actual category ID for this page
+            window.location.href = `voteCategory.php?completedCategoryId=${categoryId}`;
+        }
+    </script>
 
 </body>
 </html>

@@ -4,110 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voting Category</title>
-
-    <!-- Global stylesheets -->
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-    <!-- /global stylesheets -->
-
-    <!-- Core JS files -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/global_assets/js/main/jquery.min.js"></script>
-    <script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
-    <!-- /core JS files -->
-
-    <!-- Theme JS files -->
-    <script src="assets/js/app.js"></script>
-    <!-- /theme JS files -->
-
     <style>
         body {
             background-color: #f9f9f9;
-            margin: 0;
             font-family: Arial, sans-serif;
-        }
-
-        .form-container {
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
 
-        .form-box {
-            background: #ffffff;
+        .content-wrapper {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #000;
+        }
+
+        .categories-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            cursor: pointer;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .form-title {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            text-align: center;
-            color: #333;
-        }
-
-        .btn-submit {
-            background-color: #4caf50;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
             color: #fff;
-            font-size: 1rem;
-            font-weight: bold;
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            background-color: var(--bs-secondary-bg); /* Use secondary background */
+            border: 3px solid transparent; /* Default border */
         }
 
-        .btn-submit:hover {
-            background-color: #45a049;
+        .category-card.completed {
+            border-color: #4caf50; /* Green border for completed */
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .category-card.completed .checkmark {
+            display: block;
+        }
+
+        .checkmark {
+            display: none;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            color: #4caf50;
+        }
+
+        .card-body {
+            text-align: center;
+            padding: 25px;
         }
     </style>
 </head>
 <body>
-    <div class="page-content">
-        <div class="content-wrapper">
-            <div class="form-container">
-                <div class="form-box">
-                    <h2 class="form-title">Select a Voting Category</h2>
-                    <form action="submitVote.php" method="post">
-                        <div class="form-group">
-                            <div class="dropdown">
-                                <button class="btn btn-indigo dropdown-toggle form-control" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    Select a category
-                                </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a class="dropdown-item" href="voteScreen_A1.php">Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1 (Küçük sınıf dersleri)</a>
-                                    <a class="dropdown-item" href="voteScreen_A2.php">Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2 (Amfi dersleri)</a>
-                                    <button class="dropdown-item" type="button" onclick="setCategory('B')">Yılın Mezunları Ödülü</button>
-                                    <button class="dropdown-item" type="button" onclick="setCategory('C')">Temel Geliştirme Yılı Öğretim Görevlisi Ödülü</button>
-                                    <button class="dropdown-item" type="button" onclick="setCategory('D')">Birinci Sınıf Eğitim Asistanı Ödülü</button>
-                                    <button class="dropdown-item" type="button" onclick="setCategory('F')">Eğitim ve Öğrenim Öğrenci Geribildirimi (SFTL) Ödülü</button>
-                                    <button class="dropdown-item" type="button" onclick="setCategory('G')">Onur Ödülü</button>
-                                </div>
-                                <input type="hidden" id="category" name="category" required>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <div class="content-wrapper">
+        <div class="title">Select a Voting Category</div>
+        <div class="categories-container" id="categories-container">
+            <!-- Categories will be dynamically loaded here -->
         </div>
     </div>
 
     <script>
-        function setCategory(value) {
-            document.getElementById('category').value = value;
-            document.getElementById('dropdownMenuButton').innerText = value; // Update button text
+        const categories = [
+            { id: 'A1', name: 'Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1', url: 'voteScreen_A1.php' },
+            { id: 'A2', name: 'Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2', url: 'voteScreen_A2.php' },
+            { id: 'B', name: 'Yılın Mezunları Ödülü', url: 'voteScreen_B.php' },
+            { id: 'C', name: 'Temel Geliştirme Yılı Öğretim Görevlisi Ödülü', url: 'voteScreen_C.php' },
+            { id: 'D', name: 'Birinci Sınıf Eğitim Asistanı Ödülü', url: 'voteScreen_D.php' },
+        ];
+
+        // Retrieve completed categories from localStorage
+        const completedCategories = JSON.parse(localStorage.getItem('completedCategories')) || [];
+
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+            categories.forEach(category => {
+                const isCompleted = completedCategories.includes(category.id);
+                const card = document.createElement('div');
+                card.className = `card category-card bg-secondary ${isCompleted ? 'completed' : ''}`;
+                card.onclick = () => window.location.href = category.url; // Redirect to the category page
+                
+                // Card content
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+                cardBody.textContent = category.name;
+
+                // Checkmark for completed categories
+                const checkmark = document.createElement('div');
+                checkmark.className = 'checkmark';
+                checkmark.textContent = '✔';
+
+                card.appendChild(cardBody);
+                card.appendChild(checkmark);
+                container.appendChild(card);
+            });
         }
+
+        function markCategoryAsCompleted(categoryId) {
+            if (!completedCategories.includes(categoryId)) {
+                completedCategories.push(categoryId);
+                localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
+                renderCategories();
+            }
+        }
+
+        // Check for category completion on return
+        const queryParams = new URLSearchParams(window.location.search);
+        const completedCategoryId = queryParams.get('completedCategoryId');
+        if (completedCategoryId) {
+            markCategoryAsCompleted(completedCategoryId);
+        }
+
+        renderCategories();
     </script>
 </body>
 </html>
