@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voting Category</title>
+    <title>Report Category</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
@@ -46,13 +46,17 @@
             transition: transform 0.2s, border-color 0.2s;
             position: relative;
             color: #fff;
-            height: 75px;
-            background-color: var(--bs-secondary-bg); /* Use secondary background */
-            border: 3px solid transparent; /* Default border */
+            background-color: var(--bs-secondary-bg);
+            border: 3px solid transparent;
+            height: 75px; /* Fix height for uniform size */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
         .category-card.completed {
-            border-color: #4caf50; /* Green border for completed */
+            border-color: #4caf50;
         }
 
         .category-card:hover {
@@ -73,16 +77,13 @@
         }
 
         .card-body {
-            text-align: center;
-            padding: 25px;
+            padding: 15px;
         }
-    </style>
-</head>
-<body>
-<div style="text-align: center; margin-top: 20px;">
-    <button 
-        onclick="window.location.href='index.php'" 
-        style="
+
+        
+        .return-button {
+            grid-column: 2 / 3; /* Place below the second button */
+            margin-top: 20px;
             background-color: #007bff;
             color: white;
             border: none;
@@ -91,30 +92,31 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
-        "
-        onmouseover="this.style.backgroundColor='#0056b3'"
-        onmouseout="this.style.backgroundColor='#007bff'"
-    >
-        Return to Main Menu
-    </button>
-</div>
+        }
+
+        .return-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
     <div class="content-wrapper">
-        <div class="title">Select a Voting Category</div>
+        <div class="title">Select a Report Category</div>
         <div class="categories-container" id="categories-container">
             <!-- Categories will be dynamically loaded here -->
         </div>
+        <button 
+            onclick="window.location.href='adminDashboard.php'" 
+            class="return-button">
+            Return to Main Menu
+        </button>
     </div>
-
-
-
 
     <script>
         const categories = [
-            { id: 'A1', name: 'Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1', url: 'voteScreen_A1.php' },
-            { id: 'A2', name: 'Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2', url: 'voteScreen_A2.php' },
-            { id: 'B', name: 'Yılın Mezunları Ödülü', url: 'voteScreen_B.php' },
-            { id: 'C', name: 'Temel Geliştirme Yılı Öğretim Görevlisi Ödülü', url: 'voteScreen_C.php' },
-            { id: 'D', name: 'Birinci Sınıf Eğitim Asistanı Ödülü', url: 'voteScreen_D.php' },
+            { id: 'VoteResults', name: 'Öğretim Üyeleri Puanları', url: 'voteScreen_A2.php' },
+            { id: 'VoterList', name: 'Oy Kullanım Durumu Raporu', url: 'voterListDataTable.php' },
+            { id: 'ParticipationRates', name: 'Yıllara Göre Oylamaya Katılım Raporu', url: 'voteScreen_B.php' }
         ];
 
         // Retrieve completed categories from localStorage
@@ -143,21 +145,6 @@
                 card.appendChild(checkmark);
                 container.appendChild(card);
             });
-        }
-
-        function markCategoryAsCompleted(categoryId) {
-            if (!completedCategories.includes(categoryId)) {
-                completedCategories.push(categoryId);
-                localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
-                renderCategories();
-            }
-        }
-
-        // Check for category completion on return
-        const queryParams = new URLSearchParams(window.location.search);
-        const completedCategoryId = queryParams.get('completedCategoryId');
-        if (completedCategoryId) {
-            markCategoryAsCompleted(completedCategoryId);
         }
 
         renderCategories();

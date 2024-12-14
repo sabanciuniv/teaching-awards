@@ -97,11 +97,42 @@
             margin-left: 8px;
         }
 
+        .action-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.return-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.return-button:hover {
+    background-color: #0056b3;
+}
+
+
         
     </style>
 </head>
 <body>
     <div class="title">Student Vote Usage Status</div>
+
+    <div class="action-container">
+        <button 
+            class="return-button" 
+            onclick="window.location.href='reportPage.php'">
+            Return to Category Page
+        </button>
+    </div>
     <div class="gridjs-example-basic" style="margin: 20px;"></div>
 
     <!-- Include Grid.js JavaScript -->
@@ -111,12 +142,13 @@
     <script>
         // Demo data
         const demoData = [
-            [31254, "2023-2024", "Tankut Kayra", "kayra.ozerk", "Senior", "FENS", "kayra.ozerk@sabanciuniv.edu", "CS",  2.34, 1],
-            [1, "2021-2022", "John Doe", "john.doe", "freshman", "FENS", "john.doe@sabanciuniv.edu", "CS",  3.45, 1],
-            [2, "2020-2021", "Jane Smith", "jane.smith", "senior", "FMAN", "jane.smith@sabanciuniv.edu", "BUS",  3.78, 0],
-            [3, "2023-2024", "Ali Veli", "ali.veli", "sophomore", "FASS", "ali.veli@sabanciuniv.edu", "ART", 3.12, 1],
-            [4, "2022-2023", "Ayşe Yılmaz", "ayse.yilmaz", "junior", "FENS", "ayse.yilmaz@sabanciuniv.edu", "BIO",  3.89, 0],
-            [5, "2023-2024", "Mehmet Kara", "mehmet.kara", "prep", "FMAN", "mehmet.kara@sabanciuniv.edu", "PSY", 2.56, 0]
+            [31254, "2023-2024", "Tankut Kayra", "kayra.ozerk", "Senior", "FENS", "kayra.ozerk@sabanciuniv.edu", "CS",   1,1,"-","-","-"],
+            [1, "2021-2022", "John Doe", "john.doe", "freshman", "FENS", "john.doe@sabanciuniv.edu", "CS",  1,1,"-","-","-"],
+            [2, "2020-2021", "Jane Smith", "jane.smith", "senior", "FMAN", "jane.smith@sabanciuniv.edu", "BUS",   0,1,"-","-","-"],
+            [3, "2023-2024", "Ali Veli", "ali.veli", "sophomore", "FASS", "ali.veli@sabanciuniv.edu", "ART",  1,1,"-","-","-"],
+            [4, "2022-2023", "Ayşe Yılmaz", "ayse.yilmaz", "junior", "FENS", "ayse.yilmaz@sabanciuniv.edu", "BIO",   0,1,"-","-","-"],
+            [30199, "2024-2025", "Ilgın Simay Özcan", "ilgin.ozcan", "junior", "FENS", "ilgin.ozcan@sabanciuniv.edu", "IE",   0,1,"-","-","-"],
+            [5, "2023-2024", "Mehmet Kara", "mehmet.kara", "prep", "FMAN", "mehmet.kara@sabanciuniv.edu", "PSY",  0,1,"-","-","-"]
         ];
 
         // Render Grid.js table
@@ -126,7 +158,7 @@
                 className: {
                     table: 'table'
                 },
-                columns: ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME","Class","Faculty","Email","Departmant","GPA","Used Vote"],
+                columns: ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME","Class","Faculty","Email","Program","A1 Vote","A2 Vote","B Vote","C Vote","D Vote"],
                 data: demoData,
                 pagination: true,
                 sort: true,
@@ -148,18 +180,19 @@
 
         // Export to Excel functionality
         const exportToExcel = () => {
-            const headers = ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME", "Class", "Faculty", "Email", "Departmant", "GPA", "Used Vote"];
-            const rows = demoData.map(row => row.join(","));
-            const csvContent = [headers.join(","), ...rows].join("\n");
+    const headers = ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME", "Class", "Faculty", "Email", "Program", "A1 Vote", "A2 Vote", "B Vote", "C Vote", "D Vote"];
+    const rows = demoData.map(row => row.join(","));
+    const csvContent = [headers.join(","), ...rows].join("\n"); // Correct variable name used here
 
-            const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "student_data.csv");
-            document.body.appendChild(link); // Required for FF
-            link.click();
-            document.body.removeChild(link);
-        };
+    const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent); // Fixed variable name
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "student_data.csv"); // File name for download
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link); // Clean up
+};
+
 
 
         const downloadButton = document.createElement("button");
