@@ -16,14 +16,35 @@
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
 
+    <!-- Bootstrap and Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+
     <style>
         body {
-            background-color: #f5f7fa;
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             height: 100vh;
-            margin: 0;
+            padding-top: 50px; 
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #3f51b5;
+            padding: 10px 20px;
+        }
+        .navbar-brand img {
+            height: 40px;
+        }
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
         }
         .card {
             border: none;
@@ -82,6 +103,49 @@
     </style>
 </head>
 <body>
+
+   <!-- Navbar -->
+   <nav class="navbar navbar-dark navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <!-- Logo -->
+            <a href="voteCategory.php" class="navbar-brand d-flex align-items-center">
+                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                <span class="ms-2 text-white fs-5 fw-bold">Sabancı University</span>
+            </a>
+
+			
+			<!-- Navbar Links -->
+			<div class="collapse navbar-collapse">
+				<ul class="navbar-nav ms-auto align-items-center">
+					<!-- Welcome Dropdown -->
+					<li class="nav-item dropdown">
+						<a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							Welcome, <strong>damla.aydin</strong>
+						</a>
+						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+							<li>
+								<a class="dropdown-item" href="voteCategory.php">
+									<i class="fas fa-home me-2"></i> Home
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="#">
+									<i class="fas fa-question-circle me-2"></i> Help
+								</a>
+							</li>
+							<div class="dropdown-divider"></div>
+							<li>
+							<a class="dropdown-item text-danger" href="logout.php">
+								<i class="fas fa-sign-out-alt me-2"></i> Logout
+							</a>
+
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+        </div>
+    </nav>
     <!-- Nomination Form Card -->
     <div class="card">
         <!-- Form Title -->
@@ -132,6 +196,12 @@
 
     <script src="assets/js/main/jquery.min.js"></script>
     <script src="assets/js/main/bootstrap.bundle.min.js"></script>
-    
+  <!-- JavaScript -->
+  <script>
+        function redirectToCategoryPage() {
+            window.location.href = "voteCategory.php?completedCategoryId=A1";
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

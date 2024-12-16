@@ -7,7 +7,13 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <style>
+    
+    <!-- Bootstrap and Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+   
+   <style>
         body {
             background-color: #f9f9f9;
             font-family: Arial, sans-serif;
@@ -15,7 +21,22 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             height: 100vh;
+            padding-top: 50px; 
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #3f51b5;
+            padding: 10px 20px;
+        }
+        .navbar-brand img {
+            height: 40px;
+        }
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
         }
 
         .content-wrapper {
@@ -76,27 +97,88 @@
             text-align: center;
             padding: 25px;
         }
-    </style>
-</head>
-<body>
-<div style="text-align: center; margin-top: 20px;">
-    <button 
-        onclick="window.location.href='index.php'" 
-        style="
-            background-color: #007bff;
-            color: white;
-            border: none;
+
+        .return-button {
+            position: fixed; /* Fix the position relative to the viewport */
+            bottom: 100px; /* Distance from the bottom */
+            left: 50%; /* Align to center horizontally */
+            transform: translateX(-50%); /* Adjust for exact centering */
+            text-align: center; /* Ensure alignment */
+            z-index: 10; /* Ensures it stays above other content */
+        }
+
+        .return-button button {
             padding: 10px 20px;
             font-size: 1rem;
             border-radius: 5px;
-            cursor: pointer;
             transition: background-color 0.3s;
-        "
+            background-color: #007bff; /* Default color */
+            color: white; /* Text color */
+            border: none;
+            cursor: pointer;
+        }
+
+        .return-button button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <!-- Logo -->
+            <a href="voteCategory.php" class="navbar-brand d-flex align-items-center">
+                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                <span class="ms-2 text-white fs-5 fw-bold">Sabancı University</span>
+            </a>
+
+			
+			<!-- Navbar Links -->
+			<div class="collapse navbar-collapse">
+				<ul class="navbar-nav ms-auto align-items-center">
+					<!-- Welcome Dropdown -->
+					<li class="nav-item dropdown">
+						<a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							Welcome, <strong>damla.aydin</strong>
+						</a>
+						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+							<li>
+								<a class="dropdown-item" href="voteCategory.php">
+									<i class="fas fa-home me-2"></i> Home
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="#">
+									<i class="fas fa-question-circle me-2"></i> Help
+								</a>
+							</li>
+							<div class="dropdown-divider"></div>
+							<li>
+							<a class="dropdown-item text-danger" href="logout.php">
+								<i class="fas fa-sign-out-alt me-2"></i> Logout
+							</a>
+
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+        </div>
+    </nav>
+
+ 
+<div class="return-button">
+    <button 
+        onclick="window.location.href='index.php'" 
+        class="btn btn-primary"
         onmouseover="this.style.backgroundColor='#0056b3'"
-        onmouseout="this.style.backgroundColor='#007bff'"
-    >
+        onmouseout="this.style.backgroundColor='#007bff'">
         Return to Main Menu
     </button>
+</div>
+
 </div>
     <div class="content-wrapper">
         <div class="title">Select a Voting Category</div>
@@ -162,5 +244,14 @@
 
         renderCategories();
     </script>
+
+
+  <!-- JavaScript -->
+  <script>
+        function redirectToCategoryPage() {
+            window.location.href = "voteCategory.php?completedCategoryId=A1";
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
