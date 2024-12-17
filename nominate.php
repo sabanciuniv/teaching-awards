@@ -77,7 +77,7 @@
             <!-- Logo and Title -->
             <a href="nominate.php" class="navbar-brand d-flex align-items-center">
                 <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                <span>Sabancı University</span>
+                <span>Teaching Awards</span>
             </a>
 
             <!-- Toggler for Mobile -->

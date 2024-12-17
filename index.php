@@ -17,8 +17,6 @@ session_start();
 	<link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
 	<link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
 	<link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
 	<!-- /global stylesheets -->
@@ -38,15 +36,56 @@ session_start();
 
     <!-- Custom CSS for page -->
     <style>
+        
         body {
             background-color: #f9f9f9;
             margin: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             font-family: Arial, sans-serif;
+        }
+
+        .page-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-section {
+            height: 95vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('assets/images/sabancı\ university.png'); 
+            border-radius: 50px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.6); /* Adjust opacity as needed */
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 20px;
+            color: #333;
         }
 
         .login-container {
             text-align: center;
-            margin-top: 50px;
+            margin-top: 0 auto;
         }
 
         .login-title {
@@ -62,8 +101,6 @@ session_start();
         }
 
         .rules-button {
-            background-color: #dde8ff;
-            color: #333;
             font-size: 1.2rem;
             font-weight: bold;
             padding: 10px 30px;
@@ -110,34 +147,39 @@ session_start();
             margin-top: 20px;
             color: #666;
         }
+
     </style>
 </head>
 <body>
     <!-- Page Content -->
-    <div class="page-content">
-        <div class="content-wrapper">
-            <div class="login-container">
-                <!-- Header Section -->
-                <img src="assets/images/screenshots/sabancilogo.png" alt="Logo" style="height: 60px; margin-bottom: 20px;">
-                <h1 class="login-title">VOTE & CHOOSE YOUR FAVORITE</h1>
-                <p class="login-subtitle">Click to View the Rules</p>
+     <div class= "page content">
+        <div class="hero-section">
+            <div class="hero-overlay"></div>
+                <div class="content-wrapper">
+                    <div class="login-container">
+                        <!-- Header Section -->
+                        <img src="assets/images/screenshots/sabancilogo.png" alt="Logo" style="height: 60px; margin-bottom: 20px;">
+                        <h1 class="login-title">VOTE & CHOOSE YOUR FAVORITE</h1>
+                        <p class="login-subtitle">Click to View the Rules</p>
 
-                <!-- Rules Button -->
-                <button class="rules-button" data-toggle="modal" data-target="#rulesModal">⬇ View the Rules ⬇</button>
+                        <!-- Rules Button -->
+                        <button class="rules-button btn-secondary text-white" data-toggle="modal" data-target="#rulesModal">⬇ View the Rules ⬇</button>
 
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <a href="loginCAS.php?redirect=nominate.php" class="btn btn-indigo">Nominate</a>
-                    <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-indigo">Vote Page</a>
-                    <!-- <a href="viewWinners.php" class="btn btn-indigo">View Winners</a> -->
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary">Nominate</a>
+                            <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary">Vote Page</a>
+                            <!-- <a href="viewWinners.php" class="btn btn-indigo">View Winners</a> -->
+                        </div>
+
+                        <div class="action-buttons mt-1" style="text-align: center;">
+                            <a href="viewWinners.php" class="btn btn-secondary" style="width: 250px;">View Winners</a>
+                        </div>
+
+                        <!-- Footer Text -->
+                        <p class="footer-text">YOU CAN VOTE BETWEEN start_date - end_date</p>
+                    </div>
                 </div>
-
-                <div class="action-buttons mt-1" style="text-align: center;">
-                    <a href="viewWinners.php" class="btn btn-indigo" style="width: 250px;">View Winners</a>
-                </div>
-
-                <!-- Footer Text -->
-                <p class="footer-text">YOU CAN VOTE BETWEEN start_date - end_date</p>
             </div>
         </div>
     </div>

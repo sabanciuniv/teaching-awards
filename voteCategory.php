@@ -126,7 +126,7 @@
                 <!-- Logo and Title -->
                 <a href="voteCategory.php" class="navbar-brand d-flex align-items-center ms-5">
                     <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                    <span>Sabancı University</span>
+                    <span>Teaching Awards</span>
                 </a>
             </div>
 
