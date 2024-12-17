@@ -74,12 +74,17 @@
     <!-- Navbar -->
     <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
         <div class="container-fluid">
-            <!-- Logo and Title -->
-            <a href="nominate.php" class="navbar-brand d-flex align-items-center">
-                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                <span>Teaching Awards</span>
-            </a>
-
+            <div class="d-flex align-items-center">
+                <!-- Back Arrow -->
+                <a href="index.php" class="text-white" style="text-decoration:none; font-size:1.2rem;">
+                    <i class="fas fa-arrow-left me-3"></i>
+                </a>
+                <!-- Logo and Title -->
+                <a href="nominate.php" class="navbar-brand d-flex align-items-center ms-5">
+                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                    <span>Teaching Awards</span>
+                </a>
+            </div>
             <!-- Toggler for Mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

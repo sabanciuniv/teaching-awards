@@ -5,31 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Teaching Awards - Sabancı University</title>
 
-    <!-- Bootstrap and Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Limitless Theme CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
 
     <style>
         /* General Page Styles */
         body {
             margin: 0;
-            padding: 0;
             font-family: 'Roboto', sans-serif;
             background-color: #f5f7fa;
+            padding-top: 80px;
         }
 
         /* Navbar */
-        .navbar {
-            background-color: #3f51b5;
-            padding: 10px 20px;
-            height: 70px; 
-        }
+        /* Logo and title in the navbar */
         .navbar-brand img {
-            height: 30px;
+            height: 40px;
         }
-        .navbar-nav .nav-link {
+
+        .navbar-brand span {
+            font-size: 1.25rem;
+            font-weight: bold;
             color: white !important;
-            font-weight: 500;
+            margin-left: 10px;
         }
 
         /* Welcome Section */
@@ -74,7 +79,6 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: white;
-            background-color: #3f51b5;
             padding: 10px;
             border-radius: 8px;
             margin: 20px 0;
@@ -85,7 +89,6 @@
             position: fixed;
             bottom: 20px;
             right: 30px;
-            background-color: #3f51b5;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -94,7 +97,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         .submit-btn:hover {
-            background-color: #3f51b5;
             cursor: pointer;
         }
 
@@ -116,53 +118,61 @@
     <div class="background-placeholder"></div>
 
    <!-- Navbar -->
-    <nav class="navbar navbar-dark navbar-expand-lg">
+   <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
         <div class="container-fluid">
-            <!-- Logo -->
-            <a href="voteCategory.php" class="navbar-brand d-flex align-items-center">
-                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                <span class="ms-2 text-white fs-5 fw-bold">Sabancı University</span>
-            </a>
+            <div class="d-flex align-items-center">
+                <!-- Back Arrow -->
+                <a href="voteCategory.php" class="text-white" style="text-decoration:none; font-size:1.2rem;">
+                    <i class="fas fa-arrow-left me-3"></i>
+                </a>
+                <!-- Logo and Title -->
+                <a href="voteScreen_A1.php" class="navbar-brand d-flex align-items-center ms-5">
+                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                    <span>Teaching Awards</span>
+                </a>
+            </div>
+            <!-- Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-			
-			<!-- Navbar Links -->
-			<div class="collapse navbar-collapse">
-				<ul class="navbar-nav ms-auto align-items-center">
-					<!-- Welcome Dropdown -->
-					<li class="nav-item dropdown">
-						<a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-							Welcome, <strong>damla.aydin</strong>
-						</a>
-						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
-							<li>
-								<a class="dropdown-item" href="voteCategory.php">
-									<i class="fas fa-home me-2"></i> Home
-								</a>
-							</li>
-							<li>
-								<a class="dropdown-item" href="#">
-									<i class="fas fa-question-circle me-2"></i> Help
-								</a>
-							</li>
-							<div class="dropdown-divider"></div>
-							<li>
-							<a class="dropdown-item text-danger" href="logout.php">
-								<i class="fas fa-sign-out-alt me-2"></i> Logout
-							</a>
-
-							</li>
-						</ul>
-					</li>
-				</ul>
-			</div>
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <!-- Welcome Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Welcome, <strong>damla.aydin</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+                            <li>
+                                <a class="dropdown-item" href="index.php">
+                                    <i class="fas fa-home me-2"></i> Home
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-question-circle me-2"></i> Help
+                                </a>
+                            </li>
+                            <div class="dropdown-divider"></div>
+                            <li>
+                                <a class="dropdown-item text-danger" href="logout.php">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </nav> 
+    </nav>
 
 
     <!-- Content Section -->
     <div class="content container">
         <!-- Award Category Header -->
-        <div class="award-category">
+        <div class="award-category bg-secondary text-white">
             Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1 (Küçük sınıf dersleri)
         </div>
 
@@ -359,7 +369,7 @@
     </div>
 
     <!-- Submit Button -->
-    <button class="submit-btn" onclick="redirectToCategoryPage()">Submit</button>
+    <button class="submit-btn btn-secondary" onclick="redirectToCategoryPage()">Submit</button>
 
     <!-- JavaScript -->
     <script>
