@@ -6,7 +6,7 @@ require './phpCAS/source/CAS.php';
 $cas_host = 'login.sabanciuniv.edu';
 $cas_context = '/cas';
 $cas_port = 443;
-$app_base_url = 'http://apps-local.sabanciuniv.edu/ENS491-492';
+$app_base_url = 'http://localhost/ENS491-492';
 
 
 // Initialize phpCAS client
