@@ -17,6 +17,13 @@
 
     <style>
         /* General Page Styles */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow-y: auto; /* Enables vertical scrolling */
+            overflow-x: hidden; /* Prevents horizontal scrolling */
+        }
+        
         body {
             margin: 0;
             font-family: 'Roboto', sans-serif;
