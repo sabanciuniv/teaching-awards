@@ -103,12 +103,12 @@ session_start();
         .rules-button {
             font-size: 1.2rem;
             font-weight: bold;
-            padding: 10px 30px;
+            padding: 10px 42px;
             border-radius: 8px;
-            margin: 15px 0;
+            margin: 10px;
             border: none;
             cursor: pointer;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
 
         .rules-button:hover {
@@ -172,8 +172,8 @@ session_start();
                             <!-- <a href="viewWinners.php" class="btn btn-indigo">View Winners</a> -->
                         </div>
 
-                        <div class="action-buttons mt-1" style="text-align: center;">
-                            <a href="viewWinners.php" class="btn btn-secondary" style="width: 250px;">View Winners</a>
+                        <div class="action-buttons" style="text-align: center;">
+                            <a href="viewWinners.php" class="btn btn-secondary" style="width: 260px;">View Winners</a>
                         </div>
 
                         <!-- Footer Text -->
