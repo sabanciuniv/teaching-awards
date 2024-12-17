@@ -1,3 +1,12 @@
+<?php
+session_start();
+if (!isset($_SESSION['user'])) {
+    // Redirect if the user is not logged in
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -149,7 +158,7 @@
                     <!-- Welcome Dropdown -->
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Welcome, <strong>damla.aydin</strong>
+                            Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
                             <li>

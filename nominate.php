@@ -1,3 +1,12 @@
+<?php
+session_start();
+if (!isset($_SESSION['user'])) {
+    // Redirect if the user is not logged in
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,10 +24,12 @@
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+    <!-- Scripts -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
 
+    <!-- Custom Styles -->
     <style>
         body {
             background-color: #f9f9f9;
@@ -33,11 +44,11 @@
         }
 
         .card {
-            background-color: var(--bs-secondary); /* Bootstrap secondary background */
-            color: white; /* Ensure text color is white */
-            border: 1px solid var(--bs-secondary); /* Bootstrap secondary border */
+            background-color: var(--bs-secondary);
+            color: white;
+            border: 1px solid var(--bs-secondary);
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Subtle shadow for separation */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             width: 100%;
             max-width: 500px;
         }
@@ -53,11 +64,10 @@
             padding: 20px;
         }
 
-        .form-control{
+        .form-control {
             color: var(--bs-secondary);
         }
 
-        /* Logo and title in the navbar */
         .navbar-brand img {
             height: 40px;
         }
@@ -96,7 +106,7 @@
                     <!-- Welcome Dropdown -->
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Welcome, <strong>damla.aydin</strong>
+                            Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
                             <li>
@@ -123,16 +133,16 @@
     </nav>
 
     <!-- Nomination Form Card -->
-    <div class="card mt-5 card border border-secondary ">
+    <div class="card mt-5">
         <!-- Form Title -->
         <div class="card-header bg-secondary text-white text-center">Nomination Form</div>
         <!-- Form Body -->
         <div class="form-body">
             <form action="index.php" method="post" enctype="multipart/form-data">
-                <!-- Your Name -->
+                <!-- Your Username -->
                 <div class="mb-3">
                     <label class="form-label text-secondary">Your Username</label>
-                    <input type="text" name="your_name" class="form-control border-secondary text-secondary" placeholder="damla.aydin" required>
+                    <input type="text" name="your_name" class="form-control border-secondary text-secondary" value="<?php echo htmlspecialchars($_SESSION['user']); ?>" readonly>
                 </div>
                 <!-- Nominee's Name -->
                 <div class="mb-3">
@@ -159,8 +169,7 @@
         </div>
     </div>
     
-    <!-- Required Scripts -->
+    <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
