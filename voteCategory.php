@@ -7,39 +7,43 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    
-    <!-- Bootstrap and Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-   
    <style>
         body {
             background-color: #f9f9f9;
             font-family: Arial, sans-serif;
             margin: 0;
             display: flex;
-            justify-content: center;
             align-items: center;
             flex-direction: column;
-            height: 100vh;
-            padding-top: 50px; 
+            padding-top: 70px; 
         }
 
         /* Navbar */
-        .navbar {
-            background-color: #3f51b5;
-            padding: 10px 20px;
-        }
+        /* Logo and title in the navbar */
         .navbar-brand img {
             height: 40px;
         }
-        .navbar-nav .nav-link {
+
+        .navbar-brand span {
+            font-size: 1.25rem;
+            font-weight: bold;
             color: white !important;
-            font-weight: 500;
+            margin-left: 10px;
         }
 
         .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
             text-align: center;
         }
 
@@ -51,25 +55,29 @@
         }
 
         .categories-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
-            align-items: center;
-            max-width: 800px;
             margin: 0 auto;
+            max-width: 800px;
         }
 
         .category-card {
+            flex: 0 0 250px;
+            text-align: center;
             cursor: pointer;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s, border-color 0.2s;
-            position: relative;
             color: #fff;
             height: 75px;
             background-color: var(--bs-secondary-bg); /* Use secondary background */
             border: 3px solid transparent; /* Default border */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
 
         .category-card.completed {
@@ -94,101 +102,78 @@
         }
 
         .card-body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            padding: 25px;
-        }
-
-        .return-button {
-            position: fixed; /* Fix the position relative to the viewport */
-            bottom: 100px; /* Distance from the bottom */
-            left: 50%; /* Align to center horizontally */
-            transform: translateX(-50%); /* Adjust for exact centering */
-            text-align: center; /* Ensure alignment */
-            z-index: 10; /* Ensures it stays above other content */
-        }
-
-        .return-button button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            background-color: #007bff; /* Default color */
-            color: white; /* Text color */
-            border: none;
-            cursor: pointer;
-        }
-
-        .return-button button:hover {
-            background-color: #0056b3; /* Darker blue on hover */
         }
     </style>
 </head>
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-dark navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <!-- Logo -->
-            <a href="voteCategory.php" class="navbar-brand d-flex align-items-center">
-                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                <span class="ms-2 text-white fs-5 fw-bold">Sabancı University</span>
-            </a>
+    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
+        <div class="container-fluid d-flex align-items-center">
+            <div class="d-flex align-items-center">
+                <!-- Back Arrow -->
+                <a href="index.php" class="text-white" style="text-decoration:none; font-size:1.2rem;">
+                    <i class="fas fa-arrow-left me-3"></i>
+                </a>
+                <!-- Logo and Title -->
+                <a href="voteCategory.php" class="navbar-brand d-flex align-items-center ms-5">
+                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                    <span>Sabancı University</span>
+                </a>
+            </div>
 
-			
-			<!-- Navbar Links -->
-			<div class="collapse navbar-collapse">
-				<ul class="navbar-nav ms-auto align-items-center">
-					<!-- Welcome Dropdown -->
-					<li class="nav-item dropdown">
-						<a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-							Welcome, <strong>damla.aydin</strong>
-						</a>
-						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
-							<li>
-								<a class="dropdown-item" href="voteCategory.php">
-									<i class="fas fa-home me-2"></i> Home
-								</a>
-							</li>
-							<li>
-								<a class="dropdown-item" href="#">
-									<i class="fas fa-question-circle me-2"></i> Help
-								</a>
-							</li>
-							<div class="dropdown-divider"></div>
-							<li>
-							<a class="dropdown-item text-danger" href="logout.php">
-								<i class="fas fa-sign-out-alt me-2"></i> Logout
-							</a>
+            <!-- Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-							</li>
-						</ul>
-					</li>
-				</ul>
-			</div>
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <!-- Welcome Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Welcome, <strong>damla.aydin</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+                            <li>
+                                <a class="dropdown-item" href="index.php">
+                                    <i class="fas fa-home me-2"></i> Home
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-question-circle me-2"></i> Help
+                                </a>
+                            </li>
+                            <div class="dropdown-divider"></div>
+                            <li>
+                                <a class="dropdown-item text-danger" href="logout.php">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
- 
-<div class="return-button">
-    <button 
-        onclick="window.location.href='index.php'" 
-        class="btn btn-primary"
-        onmouseover="this.style.backgroundColor='#0056b3'"
-        onmouseout="this.style.backgroundColor='#007bff'">
-        Return to Main Menu
-    </button>
-</div>
-
-</div>
-    <div class="content-wrapper">
+    </div>
+        <div class="content-wrapper">
         <div class="title">Select a Voting Category</div>
         <div class="categories-container" id="categories-container">
             <!-- Categories will be dynamically loaded here -->
         </div>
     </div>
-
-
-
 
     <script>
         const categories = [
@@ -246,8 +231,8 @@
     </script>
 
 
-  <!-- JavaScript -->
-  <script>
+    <!-- JavaScript -->
+    <script>
         function redirectToCategoryPage() {
             window.location.href = "voteCategory.php?completedCategoryId=A1";
         }

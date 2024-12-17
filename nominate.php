@@ -126,13 +126,8 @@
             <form action="index.php" method="post" enctype="multipart/form-data">
                 <!-- Your Name -->
                 <div class="mb-3">
-                    <label class="form-label text-secondary">Your Name</label>
-                    <input type="text" name="your_name" class="form-control border-secondary text-secondary" placeholder="Enter your name" required>
-                </div>
-                <!-- Your Surname -->
-                <div class="mb-3">
-                    <label class="form-label text-secondary">Your Surname</label>
-                    <input type="text" name="your_surname" class="form-control text-secondary border-secondary" placeholder="Enter your surname" required>
+                    <label class="form-label text-secondary">Your Username</label>
+                    <input type="text" name="your_name" class="form-control border-secondary text-secondary" placeholder="damla.aydin" required>
                 </div>
                 <!-- Nominee's Name -->
                 <div class="mb-3">
