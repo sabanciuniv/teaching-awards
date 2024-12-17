@@ -11,28 +11,20 @@ session_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teaching Awards</title>
 
-	<!-- Global stylesheets -->
-	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
-	<link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-	<!-- /global stylesheets -->
+    <link href="assets/fonts/inter/inter.css" rel="stylesheet" type="text/css">
+	<link href="assets/icons/phosphor/styles.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/ltr/all.min.css" id="stylesheet" rel="stylesheet" type="text/css">
+
+    <!-- Limitless Theme CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 
-	<!-- Core JS files -->
-	<script src="assets/js/jquery.min.js"></script>
-	<script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/global_assets/js/main/jquery.min.js"></script>
-	<script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
-	<!-- /core JS files -->
-
-	<!-- Theme JS files -->
-	<script src="assets/js/app.js"></script>
-	<script src="assets/js/custom.js"></script>
-	<!-- /theme JS files -->
 
     <!-- Custom CSS for page -->
     <style>
@@ -45,21 +37,24 @@ session_start();
             flex-direction: column;
             font-family: Arial, sans-serif;
         }
-
-        .page-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        
+          /* Navbar */
+        /* Logo and title in the navbar */
+        .navbar-brand span {
+            font-size: 1rem;
+            font-weight: bold;
+            color: white !important;
+            margin-left: 50px;
         }
 
         .hero-section {
-            height: 95vh;
+            height: 100vh;
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
             background-image: url('assets/images/sabancı\ university.png'); 
-            border-radius: 50px;
+            border-radius: 40px;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -82,22 +77,28 @@ session_start();
             padding: 20px;
             color: #333;
         }
+        .login-title {
+            font-size: 4.5rem; /* Extremely large font size */
+            font-weight: 800; /* Super thick and bold */
+            color: #004f9e; /* Dark blue color */
+            text-transform: uppercase; /* Uppercase for emphasis */
+            line-height: 1; /* Tight spacing between lines */
+            text-align: left; /* Left-aligned */
+            margin-top: 5px; /* Increased margin for spacing */
+            word-spacing: 40px; /* Wider spacing between words */
+            letter-spacing: 5px; /* Slight spacing between letters for better clarity */
+        }
 
         .login-container {
             text-align: center;
-            margin-top: 0 auto;
-        }
-
-        .login-title {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 10px;
+            margin-top: 80px;
         }
 
         .login-subtitle {
             font-size: 1.5rem;
-            margin-bottom: 30px;
-            color: #555;
+            margin-bottom: 5px;
+            font-weight: 1000;
+            color:rgb(54, 56, 70);
         }
 
         .rules-button {
@@ -143,24 +144,60 @@ session_start();
         }
 
         .footer-text {
-            font-size: 0.9rem;
+            font-size: 1rem;
             margin-top: 20px;
             color: #666;
+            color:rgb(54, 56, 70);
+            font-weight: bold;
         }
 
     </style>
 </head>
-<body>
+
     <!-- Page Content -->
      <div class= "page content">
         <div class="hero-section">
             <div class="hero-overlay"></div>
                 <div class="content-wrapper">
+                    <!-- Navbar -->
+                    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
+                            <div class="container-fluid">
+                                <div class="d-flex align-items-center">
+                                </div>
+                                <!-- Toggler for Mobile -->
+                                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+
+                                <!-- Navbar Links -->
+                                <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                                    <ul class="navbar-nav align-items-center">
+                                        <!-- Welcome Dropdown -->
+                                        <li class="nav-item dropdown">
+                                            <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <strong>TEMP dropdown</strong>
+                                            </a>
+                                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+                                                <li>
+                                                    <a class="dropdown-item" href="loginCAS.php?redirect=adminDashboard.php">Admin Login </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
                     <div class="login-container">
                         <!-- Header Section -->
                         <img src="assets/images/screenshots/sabancilogo.png" alt="Logo" style="height: 60px; margin-bottom: 20px;">
-                        <h1 class="login-title">VOTE & CHOOSE YOUR FAVORITE</h1>
-                        <p class="login-subtitle">Click to View the Rules</p>
+                        <h1 class="login-title">
+                            VOTE & <br>
+                            CHOOSE YOUR <br>
+                            FAVORITE
+                        </h1>
+
+                        <p class="login-subtitle">Click Below to View the Rules</p>
 
                         <!-- Rules Button -->
                         <button class="rules-button btn-secondary text-white" data-toggle="modal" data-target="#rulesModal">⬇ View the Rules ⬇</button>
@@ -222,5 +259,7 @@ session_start();
     <script src="assets/js/main/jquery.min.js"></script>
     <script src="assets/js/main/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
