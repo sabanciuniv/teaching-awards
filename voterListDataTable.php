@@ -118,13 +118,12 @@
 .return-button:hover {
     background-color: #0056b3;
 }
-
-
         
     </style>
 </head>
 <body>
     <div class="title">Student Vote Usage Status</div>
+    
 
     <div class="action-container">
         <button 

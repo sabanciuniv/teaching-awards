@@ -24,6 +24,9 @@ session_start();
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
 
 
     <!-- Custom CSS for page -->
@@ -37,15 +40,29 @@ session_start();
             flex-direction: column;
             font-family: Arial, sans-serif;
         }
-        
-          /* Navbar */
-        /* Logo and title in the navbar */
-        .navbar-brand span {
-            font-size: 1rem;
-            font-weight: bold;
-            color: white !important;
-            margin-left: 50px;
+        .navbar .nav-item .nav-link {
+            margin-right: -30px; /* Adjust the value to move it further left */
         }
+        /* Dropdown menu background color */
+        .dropdown-menu {
+            transform: translateX(-70px);
+            background-color: #45748A; /* Same color as navbar */
+            border: none; /* Remove border */
+        }
+
+        /* Dropdown item default text and background color */
+        .dropdown-menu .dropdown-item {
+            color: white; /* Default text color */
+            background-color: #45748A; /* Same as menu background */
+        }
+
+        /* Dropdown item hover state */
+        .dropdown-menu .dropdown-item:hover,
+        .dropdown-menu .dropdown-item:focus {
+            background-color: #45748A; /* Slightly darker shade on hover */
+            color: white; /* Text remains white */
+        }
+
 
         .hero-section {
             height: 100vh;
@@ -174,15 +191,21 @@ session_start();
                                     <ul class="navbar-nav align-items-center">
                                         <!-- Welcome Dropdown -->
                                         <li class="nav-item dropdown">
-                                            <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <strong>TEMP dropdown</strong>
+                                            <a href="#" 
+                                            class="nav-link dropdown-toggle text-white" 
+                                            id="welcomeDropdown" 
+                                            role="button" 
+                                            data-bs-toggle="dropdown" 
+                                            aria-expanded="false">
+                                                <i class="fas fa-list"></i> 
                                             </a>
-                                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+                                            <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
-                                                    <a class="dropdown-item" href="loginCAS.php?redirect=adminDashboard.php">Admin Login </a>
+                                                    <a class="dropdown-item" href="loginCAS.php?redirect=adminDashboard.php">Admin Login</a>
                                                 </li>
                                             </ul>
                                         </li>
+
                                     </ul>
                                 </div>
                             </div>

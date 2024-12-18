@@ -25,7 +25,7 @@ $_SESSION['user'] = $user;
 if (isset($_GET['redirect'])) {
     $redirect_url = $_GET['redirect'];
     // Validate and sanitize the redirect URL
-    $allowed_pages = ['nominate.php', 'voteCategory.php'];
+    $allowed_pages = ['nominate.php', 'voteCategory.php', 'adminDashboard.php'];
     if (in_array($redirect_url, $allowed_pages)) {
         header("Location: $redirect_url");
         exit;

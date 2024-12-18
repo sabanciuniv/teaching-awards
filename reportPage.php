@@ -1,3 +1,12 @@
+<?php
+session_start();
+if (!isset($_SESSION['user'])) {
+    // Redirect if the user is not logged in
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +16,18 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Limitless Theme CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+
+
     <style>
         body {
             background-color: #f9f9f9;
@@ -16,6 +37,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin-top: 200px;
         }
 
         .content-wrapper {
@@ -46,6 +68,7 @@
             transition: transform 0.2s, border-color 0.2s;
             position: relative;
             color: #fff;
+            font-size: large;
             background-color: var(--bs-secondary-bg);
             border: 3px solid transparent;
             height: 75px; /* Fix height for uniform size */
@@ -97,9 +120,70 @@
         .return-button:hover {
             background-color: #0056b3;
         }
+
+        
+        .navbar-brand img {
+            height: 40px;
+        }
+
+        .navbar-brand span {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white !important;
+            margin-left: 10px;
+        }
+
+        
     </style>
 </head>
 <body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <!-- Logo and Title -->
+                <a href="nominate.php" class="navbar-brand d-flex align-items-center ms-5">
+                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                    <span>Teaching Awards</span>
+                </a>
+            </div>
+            <!-- Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <!-- Welcome Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+                            <li>
+                                <a class="dropdown-item" href="index.php">
+                                    <i class="fas fa-home me-2"></i> Home
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-question-circle me-2"></i> Help
+                                </a>
+                            </li>
+                            <div class="dropdown-divider"></div>
+                            <li>
+                                <a class="dropdown-item text-danger" href="logout.php">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
     <div class="content-wrapper">
         <div class="title">Select a Report Category</div>
         <div class="categories-container" id="categories-container">
@@ -114,11 +198,10 @@
 
     <script>
         const categories = [
-            { id: 'VoteResults', name: 'Öğretim Üyeleri Puanları', url: 'voteScreen_A2.php' },
-            { id: 'VoterList', name: 'Oy Kullanım Durumu Raporu', url: 'voterListDataTable.php' },
-            { id: 'ParticipationRates', name: 'Yıllara Göre Oylamaya Katılım Raporu', url: 'voteScreen_B.php' }
+            { id: 'VoteResults', name: 'Faculty Member Scores', url: 'voterListDataTable.php' },
+            { id: 'VoterList', name: 'Voting Status Report', url: 'voterListDataTable.php' },
+            { id: 'ParticipationRates', name: 'Voting Participation Report by Years', url: 'voterListDataTable.php' }
         ];
-
         // Retrieve completed categories from localStorage
         const completedCategories = JSON.parse(localStorage.getItem('completedCategories')) || [];
 
@@ -149,5 +232,8 @@
 
         renderCategories();
     </script>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

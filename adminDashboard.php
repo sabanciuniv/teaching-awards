@@ -1,3 +1,12 @@
+<?php
+session_start();
+if (!isset($_SESSION['user'])) {
+    // Redirect if the user is not logged in
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +24,9 @@
 	<link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
 	<!-- /global stylesheets -->
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 
 	<!-- Core JS files -->
@@ -53,6 +65,7 @@
         .container {
             display: flex;
             padding: 20px;
+            margin-top: 80px;
         }
         .menu {
             width: 300px;
@@ -65,7 +78,6 @@
             padding: 15px;
             margin: 10px 0;
             font-size: 16px;
-            background-color: #4f87d7;
             color: white;
             border: none;
             border-radius: 5px;
@@ -92,27 +104,108 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
+        .navbar-brand img {
+            height: 40px;
+        }
+
+        .navbar-brand span {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white !important;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">Sabancı University Teaching Awards</div>
-        <div class="user-info">Name Surname(will be dynamic after)</div>
-    </div>
-    <div class="container">
-        <div class="menu">
-            <button onclick="alert('Create New Academic Year functionality not implemented yet.')">+ Create New Academic Year</button>
-            <button onclick="alert('Manage Admin functionality not implemented yet.')">Manage Admin</button>
-            <div class="note">(only for IT admins)</div>
-            <button onclick="alert('Set Vote Period functionality not implemented yet.')">Set Vote Period</button>
-            <button onclick="alert('Excellence in Teaching Awards by Year functionality not implemented yet.')">Excellence in Teaching Awards by Year</button>
-            <button onclick="alert('Sync instructor-course functionality not implemented yet.')">Sync instructor-course</button>
-            <a href="reportPage.php" style="text-decoration: none;"><button>Get Reports</button></a>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <!-- Back Arrow -->
+                <a href="index.php" class="text-white" style="text-decoration:none; font-size:1.2rem;">
+                    <i class="fas fa-arrow-left me-3"></i>
+                </a>
+                <!-- Logo and Title -->
+                <a href="nominate.php" class="navbar-brand d-flex align-items-center ms-5">
+                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
+                    <span>Teaching Awards</span>
+                </a>
+            </div>
+            <!-- Toggler for Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <!-- Welcome Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
+                            <li>
+                                <a class="dropdown-item" href="index.php">
+                                    <i class="fas fa-home me-2"></i> Home
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-question-circle me-2"></i> Help
+                                </a>
+                            </li>
+                            <div class="dropdown-divider"></div>
+                            <li>
+                                <a class="dropdown-item text-danger" href="logout.php">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </nav>
+
+    <div class="container">
+    <div class="menu">
+        <button 
+            class="btn btn-secondary w-100 mb-2" 
+            onclick="alert('Create New Academic Year functionality not implemented yet.')">
+            + Create New Academic Year
+        </button>
+        <button 
+            class="btn btn-secondary w-100 mb-2" 
+            onclick="alert('Manage Admin functionality not implemented yet.')">
+            Manage Admin
+        </button>
+        <div class="note">(only for IT admins)</div>
+        <button 
+            class="btn btn-secondary w-100 mb-2" 
+            onclick="alert('Set Vote Period functionality not implemented yet.')">
+            Set Vote Period
+        </button>
+        <button 
+            class="btn btn-secondary w-100 mb-2" 
+            onclick="alert('Excellence in Teaching Awards by Year functionality not implemented yet.')">
+            Excellence in Teaching Awards by Year
+        </button>
+        <button 
+            class="btn btn-secondary w-100 mb-2" 
+            onclick="alert('Sync instructor-course functionality not implemented yet.')">
+            Sync instructor-course
+        </button>
+        <a href="reportPage.php" style="text-decoration: none;">
+            <button class="btn btn-secondary w-100">Get Reports</button>
+        </a>
+    </div>
         <div class="image-section">
             <img src="additionalImages/sabanciFoto1.jpg" alt="Sabancı Üniversitesi">
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
