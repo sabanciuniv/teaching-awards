@@ -134,7 +134,7 @@ if (!isset($_SESSION['user'])) {
                     <i class="fas fa-arrow-left me-3"></i>
                 </a>
                 <!-- Logo and Title -->
-                <a href="voteCategory.php" class="navbar-brand d-flex align-items-center ms-5">
+                <a href="index.php" class="navbar-brand d-flex align-items-center ms-5">
                     <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
                     <span>Teaching Awards</span>
                 </a>

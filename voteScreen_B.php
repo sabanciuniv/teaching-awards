@@ -189,7 +189,7 @@ if (!isset($_SESSION['user'])) {
     <div class="content container">
         <!-- Award Category Header -->
         <div class="award-category bg-secondary text-white">
-            Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1 (Küçük sınıf dersleri)
+            Yılın Mezunları Ödülü
         </div>
 
         <!-- Instructor Cards -->
@@ -198,7 +198,7 @@ if (!isset($_SESSION['user'])) {
                 <div class="card">
                     <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
                     <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
+                    <p>MATH203 Instructor</p>
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Rank here
@@ -215,7 +215,7 @@ if (!isset($_SESSION['user'])) {
                 <div class="card">
                     <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
                     <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
+                    <p>MATH201 Instructor</p>
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Rank here
@@ -232,7 +232,7 @@ if (!isset($_SESSION['user'])) {
                 <div class="card">
                     <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
                     <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
+                    <p>CS201 Instructor</p>
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Rank here
@@ -249,7 +249,7 @@ if (!isset($_SESSION['user'])) {
                 <div class="card">
                     <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
                     <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
+                    <p>CS201 Instructor</p>
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Rank here
@@ -262,127 +262,6 @@ if (!isset($_SESSION['user'])) {
                     </div>
                 </div>
             </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>TLL101 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Submit Button -->
     <button class="submit-btn btn-secondary" onclick="redirectToCategoryPage()">Submit</button>
