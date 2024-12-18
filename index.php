@@ -66,7 +66,7 @@ session_start();
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.6); /* Adjust opacity as needed */
+            background: rgba(255, 255, 255, 0.75); /* Adjust opacity as needed */
             z-index: 1;
         }
 
