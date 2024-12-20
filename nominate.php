@@ -114,11 +114,6 @@ if (!isset($_SESSION['user'])) {
                                     <i class="fas fa-home me-2"></i> Home
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-question-circle me-2"></i> Help
-                                </a>
-                            </li>
                             <div class="dropdown-divider"></div>
                             <li>
                                 <a class="dropdown-item text-danger" href="logout.php">

@@ -3,6 +3,9 @@ session_start();
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
     header("Location: login.php");
+    while(TRUE){
+        echo($_SESSION['user']);
+    }
     exit();
 }
 ?>

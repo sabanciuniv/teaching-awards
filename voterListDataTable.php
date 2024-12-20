@@ -141,28 +141,28 @@
     <script>
         // Demo data
         const demoData = [
-    [31254, "2023-2024", "Tankut Kayra", "kayra.ozerk", "Senior", "FENS", "kayra.ozerk@sabanciuniv.edu", "CS", 1, 1, "-", "-", "-"],
-    [1, "2021-2022", "John Doe", "john.doe", "Freshman", "FENS", "john.doe@sabanciuniv.edu", "CS", 1, 1, "-", "-", "-"],
-    [2, "2020-2021", "Jane Smith", "jane.smith", "Senior", "FMAN", "jane.smith@sabanciuniv.edu", "BUS", 0, 1, "-", "-", "-"],
-    [3, "2023-2024", "Ali Veli", "ali.veli", "Sophomore", "FASS", "ali.veli@sabanciuniv.edu", "ART", 1, 1, "-", "-", "-"],
-    [4, "2022-2023", "Ayşe Yılmaz", "ayse.yilmaz", "Junior", "FENS", "ayse.yilmaz@sabanciuniv.edu", "BIO", 0, 1, "-", "-", "-"],
-    [30199, "2024-2025", "Ilgın Simay Özcan", "ilgin.ozcan", "Junior", "FENS", "ilgin.ozcan@sabanciuniv.edu", "IE", 0, 1, "-", "-", "-"],
-    [5, "2023-2024", "Mehmet Kara", "mehmet.kara", "Prep", "FMAN", "mehmet.kara@sabanciuniv.edu", "PSY", 0, 1, "-", "-", "-"],
-    [6, "2021-2022", "Selin Aydın", "selin.aydin", "Sophomore", "FASS", "selin.aydin@sabanciuniv.edu", "HIST", 1, 1, "-", "-", "-"],
-    [7, "2023-2024", "Fatih Demir", "fatih.demir", "Junior", "FENS", "fatih.demir@sabanciuniv.edu", "ME", 1, 0, "-", "-", "-"],
-    [8, "2022-2023", "Zeynep Gül", "zeynep.gul", "Senior", "FMAN", "zeynep.gul@sabanciuniv.edu", "FIN", 0, 1, "-", "-", "-"],
-    [9, "2023-2024", "Burak Özdemir", "burak.ozdemir", "Freshman", "FENS", "burak.ozdemir@sabanciuniv.edu", "EE", 1, 1, "-", "-", "-"],
-    [10, "2024-2025", "Eylül Arslan", "eylul.arslan", "Sophomore", "FASS", "eylul.arslan@sabanciuniv.edu", "PSY", 1, 1, "-", "-", "-"],
-    [11, "2023-2024", "Deniz Çelik", "deniz.celik", "Junior", "FMAN", "deniz.celik@sabanciuniv.edu", "BUS", 0, 0, "-", "-", "-"],
-    [12, "2022-2023", "Ahmet Yılmaz", "ahmet.yilmaz", "Senior", "FENS", "ahmet.yilmaz@sabanciuniv.edu", "CS", 1, 0, "-", "-", "-"],
-    [13, "2024-2025", "Seda Kaya", "seda.kaya", "Prep", "FENS", "seda.kaya@sabanciuniv.edu", "IE", 1, 1, "-", "-", "-"],
-    [14, "2023-2024", "Cenk Başar", "cenk.basar", "Junior", "FASS", "cenk.basar@sabanciuniv.edu", "IR", 0, 1, "-", "-", "-"],
-    [15, "2021-2022", "Melis Acar", "melis.acar", "Sophomore", "FMAN", "melis.acar@sabanciuniv.edu", "FIN", 1, 0, "-", "-", "-"],
-    [16, "2020-2021", "Hakan Kılıç", "hakan.kilic", "Senior", "FENS", "hakan.kilic@sabanciuniv.edu", "CS", 1, 1, "-", "-", "-"],
-    [17, "2023-2024", "Nisa Yıldırım", "nisa.yildirim", "Junior", "FENS", "nisa.yildirim@sabanciuniv.edu", "ME", 1, 1, "-", "-", "-"],
-    [18, "2022-2023", "Barış Tan", "baris.tan", "Sophomore", "FMAN", "baris.tan@sabanciuniv.edu", "FIN", 0, 1, "-", "-", "-"],
-    [19, "2024-2025", "Gökhan Demir", "gokhan.demir", "Freshman", "FASS", "gokhan.demir@sabanciuniv.edu", "ART", 0, 0, "-", "-", "-"],
-    [20, "2023-2024", "Elif Aydın", "elif.aydin", "Senior", "FENS", "elif.aydin@sabanciuniv.edu", "BIO", 1, 1, "-", "-", "-"]
+    [31254, "2023-2024", "Tankut Kayra", "kayra.ozerk", "Senior", "kayra.ozerk@sabanciuniv.edu", "CS", 1, 1, "-", "-", "-"],
+    [1, "2021-2022", "John Doe", "john.doe", "Freshman", "john.doe@sabanciuniv.edu", "CS", 1, 1, "-", "-", "-"],
+    [2, "2020-2021", "Jane Smith", "jane.smith", "Senior", "jane.smith@sabanciuniv.edu", "BUS", 0, 1, "-", "-", "-"],
+    [3, "2023-2024", "Ali Veli", "ali.veli", "Sophomore", "ali.veli@sabanciuniv.edu", "ART", 1, 1, "-", "-", "-"],
+    [4, "2022-2023", "Ayşe Yılmaz", "ayse.yilmaz", "Junior", "ayse.yilmaz@sabanciuniv.edu", "BIO", 0, 1, "-", "-", "-"],
+    [30199, "2024-2025", "Ilgın Simay Özcan", "ilgin.ozcan", "Junior", "ilgin.ozcan@sabanciuniv.edu", "IE", 0, 1, "-", "-", "-"],
+    [5, "2023-2024", "Mehmet Kara", "mehmet.kara", "Prep", "mehmet.kara@sabanciuniv.edu", "PSY", 0, 1, "-", "-", "-"],
+    [6, "2021-2022", "Selin Aydın", "selin.aydin", "Sophomore", "selin.aydin@sabanciuniv.edu", "HIST", 1, 1, "-", "-", "-"],
+    [7, "2023-2024", "Fatih Demir", "fatih.demir", "Junior", "fatih.demir@sabanciuniv.edu", "ME", 1, 0, "-", "-", "-"],
+    [8, "2022-2023", "Zeynep Gül", "zeynep.gul", "Senior", "zeynep.gul@sabanciuniv.edu", "FIN", 0, 1, "-", "-", "-"],
+    [9, "2023-2024", "Burak Özdemir", "burak.ozdemir", "Freshman", "burak.ozdemir@sabanciuniv.edu", "EE", 1, 1, "-", "-", "-"],
+    [10, "2024-2025", "Eylül Arslan", "eylul.arslan", "Sophomore", "eylul.arslan@sabanciuniv.edu", "PSY", 1, 1, "-", "-", "-"],
+    [11, "2023-2024", "Deniz Çelik", "deniz.celik", "Junior", "deniz.celik@sabanciuniv.edu", "BUS", 0, 0, "-", "-", "-"],
+    [12, "2022-2023", "Ahmet Yılmaz", "ahmet.yilmaz", "Senior", "ahmet.yilmaz@sabanciuniv.edu", "CS", 1, 0, "-", "-", "-"],
+    [13, "2024-2025", "Seda Kaya", "seda.kaya", "Prep", "seda.kaya@sabanciuniv.edu", "IE", 1, 1, "-", "-", "-"],
+    [14, "2023-2024", "Cenk Başar", "cenk.basar", "Junior", "cenk.basar@sabanciuniv.edu", "IR", 0, 1, "-", "-", "-"],
+    [15, "2021-2022", "Melis Acar", "melis.acar", "Sophomore", "melis.acar@sabanciuniv.edu", "FIN", 1, 0, "-", "-", "-"],
+    [16, "2020-2021", "Hakan Kılıç", "hakan.kilic", "Senior", "hakan.kilic@sabanciuniv.edu", "CS", 1, 1, "-", "-", "-"],
+    [17, "2023-2024", "Nisa Yıldırım", "nisa.yildirim", "Junior", "nisa.yildirim@sabanciuniv.edu", "ME", 1, 1, "-", "-", "-"],
+    [18, "2022-2023", "Barış Tan", "baris.tan", "Sophomore", "baris.tan@sabanciuniv.edu", "FIN", 0, 1, "-", "-", "-"],
+    [19, "2024-2025", "Gökhan Demir", "gokhan.demir", "Freshman", "gokhan.demir@sabanciuniv.edu", "ART", 0, 0, "-", "-", "-"],
+    [20, "2023-2024", "Elif Aydın", "elif.aydin",  "elif.aydin@sabanciuniv.edu", "BIO", 1, 1, "-", "-", "-"]
 ];
 
 
@@ -173,7 +173,7 @@
                 className: {
                     table: 'table'
                 },
-                columns: ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME","Class","Faculty","Email","Program","A1 Vote","A2 Vote","B Vote","C Vote","D Vote"],
+                columns: ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME","Class","Email","Program","A1 Vote","A2 Vote","B Vote","C Vote","D Vote"],
                 data: demoData,
                 pagination: true,
                 sort: true,
@@ -195,7 +195,7 @@
 
         // Export to Excel functionality
         const exportToExcel = () => {
-    const headers = ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME", "Class", "Faculty", "Email", "Program", "A1 Vote", "A2 Vote", "B Vote", "C Vote", "D Vote"];
+    const headers = ["SU_ID", "Academic Year", "Name", "SUNET_USERNAME", "Class", "Email", "Program", "A1 Vote", "A2 Vote", "B Vote", "C Vote", "D Vote"];
     const rows = demoData.map(row => row.join(","));
     const csvContent = [headers.join(","), ...rows].join("\n"); // Correct variable name used here
 
