@@ -174,7 +174,7 @@ if (!isset($_SESSION['user'])) {
         <button 
             class="btn btn-secondary w-100 mb-2" 
             onclick="alert('Create New Academic Year functionality not implemented yet.')">
-            + Create New Academic Year
+            + Manage New Academic Year
         </button>
         <button 
             class="btn btn-secondary w-100 mb-2" 
@@ -182,11 +182,6 @@ if (!isset($_SESSION['user'])) {
             Manage Admin
         </button>
         <div class="note">(only for IT admins)</div>
-        <button 
-            class="btn btn-secondary w-100 mb-2" 
-            onclick="alert('Set Vote Period functionality not implemented yet.')">
-            Set Vote Period
-        </button>
         <button 
             class="btn btn-secondary w-100 mb-2" 
             onclick="alert('Excellence in Teaching Awards by Year functionality not implemented yet.')">
