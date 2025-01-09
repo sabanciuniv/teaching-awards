@@ -133,56 +133,7 @@ if (!isset($_SESSION['user'])) {
     <!-- Background Placeholder -->
     <div class="background-placeholder"></div>
 
-   <!-- Navbar -->
-   <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center">
-                <!-- Back Arrow -->
-                <a href="voteCategory.php" class="text-white" style="text-decoration:none; font-size:1.2rem;">
-                    <i class="fas fa-arrow-left me-3"></i>
-                </a>
-                <!-- Logo and Title -->
-                <a href="index.php" class="navbar-brand d-flex align-items-center ms-5">
-                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                    <span>Teaching Awards</span>
-                </a>
-            </div>
-            <!-- Toggler for Mobile -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Navbar Links -->
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav align-items-center">
-                    <!-- Welcome Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
-                            <li>
-                                <a class="dropdown-item" href="index.php">
-                                    <i class="fas fa-home me-2"></i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-question-circle me-2"></i> Help
-                                </a>
-                            </li>
-                            <div class="dropdown-divider"></div>
-                            <li>
-                                <a class="dropdown-item text-danger" href="logout.php">
-                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
 
     <!-- Content Section -->
