@@ -1,12 +1,9 @@
 <?php
 // Auto-detect base URL for internal app usage
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-$host = $_SERVER['HTTP_HOST'];
-$script_path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-$app_base_url = $protocol . $host . $script_path;
+$app_base_url = 'http://pro2-dev.sabanciuniv.edu/odul/';
 
 // Manually set the CAS service URL if needed
-$cas_service_url = getenv('CAS_SERVICE_URL') ?: $app_base_url; // Use environment variable or auto-detect
+$cas_service_url = 'http://pro2-dev.sabanciuniv.edu/odul/'; // Ensure CAS service aligns with base
 
 return [
     'app_base_url' => $app_base_url,  // Dynamic base URL for app
