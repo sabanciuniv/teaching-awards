@@ -1,11 +1,14 @@
 <?php // Start the session
 require './phpCAS/source/CAS.php';
 
-// Configure phpCAS client
-$cas_host = 'login.sabanciuniv.edu';
-$cas_context = '/cas';          
-$cas_port = 443;                 
-$app_base_url = 'http://apps-local.sabanciuniv.edu'; 
+// Include configuration
+$config = include 'config.php';
+
+// Configure phpCAS client using config values
+$cas_host = $config['cas_host'];
+$cas_context = $config['cas_context'];
+$cas_port = $config['cas_port'];
+$app_base_url = $config['app_base_url'];
 
 phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 
