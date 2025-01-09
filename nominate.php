@@ -107,9 +107,19 @@ if (!isset($_SESSION['user'])) {
                     <input type="text" name="nominee_surname" class="form-control text-secondary border-secondary" placeholder="Enter nominee's surname" required>
                 </div>
                 <!-- Upload References -->
-                <div class="mb-3">
-                    <label class="form-label text-secondary">Upload Reference Document</label>
-                    <input type="file" name="reference_document" class="form-control text-secondary border-secondary" required>
+                <div class="fw-bold border-bottom pb-2 mb-3 text-secondary">Upload Reference Document</div>
+                <div class="row mb-3">
+                    <div class="col-lg-12">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-arrow-up-from-bracket"></i>
+                            </span>
+                            <input type="file" name="reference_document" class="form-control is-invalid" id="referenceDocumentInput" required>
+                            <div class="invalid-feedback">
+                                Please upload a valid document.
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Submit Button -->
                 <div class="text-end">
@@ -120,6 +130,30 @@ if (!isset($_SESSION['user'])) {
             </form>
         </div>
     </div>
+    <script>
+        document.getElementById("referenceDocumentInput").addEventListener("change", function () {
+            const fileInput = this;
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                const fileSize = fileInput.files[0].size / 1024 / 1024; // Convert to MB
+                const maxFileSize = 5; // 5 MB limit
+
+                if (fileSize <= maxFileSize) {
+                    fileInput.classList.remove("is-invalid");
+                    fileInput.classList.add("is-valid");
+                    fileInput.nextElementSibling.textContent = `Uploaded: ${fileName}`;
+                } else {
+                    fileInput.classList.remove("is-valid");
+                    fileInput.classList.add("is-invalid");
+                    fileInput.nextElementSibling.textContent = "File is too large. Max size is 5MB.";
+                }
+            } else {
+                fileInput.classList.remove("is-valid");
+                fileInput.classList.add("is-invalid");
+                fileInput.nextElementSibling.textContent = "Please upload a valid file.";
+            }
+        });
+    </script>
     
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
