@@ -75,6 +75,8 @@ session_start();
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            margin-left: -20px;
+            margin-right: -20px;
         }
 
         .hero-overlay {

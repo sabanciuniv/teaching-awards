@@ -15,5 +15,13 @@ return [
         'nominate.php',
         'voteCategory.php',
         'adminDashboard.php'
+    ],
+
+    'database' => [  
+        'host' => 'pro2-dev.sabanciuniv.edu',
+        'dbname' => 'odul',
+        'port' => 3306,
+        'username' => 'odul',
+        'password' => 'fQDq66ZP',
     ]
 ];

@@ -14,37 +14,21 @@ try {
     );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // SQL query
+    // SQL query for Faculty Member Score Table
     $stmt = $pdo->query("
         SELECT 
-            StudentID, 
-            AcademicYear, 
-            StudentNameSurname, 
-            SuNET_Username, 
-            Class, 
-            Mail, 
-            Department, 
-            A1_Vote, 
-            A2_Vote, 
-            B_Vote, 
-            C_Vote, 
-            D_Vote
-        FROM Student_Table
+        FacultyMemberID, 
+        FacultyMemberName, 
+        AcademicYear, 
+        TotalPoints
+        FROM Faculty_Member_Score_Table
     ");
     $data = $stmt->fetchAll(PDO::FETCH_NUM);
-
-    // Debug: Print data to confirm fetching works
-    //echo '<pre>';
-    //print_r($data);
-    //echo '</pre>';
-    //die();
 
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -170,8 +154,7 @@ try {
     </style>
 </head>
 <body>
-    <div class="title">Student Vote Usage Status</div>
-    
+    <div class="title">Faculty Member Score Table</div>
 
     <div class="action-container">
         <button 
@@ -184,25 +167,13 @@ try {
 
     <!-- Include Grid.js JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             // Fetch PHP-encoded data
-            const StudentData = <?php echo json_encode($data); ?>;
+            const facultyData = <?php echo json_encode($data); ?>;
 
             // Debug: Log data to console
-            console.log("Student Data: ", StudentData);
-
-            // Transform vote columns to "Voted" or "Not Voted"
-            const transformedData = StudentData.map(row =>
-                row.map((cell, index) => {
-                    // Vote columns are at indices 7 to 11
-                    if (index >= 7 && index <= 11) {
-                        return cell === "yes" ? "Voted" : cell === "no" ? "Not Voted" : "-";
-                    }
-                    return cell;
-                })
-            );
+            console.log("Faculty Member Score Data: ", facultyData);
 
             // Render Grid.js table
             const gridjsBasicElement = document.querySelector(".gridjs-example-basic");
@@ -212,20 +183,12 @@ try {
                         table: 'table'
                     },
                     columns: [
-                        "Student ID", 
+                        "Faculty Member ID", 
+                        "Faculty Member Name",
                         "Academic Year", 
-                        "Name", 
-                        "SUNET Username", 
-                        "Class", 
-                        "Email", 
-                        "Department", 
-                        "A1 Vote", 
-                        "A2 Vote", 
-                        "B Vote", 
-                        "C Vote", 
-                        "D Vote"
+                        "Total Points"
                     ],
-                    data: transformedData,
+                    data: facultyData,
                     pagination: true,
                     sort: true,
                     search: true,
@@ -247,27 +210,19 @@ try {
             // Export to Excel functionality
             const exportToExcel = () => {
                 const headers = [
-                    "Student ID", 
+                    "Faculty Member ID", 
+                    "Faculty Member Name",
                     "Academic Year", 
-                    "Name", 
-                    "SUNET Username", 
-                    "Class", 
-                    "Email", 
-                    "Department", 
-                    "A1 Vote", 
-                    "A2 Vote", 
-                    "B Vote", 
-                    "C Vote", 
-                    "D Vote"
+                    "Total Points"
                 ];
 
-                const rows = transformedData.map(row => row.join(","));
+                const rows = facultyData.map(row => row.join(","));
                 const csvContent = [headers.join(","), ...rows].join("\n");
 
                 const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
                 const link = document.createElement("a");
                 link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "student_data.csv");
+                link.setAttribute("download", "faculty_member_scores.csv");
                 document.body.appendChild(link); // Required for Firefox
                 link.click();
                 document.body.removeChild(link); // Clean up
@@ -281,8 +236,6 @@ try {
             downloadButton.addEventListener("click", exportToExcel);
             document.body.insertBefore(downloadButton, gridjsBasicElement);
         });
-
     </script>
-
 </body>
 </html>
