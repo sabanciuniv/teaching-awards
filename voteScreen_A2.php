@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'api/authMiddleware.php';
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
     header("Location: login.php");

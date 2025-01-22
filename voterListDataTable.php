@@ -1,5 +1,6 @@
 <?php
 // Include configuration
+require_once 'api/authMiddleware.php';
 $config = include('config.php');
 
 // Fetch data from the database
