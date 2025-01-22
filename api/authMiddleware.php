@@ -16,7 +16,7 @@ if (!isset($_SESSION['user'])) {
 
 // Check if cookies are set
 if (!isset($_COOKIE['username']) || !isset($_COOKIE['cookie_id'])) {
-    header("Location: index.php");
+    phpCAS::logoutWithRedirectService($app_base_url . "/ENS491-492");
     exit();
 }
 
