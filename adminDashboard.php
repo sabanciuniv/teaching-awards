@@ -145,31 +145,35 @@ try {
 </head>
 <body>
     <!-- Navbar -->
+    <?php include 'navbar.php'; ?>
+     <!--
     <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center">
+        <div class="container-fluid d-flex align-items-center position-relative">
+            <div class="d-flex align-items-center"> -->
                 <!-- Back Arrow -->
-                <a href="index.php" class="text-white" style="text-decoration:none; font-size:1.2rem;">
+                <!--<a href="index.php" class="text-white" style="text-decoration:none; font-size:1.2rem; margin-right: 20px;">
                     <i class="fas fa-arrow-left me-3"></i>
-                </a>
+                </a>-->
                 <!-- Logo and Title -->
-                <a href="nominate.php" class="navbar-brand d-flex align-items-center ms-5">
-                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
-                    <span>Teaching Awards</span>
+                <!--<a href="nominate.php" class="navbar-brand d-flex align-items-center ms-5">
+                    <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo" style="height: 40px;">
                 </a>
-            </div>
+            </div>-->
+            <!-- Centered Title -->
+            <!--<div class="navbar-title position-absolute" style="left: 50%; transform: translateX(-50%); font-size: 1.5rem; font-weight: bold; color: white;">
+                Teaching Awards
+            </div>-->
             <!-- Toggler for Mobile -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            <!--<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarNav" aria-controls="navbarNav"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
-            </button>
-
+            </button>-->
             <!-- Navbar Links -->
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav align-items-center">
+            <!--<div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">-->
                     <!-- Welcome Dropdown -->
-                    <li class="nav-item dropdown">
+                    <!--<li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown"
                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>
@@ -196,7 +200,7 @@ try {
                 </ul>
             </div>
         </div>
-    </nav>
+    </nav> -->
 
     <div class="container">
         <div class="menu">

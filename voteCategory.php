@@ -38,18 +38,6 @@ if (!isset($_SESSION['user'])) {
             padding-top: 70px; 
         }
 
-        /* Navbar */
-        /* Logo and title in the navbar */
-        .navbar-brand img {
-            height: 40px;
-        }
-
-        .navbar-brand span {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: white !important;
-            margin-left: 10px;
-        }
 
         .content-wrapper {
             flex: 1;

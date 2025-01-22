@@ -147,16 +147,6 @@ if (!isset($_SESSION['user'])) {
             display: none;
         }
 
-        .navbar-brand img {
-            height: 40px;
-        }
-
-        .navbar-brand span {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: white !important;
-            margin-left: 10px;
-        }
     </style>
 </head>
 <body>

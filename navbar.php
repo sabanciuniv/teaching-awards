@@ -1,5 +1,18 @@
 <!-- Navbar -->
 <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
+    <style>
+        /* Navbar */
+        .navbar-brand img {
+            height: 40px;
+        }
+
+        .navbar-brand span {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white !important;
+            margin-left: 10px;
+        }
+    </style>
     <div class="container-fluid d-flex align-items-center position-relative">
         <!-- Back Arrow and Logo -->
         <div class="d-flex align-items-center">
