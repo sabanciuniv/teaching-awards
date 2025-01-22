@@ -1,9 +1,37 @@
 <?php
 session_start();
+
+// If the user is not logged in, redirect to the login page
 if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
     header("Location: login.php");
     exit();
+}
+
+// Include DB connection (adjust path if necessary)
+require_once 'database/dbConnection.php';
+
+// Fetch the username from session
+$username = $_SESSION['user'];
+
+// Default role (assume null if not found)
+$role = null;
+
+try {
+    // Query the Admin_Table to fetch the user's Role
+    $stmt = $pdo->prepare("SELECT Role FROM Admin_Table WHERE AdminSuUsername = :username");
+    $stmt->execute([':username' => $username]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($row) {
+        // If found, set $role based on DB value (e.g., 'IT_Admin' or 'admin')
+        $role = $row['Role']; 
+    } else {
+        // If no record in Admin_Table, you may optionally redirect or handle as unauthorized
+        // header("Location: index.php"); 
+        // exit();
+    }
+} catch (PDOException $e) {
+    die("Database error: " . $e->getMessage());
 }
 ?>
 
@@ -14,32 +42,30 @@ if (!isset($_SESSION['user'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabancı University Teaching Awards</title>
     <!-- Global stylesheets -->
-	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
-	<link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
-	<link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-	<!-- /global stylesheets -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+    <!-- /global stylesheets -->
 
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-
-	<!-- Core JS files -->
-	<script src="assets/js/jquery.min.js"></script>
-	<script src="assets/js/bootstrap.bundle.min.js"></script>
+    <!-- Core JS files -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/global_assets/js/main/jquery.min.js"></script>
-	<script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
-	<!-- /core JS files -->
+    <script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
+    <!-- /core JS files -->
 
-	<!-- Theme JS files -->
-	<script src="assets/js/app.js"></script>
-	<script src="assets/js/custom.js"></script>
-	<!-- /theme JS files -->
+    <!-- Theme JS files -->
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <!-- /theme JS files -->
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -133,7 +159,9 @@ if (!isset($_SESSION['user'])) {
                 </a>
             </div>
             <!-- Toggler for Mobile -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -142,8 +170,9 @@ if (!isset($_SESSION['user'])) {
                 <ul class="navbar-nav align-items-center">
                     <!-- Welcome Dropdown -->
                     <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
+                        <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown"
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
                             <li>
@@ -170,37 +199,42 @@ if (!isset($_SESSION['user'])) {
     </nav>
 
     <div class="container">
-    <div class="menu">
-        <button 
-            class="btn btn-secondary w-100 mb-2" 
-            onclick="alert('Create New Academic Year functionality not implemented yet.')">
-            + Manage New Academic Year
-        </button>
-        <button 
-            class="btn btn-secondary w-100 mb-2" 
-            onclick="alert('Manage Admin functionality not implemented yet.')">
-            Manage Admin
-        </button>
-        <div class="note">(only for IT admins)</div>
-        <button 
-            class="btn btn-secondary w-100 mb-2" 
-            onclick="alert('Excellence in Teaching Awards by Year functionality not implemented yet.')">
-            Excellence in Teaching Awards by Year
-        </button>
-        <button 
-            class="btn btn-secondary w-100 mb-2" 
-            onclick="alert('Sync instructor-course functionality not implemented yet.')">
-            Sync instructor-course
-        </button>
-        <a href="reportPage.php" style="text-decoration: none;">
-            <button class="btn btn-secondary w-100">Get Reports</button>
-        </a>
-    </div>
+        <div class="menu">
+            <button 
+                class="btn btn-secondary w-100 mb-2" 
+                onclick="alert('Create New Academic Year functionality not implemented yet.')">
+                + Manage New Academic Year
+            </button>
+
+            <!-- Show 'Manage Admin' button ONLY if $role is 'IT_Admin' -->
+            <?php if ($role === 'IT_Admin'): ?>
+                <button 
+                    class="btn btn-secondary w-100 mb-2" 
+                    onclick="alert('Manage Admin functionality not implemented yet.')">
+                    Manage Admin
+                </button>
+                <div class="note">(only for IT admins)</div>
+            <?php endif; ?>
+
+            <button 
+                class="btn btn-secondary w-100 mb-2" 
+                onclick="alert('Excellence in Teaching Awards by Year functionality not implemented yet.')">
+                Excellence in Teaching Awards by Year
+            </button>
+            <button 
+                class="btn btn-secondary w-100 mb-2" 
+                onclick="alert('Sync instructor-course functionality not implemented yet.')">
+                Sync instructor-course
+            </button>
+            <a href="reportPage.php" style="text-decoration: none;">
+                <button class="btn btn-secondary w-100">Get Reports</button>
+            </a>
+        </div>
+
         <div class="image-section">
             <img src="additionalImages/sabanciFoto1.jpg" alt="Sabancı Üniversitesi">
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
