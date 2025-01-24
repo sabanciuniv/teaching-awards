@@ -66,8 +66,8 @@ try {
     }
 
     // (2) Set cookies for the client, valid for 2 hours
-    //$cookie_lifetime = 2 * 60 * 60; // 2 hours in seconds
-    $cookie_lifetime = 2; // 2 hours in seconds
+    $cookie_lifetime = 2 * 60 * 60; // 2 hours in seconds
+    //$cookie_lifetime = 2; // 2 hours in seconds
     setcookie("username", $user, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
     setcookie("cookie_id", $cookie_id, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
 
