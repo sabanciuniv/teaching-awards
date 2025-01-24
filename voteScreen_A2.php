@@ -150,7 +150,7 @@ if ($data === null || $data['status'] !== 'success') {
     <!-- Background Placeholder -->
     <div class="background-placeholder"></div>
 
-    <?php include 'navbar.php'; ?>
+    <?php $backLink = "voteCategory.php"; include 'navbar.php'; ?>
 
 
     <!-- Content Section -->

@@ -139,7 +139,7 @@ if (!isset($_SESSION['user'])) {
 </head>
 <body>
 
-    <?php include 'navbar.php'; ?>
+    <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
    
     <div class="content-wrapper">
         <div class="title">Select a Report Category</div>

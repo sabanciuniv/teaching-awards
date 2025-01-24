@@ -16,7 +16,7 @@
     <div class="container-fluid d-flex align-items-center position-relative">
         <!-- Back Arrow and Logo -->
         <div class="d-flex align-items-center">
-            <a href="index.php" class="text-white" style="text-decoration:none; font-size:1.2rem; margin-right: 20px;">
+            <a href="<?php echo isset($backLink) ? htmlspecialchars($backLink) : 'index.php'; ?>" class="text-white" style="text-decoration:none; font-size:1.2rem; margin-right: 20px;">
                 <i class="fas fa-arrow-left me-3"></i>
             </a>
             <a href="index.php" class="navbar-brand d-flex align-items-center ms-5">

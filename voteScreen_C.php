@@ -134,7 +134,7 @@ if (!isset($_SESSION['user'])) {
     <!-- Background Placeholder -->
     <div class="background-placeholder"></div>
 
-    <?php include 'navbar.php'; ?>
+    <?php $backLink = "voteCategory.php"; include 'navbar.php'; ?>
 
 
     <!-- Content Section -->
