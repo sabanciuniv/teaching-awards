@@ -159,24 +159,25 @@ if (!isset($_SESSION['user'])) {
         <div class="card-header bg-secondary text-white text-center">Nomination Form</div>
         <!-- Form Body -->
         <div class="form-body">
-            <form action="index.php" method="post" enctype="multipart/form-data">
-                <!-- Your Username -->
+        <form id="nominationForm" action="submitNomination.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="year_id" id="year_id">
+   
+            <!-- Your Username -->
                 <div class="mb-3">
                     <label class="form-label text-secondary">Your Username</label>
-                    <input type="text" name="your_name" class="form-control border-secondary text-secondary" value="<?php echo htmlspecialchars($_SESSION['user']); ?>" readonly>
+                    <input type="text" name="SUnetUsername" class="form-control border-secondary text-secondary" value="<?php echo htmlspecialchars($_SESSION['user']); ?>" readonly>
                 </div>
                 <!-- Nominee's Name -->
                 <div class="mb-3">
                     <label class="form-label text-secondary">Nominee's Name</label>
-                    <input type="text" name="nominee_name" class="form-control text-secondary border-secondary" placeholder="Enter nominee's name" required>
+                    <input type="text" name="NomineeName" class="form-control text-secondary border-secondary" placeholder="Enter nominee's name" required>
                 </div>
                 <!-- Nominee's Surname -->
                 <div class="mb-3">
                     <label class="form-label text-secondary">Nominee's Surname</label>
-                    <input type="text" name="nominee_surname" class="form-control text-secondary border-secondary" placeholder="Enter nominee's surname" required>
+                    <input type="text" name="NomineeSurname" class="form-control text-secondary border-secondary" placeholder="Enter nominee's surname" required>
                 </div>
                 <!-- Upload References -->
-               <div class="fw-bold border-bottom pb-2 mb-3 text-secondary">Upload Reference Document</div>
                 <div class="file-input">
                     <div class="file-preview">
                         <button type="button" class="btn-close fileinput-remove" aria-label="Close" onclick="clearAllFiles()"></button>
@@ -188,103 +189,172 @@ if (!isset($_SESSION['user'])) {
                             <div class="file-preview-thumbnails clearfix" id="fileThumbnails"></div>
                         </div>
                     </div>
-                    <input type="file" id="fileInput" name="reference_document[]" multiple onchange="handleFileSelect(event)">
+                    <input type="file" id="fileInput" name="ReferenceLetterFiles[]" multiple style="display: none;">
                     <div class="file-caption">
                         <input type="text" class="file-caption-name form-control" id="fileCaption" readonly placeholder="No file selected">
                     </div>
                 </div>
 
                 <!-- Submit Button -->
-                <div class="text-end">
-                    <button type="submit" class="btn button-secondary bg-secondary text-white">
-                        Submit <i class="icon-paperplane"></i>
-                    </button>
-                </div>
+                <button type="submit" class="btn btn-secondary bg-secondary text-white">
+                    Submit <i class="icon-paperplane"></i>
+                </button>
+
             </form>
         </div>
     </div>
+
+
     <script>
-        // Array to store all selected files
-        let selectedFiles = [];
+    // Array to store all selected files
+    let selectedFiles = [];
 
-        function handleFileSelect(event) {
-            const files = event.target.files;
-            addFilesToSelection(files);
-        }
+    // Handle manual file selection via input
+    document.getElementById("fileDropZone").addEventListener("click", function(event) {
+        event.stopPropagation();  // Prevent click event bubbling
+        document.getElementById("fileInput").click();
+    });
 
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            const fileDropZone = document.getElementById("fileDropZone");
-            fileDropZone.classList.add("dragging");
-        }
 
-        function handleFileDrop(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            const fileDropZone = document.getElementById("fileDropZone");
-            fileDropZone.classList.remove("dragging");
-            const files = event.dataTransfer.files;
-            addFilesToSelection(files);
-        }
+    // Handle file selection from input element
+    document.getElementById("fileInput").addEventListener("change", function(event) {
+        addFilesToSelection(event.target.files);
+    });
+    
+    // Handle file drag over effect
+    function handleDragOver(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.getElementById("fileDropZone").classList.add("dragging");
+    }
 
-        function addFilesToSelection(files) {
-            // Add new files to the array, avoiding duplicates
-            Array.from(files).forEach((file) => {
-                if (!selectedFiles.some((f) => f.name === file.name && f.size === file.size)) {
-                    selectedFiles.push(file);
-                }
-            });
+    // Handle file drop event
+    function handleFileDrop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.getElementById("fileDropZone").classList.remove("dragging");
+        addFilesToSelection(event.dataTransfer.files);
+    }
 
-            updateFilePreview();
-        }
-
-        function updateFilePreview() {
-            const fileThumbnails = document.getElementById("fileThumbnails");
-            const fileCaption = document.getElementById("fileCaption");
-            fileThumbnails.innerHTML = ""; // Clear existing thumbnails
-            fileCaption.value = selectedFiles.length + " file(s) selected";
-
-            selectedFiles.forEach((file, index) => {
-                const frame = document.createElement("div");
-                frame.className = "file-preview-frame";
-
-                const img = document.createElement("img");
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-
-                const removeButton = document.createElement("button");
-                removeButton.type = "button";
-                removeButton.className = "btn-close btn-remove-file";
-                removeButton.ariaLabel = "Remove";
-                removeButton.onclick = function () {
-                    removeFile(index);
-                };
-
-                frame.appendChild(img);
-                frame.appendChild(removeButton);
-                fileThumbnails.appendChild(frame);
-            });
-        }
-
-        function removeFile(index) {
-            selectedFiles.splice(index, 1); // Remove file at the given index
-            updateFilePreview(); // Update the preview
-        }
-
-        function clearAllFiles() {
-            selectedFiles = []; // Clear all files
-            updateFilePreview(); // Update the preview
-        }
-
-        // Remove dragging effect when drag leaves the zone
-        document.getElementById("fileDropZone").addEventListener("dragleave", () => {
-            document.getElementById("fileDropZone").classList.remove("dragging");
+    function addFilesToSelection(files) {
+        // Add new files to the array, avoiding duplicates
+        Array.from(files).forEach((file) => {
+            if (!selectedFiles.some((f) => f.name === file.name && f.size === file.size)) {
+                selectedFiles.push(file);
+            }
         });
-    </script>
+
+        updateFilePreview();
+    }
+
+    function updateFilePreview() {
+        const fileThumbnails = document.getElementById("fileThumbnails");
+        const fileCaption = document.getElementById("fileCaption");
+        fileThumbnails.innerHTML = ""; // Clear existing thumbnails
+        fileCaption.value = selectedFiles.length + " file(s) selected";
+
+        selectedFiles.forEach((file, index) => {
+            const frame = document.createElement("div");
+            frame.className = "file-preview-frame";
+
+            const img = document.createElement("img");
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "btn-close btn-remove-file";
+            removeButton.ariaLabel = "Remove";
+
+            // Stop propagation to prevent triggering click event on the drop zone
+            removeButton.onclick = function (event) {
+                event.stopPropagation();  // Prevents triggering file input click
+                removeFile(index);
+            };
+
+            frame.appendChild(img);
+            frame.appendChild(removeButton);
+            fileThumbnails.appendChild(frame);
+        });
+}
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1); // Remove file at the given index
+        updateFilePreview(); // Update the preview
+    }
+
+    function clearAllFiles() {
+        selectedFiles = []; // Clear all files
+        updateFilePreview(); // Update the preview
+    }
+
+    // Remove dragging effect when drag leaves the zone
+    document.getElementById("fileDropZone").addEventListener("dragleave", () => {
+        document.getElementById("fileDropZone").classList.remove("dragging");
+    });
+
+    document.getElementById("nominationForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        if (selectedFiles.length === 0) {
+            alert("Please upload at least one file.");
+            return;
+        }
+
+        let formData = new FormData(this);
+
+        selectedFiles.forEach((file, index) => {
+            formData.append("ReferenceLetterFiles[]", file);
+        });
+
+        fetch(this.action, {
+            method: this.method,
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log("Server response:", data);
+            if (data.includes("Error")) {
+                alert("Submission failed: " + data);
+            } else {
+                alert("Nomination submitted successfully!");
+                clearAllFiles();
+                document.getElementById("nominationForm").reset();
+            }
+        })
+        .catch(error => {
+            console.error("Error submitting the form:", error);
+            alert("Error submitting the form. Please try again.");
+        });
+
+    });
+
+
+    document.getElementById('nominationForm').addEventListener('submit', function () {
+        document.querySelector('button[type="submit"]').disabled = true;
+    });
+
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch('api/getAcademicYear.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.year) {
+                    document.getElementById("year_id").value = data.year;
+                } else {
+                    console.error('Year not available');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching academic year:', error);
+            });
+    });
+</script>
+
     
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
