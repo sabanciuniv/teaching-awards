@@ -12,25 +12,40 @@
             color: white !important;
             margin-left: 10px;
         }
+
+        /* Adjust spacing */
+        .back-arrow {
+            margin-right: 15px !important; /* Reduce space between arrow and logo */
+        }
+
+        .navbar-brand {
+            margin-left: 0 !important; /* Remove extra left margin on logo */
+        }
     </style>
+
     <div class="container-fluid d-flex align-items-center position-relative">
         <!-- Back Arrow and Logo -->
         <div class="d-flex align-items-center">
-            <a href="<?php echo isset($backLink) ? htmlspecialchars($backLink) : 'index.php'; ?>" class="text-white" style="text-decoration:none; font-size:1.2rem; margin-right: 20px;">
-                <i class="fas fa-arrow-left me-3"></i>
+            <a href="<?php echo isset($backLink) ? htmlspecialchars($backLink) : 'index.php'; ?>" 
+               class="text-white back-arrow" 
+               style="text-decoration:none; font-size:1.2rem;">
+                <i class="fas fa-arrow-left me-1"></i>  <!-- Reduced margin -->
             </a>
-            <a href="index.php" class="navbar-brand d-flex align-items-center ms-5">
-                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo" style="height: 40px;">
+            <a href="index.php" class="navbar-brand d-flex align-items-center">
+                <img src="https://yabangee.com/wp-content/uploads/sabancı-university-2.jpg" alt="Logo">
             </a>
         </div>
 
         <!-- Centered Title -->
-        <div class="navbar-title position-absolute" style="left: 50%; transform: translateX(-50%); font-size: 1.5rem; font-weight: bold; color: white;">
+        <div class="navbar-title position-absolute" 
+             style="left: 50%; transform: translateX(-50%); font-size: 1.5rem; font-weight: bold; color: white;">
             Teaching Awards
         </div>
 
         <!-- Toggler for Mobile -->
-        <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" 
+                aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -38,7 +53,9 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle text-white" id="welcomeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a href="#" class="nav-link dropdown-toggle text-white" 
+                       id="welcomeDropdown" role="button" data-bs-toggle="dropdown" 
+                       aria-expanded="false">
                         Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
