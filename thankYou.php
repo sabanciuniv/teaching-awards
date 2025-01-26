@@ -3,6 +3,7 @@ session_start();
 
 // Determine context: "nominate" or "vote"
 $context = isset($_GET['context']) ? htmlspecialchars($_GET['context']) : 'vote'; // Default to "vote"
+$completedCategoryId = isset($_GET['completedCategoryId']) ? htmlspecialchars($_GET['completedCategoryId']) : null;
 
 // Define messages and redirect URLs based on context
 if ($context === 'nominate') {
@@ -79,7 +80,24 @@ if ($context === 'nominate') {
     <div class="thank-you-container">
         <h1 class="thank-you-message"><?= $thankYouMessage ?></h1>
         <p>Your action has been successfully recorded.</p>
-        <a href="<?= $redirectUrl ?>" class="home-button"><?= $buttonText ?></a>
+        <a href="<?= $redirectUrl ?>" class="home-button" id="back-button"><?= $buttonText ?></a>
     </div>
+    <script>
+        (function () {
+            // Retrieve the completed category ID from PHP
+            const completedCategoryId = "<?= $completedCategoryId ?>";
+
+            if (completedCategoryId) {
+                // Retrieve or initialize the completed categories in localStorage
+                const completedCategories = JSON.parse(localStorage.getItem('completedCategories')) || [];
+
+                // Add the completed category if not already marked
+                if (!completedCategories.includes(completedCategoryId)) {
+                    completedCategories.push(completedCategoryId);
+                    localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
+                }
+            }
+        })();
+    </script>
 </body>
 </html>

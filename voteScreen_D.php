@@ -288,8 +288,8 @@ if (!isset($_SESSION['user'])) {
     <!-- JavaScript -->
     <script>
         function redirectToThankYouPage() {
-            // Redirect to thankYou.php with the context set to 'vote'
-            window.location.href = "thankYou.php";
+            const categoryId = 'D'; // Adjust dynamically if needed
+            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
