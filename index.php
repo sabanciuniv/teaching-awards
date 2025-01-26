@@ -1,6 +1,30 @@
 <?php
 session_start();
 
+$apiUrl = 'http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php';
+$response = file_get_contents($apiUrl);
+
+if ($response === false) {
+    die('Error fetching API data.');
+}
+
+$academicYear = json_decode($response, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    die('JSON decode error: ' . json_last_error_msg());
+}
+
+if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['end_date'])) {
+    $yearID = $academicYear['yearID']; // Corrected key
+    $startDate = date('F j, Y', strtotime($academicYear['start_date']));
+    $endDate = date('F j, Y', strtotime($academicYear['end_date']));
+} else {
+    $yearID = 'N/A';
+    $startDate = 'N/A';
+    $endDate = 'N/A';
+}
+
+
 ?>
 
 
@@ -240,7 +264,7 @@ session_start();
                         </div>
 
                         <!-- Footer Text -->
-                        <p class="footer-text">YOU CAN VOTE BETWEEN start_date - end_date</p>
+                        <p class="footer-text">YOU CAN VOTE BETWEEN <?php echo $startDate; ?> - <?php echo $endDate; ?></p>
                     </div>
                 </div>
             </div>

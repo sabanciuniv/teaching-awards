@@ -106,4 +106,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "Error: " . $e->getMessage();
     }
 }
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Process form submission logic here (e.g., insert into database)
+
+    // Redirect to the thank you page
+    header("Location: thankYou.php");
+    exit();
+}
 ?>

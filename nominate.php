@@ -320,9 +320,7 @@ if (!isset($_SESSION['user'])) {
             if (data.includes("Error")) {
                 alert("Submission failed: " + data);
             } else {
-                alert("Nomination submitted successfully!");
-                clearAllFiles();
-                document.getElementById("nominationForm").reset();
+                window.location.href = "thankYou.php"; // Redirect after successful submission
             }
         })
         .catch(error => {
@@ -334,7 +332,7 @@ if (!isset($_SESSION['user'])) {
 
 
     document.getElementById('nominationForm').addEventListener('submit', function () {
-        document.querySelector('button[type="submit"]').disabled = true;
+        document.querySelector('button[type="submit"]').disabled = false;
     });
 
 
@@ -343,8 +341,8 @@ if (!isset($_SESSION['user'])) {
         fetch('api/getAcademicYear.php')
             .then(response => response.json())
             .then(data => {
-                if (data.year) {
-                    document.getElementById("year_id").value = data.year;
+                if (data.yearID) {
+                    document.getElementById("year_id").value = data.yearID;
                 } else {
                     console.error('Year not available');
                 }
