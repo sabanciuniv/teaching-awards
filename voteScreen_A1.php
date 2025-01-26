@@ -35,7 +35,6 @@ if ($data === null || $data['status'] !== 'success') {
     <title>Teaching Awards - Sabancı University</title>
 
     <!-- Limitless Theme CSS -->
-
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
@@ -192,12 +191,13 @@ if ($data === null || $data['status'] !== 'success') {
         <?php endif; ?>
     </div>
     <!-- Submit Button -->
-    <button class="submit-btn btn-secondary" onclick="redirectToCategoryPage()">Submit</button>
+    <button class="submit-btn btn-secondary" onclick="redirectToThankYouPage()">Submit</button>
 
     <!-- JavaScript -->
     <script>
-        function redirectToCategoryPage() {
-            window.location.href = "voteCategory.php?completedCategoryId=A1";
+        function redirectToThankYouPage() {
+            // Redirect to thankYou.php with the context set to 'vote'
+            window.location.href = "thankYou.php";
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

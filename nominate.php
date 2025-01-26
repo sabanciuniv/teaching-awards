@@ -320,7 +320,7 @@ if (!isset($_SESSION['user'])) {
             if (data.includes("Error")) {
                 alert("Submission failed: " + data);
             } else {
-                window.location.href = "thankYou.php"; // Redirect after successful submission
+                window.location.href = `thankYou.php?context=nominate`; // Redirect after successful submission
             }
         })
         .catch(error => {

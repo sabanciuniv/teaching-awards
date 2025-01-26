@@ -1,6 +1,19 @@
 <?php
 session_start();
 
+// Determine context: "nominate" or "vote"
+$context = isset($_GET['context']) ? htmlspecialchars($_GET['context']) : 'vote'; // Default to "vote"
+
+// Define messages and redirect URLs based on context
+if ($context === 'nominate') {
+    $thankYouMessage = "Thank You for Your Nomination!";
+    $redirectUrl = "index.php";
+    $buttonText = "Back to Main Page";
+} else {
+    $thankYouMessage = "Thank You for Voting!";
+    $redirectUrl = "voteCategory.php";
+    $buttonText = "Back to Vote Categories";
+}
 ?>
 
 <!DOCTYPE html>
@@ -64,9 +77,9 @@ session_start();
 </head>
 <body>
     <div class="thank-you-container">
-        <h1 class="thank-you-message">Thank You for Voting!</h1>
-        <p>Your vote has been successfully submitted.</p>
-        <a href="index.php" class="home-button">Back to Main Page</a>
+        <h1 class="thank-you-message"><?= $thankYouMessage ?></h1>
+        <p>Your action has been successfully recorded.</p>
+        <a href="<?= $redirectUrl ?>" class="home-button"><?= $buttonText ?></a>
     </div>
 </body>
 </html>
