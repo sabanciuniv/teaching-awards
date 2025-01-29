@@ -7,13 +7,13 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-// Include DB connection (adjust path if necessary)
+// Include DB connection
 require_once 'database/dbConnection.php';
 
 // Fetch the username from session
 $username = $_SESSION['user'];
 
-// Default role (assume null if not found)
+// Default role 
 $role = null;
 
 try {
@@ -207,7 +207,7 @@ try {
         <div class="menu">
             <button 
                 class="btn btn-secondary w-100 mb-2" 
-                onclick="alert('Create New Academic Year functionality not implemented yet.')">
+                onclick="window.location.href='manageAcademicYear.php';">
                 + Manage New Academic Year
             </button>
 
