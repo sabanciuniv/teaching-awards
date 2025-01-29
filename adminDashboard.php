@@ -215,8 +215,8 @@ try {
             <?php if ($role === 'IT_Admin'): ?>
                 <button 
                     class="btn btn-secondary w-100 mb-2" 
-                    onclick="alert('Manage Admin functionality not implemented yet.')">
-                    Manage Admin
+                    onclick="window.location.href='manageAdmins.php';">
+                    Manage Admins
                 </button>
                 <div class="note">(only for IT admins)</div>
             <?php endif; ?>
