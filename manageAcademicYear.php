@@ -95,7 +95,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
 </head>
 <body>
         
-    <?php include 'navbar.php'; ?>
+    <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
     <div class="container mt-4">
         <div class="card shadow">
             <div class="card-header text-white" style="background-color: #45748a;">
