@@ -173,9 +173,13 @@ if ($data === null || $data['status'] !== 'success') {
                         <h6><?= htmlspecialchars($instructor['InstructorName'] ?? 'Unknown') ?></h6>
                         <p><?= htmlspecialchars($instructor['CourseName'] ?? 'Unknown Course') ?></p>
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle rank-btn" type="button" data-bs-toggle="dropdown" id="rank-btn-<?= $index ?>">
-                                Rank here
-                            </button>
+                            <button class="btn btn-secondary dropdown-toggle rank-btn"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        id="rank-btn-<?= $index ?>"
+                                        data-candidate-id="<?= isset($instructor['InstructorID']) ? htmlspecialchars($instructor['InstructorID']) : 'missing' ?>">
+                                    Rank here
+                                </button>
                             <div class="dropdown-menu">
                                 <a class="dropdown-item rank-option" data-rank="1" data-index="<?= $index ?>" href="#">1st place</a>
                                 <a class="dropdown-item rank-option" data-rank="2" data-index="<?= $index ?>" href="#">2nd place</a>
@@ -191,7 +195,7 @@ if ($data === null || $data['status'] !== 'success') {
         <?php endif; ?>
     </div>
     <!-- Submit Button -->
-    <button class="submit-btn btn-secondary" onclick="redirectToThankYouPage()">Submit</button>
+    <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
     <!-- JavaScript -->
     <script>
@@ -213,15 +217,11 @@ if ($data === null || $data['status'] !== 'success') {
             let rank = this.getAttribute('data-rank');
             let index = this.getAttribute('data-index');
 
-            // Check if rank is already selected
-            if (Object.values(selectedRanks).includes(rank)) {
-                alert("This rank is already assigned to another instructor.");
-                return;
-            }
-
             // Assign rank to selected instructor
             selectedRanks[index] = rank;
             updateUI();
+            console.log("Updated Selected Ranks:", selectedRanks); // Debugging
+
         });
     });
 
@@ -253,6 +253,68 @@ if ($data === null || $data['status'] !== 'success') {
         });
     }
 
+    
+    function submitVote() {
+        console.log("Selected Ranks:", selectedRanks); // Debugging step
+
+        const categoryId = 'A1'; 
+        const academicYear = '2023'; 
+        let votes = [];
+
+        Object.entries(selectedRanks).forEach(([index, rank]) => {
+            let candidateButton = document.querySelector(`#rank-btn-${index}`);
+            
+            if (candidateButton) {
+                let candidateID = candidateButton.getAttribute("data-candidate-id");
+                console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
+                
+                if (candidateID && candidateID.trim() !== "") {
+                    votes.push({ candidateID, rank });
+                } else {
+                    console.error(`Missing CandidateID for index ${index}`);
+                }
+            }
+        });
+
+        console.log("Votes Data being sent:", votes); // Debugging step
+
+        if (votes.length === 0) {
+            alert("Please rank at least one candidate.");
+            return;
+        }
+
+        // 🚀 Send JSON data properly
+        fetch("submitVote.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                categoryID: categoryId,
+                academicYear: academicYear,
+                votes: votes
+            })
+        })
+        .then(response => response.text()) // Log raw response
+        .then(text => {
+            console.log("Raw Response from Server:", text);
+            try {
+                return JSON.parse(text); // Convert to JSON
+            } catch (error) {
+                console.error("Response is not valid JSON:", text);
+                throw error;
+            }
+        })
+        .then(data => {
+            console.log("Parsed Response from Server:", data);
+            if (data.status === "success") {
+                window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error("Fetch Error:", error));
+    }
+
+
     function removeRank(index) {
         delete selectedRanks[index];
 
@@ -265,6 +327,10 @@ if ($data === null || $data['status'] !== 'success') {
 
         updateUI();
     }
+
+    
+
+
 </script>
 </body>
 </html>

@@ -128,59 +128,42 @@ if (!isset($_SESSION['user'])) {
     </div>
 
     <script>
-        const categories = [
-            { id: 'A1', name: 'Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1', url: 'voteScreen_A1.php' },
-            { id: 'A2', name: 'Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2', url: 'voteScreen_A2.php' },
-            { id: 'B', name: 'Yılın Mezunları Ödülü', url: 'voteScreen_B.php' },
-            { id: 'C', name: 'Temel Geliştirme Yılı Öğretim Görevlisi Ödülü', url: 'voteScreen_C.php' },
-            { id: 'D', name: 'Birinci Sınıf Eğitim Asistanı Ödülü', url: 'voteScreen_D.php' },
-        ];
+        async function fetchCategories() {
+            try {
+                const response = await fetch('api/getCategories.php');
+                const data = await response.json();
 
-        // Retrieve completed categories from localStorage
-        const completedCategories = JSON.parse(localStorage.getItem('completedCategories')) || [];
+                if (data.status === "success") {
+                    renderCategories(data.categories);
+                } else {
+                    console.error("Error fetching categories:", data.message);
+                }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+            }
+        }
 
-        function renderCategories() {
+        function renderCategories(categories) {
             const container = document.getElementById('categories-container');
             container.innerHTML = '';
+
             categories.forEach(category => {
-                const isCompleted = completedCategories.includes(category.id);
                 const card = document.createElement('div');
-                card.className = `card category-card bg-secondary ${isCompleted ? 'completed' : ''}`;
-                card.onclick = () => window.location.href = category.url; // Redirect to the category page
-                
-                // Card content
+                card.className = 'card category-card bg-secondary';
+                card.onclick = () => window.location.href = `voteScreen_${category.id}.php`;
+
                 const cardBody = document.createElement('div');
                 cardBody.className = 'card-body';
                 cardBody.textContent = category.name;
 
-                // Checkmark for completed categories
-                const checkmark = document.createElement('div');
-                checkmark.className = 'checkmark';
-                checkmark.textContent = '✔';
-
                 card.appendChild(cardBody);
-                card.appendChild(checkmark);
                 container.appendChild(card);
             });
         }
 
-        function markCategoryAsCompleted(categoryId) {
-            if (!completedCategories.includes(categoryId)) {
-                completedCategories.push(categoryId);
-                localStorage.setItem('completedCategories', JSON.stringify(completedCategories));
-                renderCategories();
-            }
-        }
-
-        // Check for category completion on return
-        const queryParams = new URLSearchParams(window.location.search);
-        const completedCategoryId = queryParams.get('completedCategoryId');
-        if (completedCategoryId) {
-            markCategoryAsCompleted(completedCategoryId);
-        }
-
-        renderCategories();
+        document.addEventListener('DOMContentLoaded', fetchCategories);
     </script>
+
 
 
     <!-- JavaScript -->

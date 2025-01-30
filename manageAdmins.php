@@ -54,9 +54,8 @@ if (!isset($_SESSION['user'])) {
         }
     </style>
 </head>
-<body>
 
-<?php include 'navbar.php'; ?>
+<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
 <div class="container mt-4">
     <div class="card shadow">
