@@ -43,11 +43,11 @@ session_start();
         <form id="filter-form" class="d-flex justify-content-center">
             <select id="category" name="category" class="form-select w-50" required>
                 <option value="" disabled selected>Select Category</option>
-                <option value="A1">A1</option>
-                <option value="A2">A2</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
+                <option value="1">A1</option>
+                <option value="2">A2</option>
+                <option value="3">B</option>
+                <option value="4">C</option>
+                <option value="5">D</option>
             </select>
             <button type="submit" class="btn btn-primary ms-5">View Winners</button>
         </form>
@@ -77,51 +77,59 @@ session_start();
     document.getElementById('filter-form').addEventListener('submit', async function (event) {
         event.preventDefault();
 
-        // Get selected category
         const category = document.getElementById('category').value;
 
-        // Fetch winners data from API
+        if (!category) {
+            alert('Please select a category.');
+            return;
+        }
+
         try {
-            const response = await fetch(`http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getWinners.php?category=${category}`);
+            const response = await fetch(`fetchWinners.php?category=${category}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
             const data = await response.json();
 
             const winnersTable = document.getElementById('winners-table');
-            const winnersContainer = document.getElementById('winners-container');
+            const tableBody = winnersTable.querySelector('tbody');
             const errorMessage = document.getElementById('error-message');
 
-            // Clear existing data
-            winnersTable.querySelector('tbody').innerHTML = '';
+            // Clear previous data
+            tableBody.innerHTML = '';
             errorMessage.classList.add('d-none');
             winnersTable.classList.add('d-none');
 
-            if (data.status === 'success') {
-                // Populate winners table
-                data.data.forEach(winner => {
+            if (data.winners && data.winners.length > 0) {
+                // Populate the winners table
+                data.winners.forEach(winner => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${winner.Rank}</td>
-                        <td>${winner.WinnerName}</td>
-                        <td>${winner.WinnerEmail}</td>
-                        <td>${winner.WinnerRole}</td>
-                        <td>${winner.AcademicYear}</td>
+                        <td>${winner.rank || 'N/A'}</td>
+                        <td>${winner.candidate_name || 'N/A'}</td>
+                        <td>${winner.candidate_email || 'N/A'}</td>
+                        <td>${winner.candidate_role || 'N/A'}</td>
+                        <td>${winner.term || 'N/A'}</td> 
                     `;
-                    winnersTable.querySelector('tbody').appendChild(row);
+                    tableBody.appendChild(row);
                 });
 
-                // Show the table
                 winnersTable.classList.remove('d-none');
-            } else {
-                // Show error message if no winners found
-                errorMessage.textContent = data.message || 'No winners found.';
+            } else if (data.message) {
+                // Show message if no winners found
+                errorMessage.textContent = data.message;
                 errorMessage.classList.remove('d-none');
             }
         } catch (error) {
-            // Handle fetch errors
+            // Handle errors
+            console.error('Error fetching winners:', error);
             const errorMessage = document.getElementById('error-message');
             errorMessage.textContent = 'An error occurred while fetching winners data. Please try again later.';
             errorMessage.classList.remove('d-none');
         }
     });
+
 </script>
 
 </body>
