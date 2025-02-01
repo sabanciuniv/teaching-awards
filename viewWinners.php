@@ -110,7 +110,7 @@ session_start();
                         <td>${winner.candidate_name || 'N/A'}</td>
                         <td>${winner.candidate_email || 'N/A'}</td>
                         <td>${winner.candidate_role || 'N/A'}</td>
-                        <td>${winner.term || 'N/A'}</td> 
+                        <td>${winner.Academic_year || 'N/A'}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -129,6 +129,7 @@ session_start();
             errorMessage.classList.remove('d-none');
         }
     });
+
 
 </script>
 

@@ -61,19 +61,21 @@ try {
                    c.Name AS candidate_name, 
                    c.Mail AS candidate_email, 
                    c.Role AS candidate_role, 
-                   a.Academic_year
+                   IFNULL(a.Academic_year, :fallback_year) AS Academic_year
             FROM WinnerList_Table w
             INNER JOIN Candidate_Table c ON w.WinnerID = c.id
-            INNER JOIN AcademicYear_Table a ON w.YearID = a.YearID
+            LEFT JOIN AcademicYear_Table a ON w.YearID = a.YearID
             WHERE w.YearID = :year_id AND w.CategoryID = :category_id
             ORDER BY w.Rank ASC
         ");
         $existingStmt->execute([
             ':year_id' => $academicYearID,
-            ':category_id' => $categoryId
+            ':category_id' => $categoryId,
+            ':fallback_year' => $academicYear // Fallback if Academic_year is NULL
         ]);
 
         $existingWinners = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode(['winners' => $existingWinners]);
         exit();
     }
@@ -120,8 +122,7 @@ try {
             'candidate_name' => $candidate['candidate_name'],
             'candidate_email' => $candidate['candidate_email'],
             'candidate_role' => $candidate['candidate_role'],
-            'total_points' => $candidate['total_points'],
-            'term' => $academicYear,
+            'Academic_year' => $academicYear, // Use the correct Academic Year here
         ];
 
         $insertStmt->execute([
@@ -135,10 +136,12 @@ try {
     }
 
     $pdo->commit();
+
     echo json_encode(['winners' => $winners]);
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+
     echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 }
