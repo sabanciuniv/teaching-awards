@@ -6,29 +6,6 @@ $config = include('config.php');
 // Fetch data from the database
 $dbConfig = $config['database'];
 $data = [];
-
-try {
-    $pdo = new PDO(
-        "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset=utf8mb4",
-        $dbConfig['username'],
-        $dbConfig['password']
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // SQL query for Faculty Member Score Table
-    $stmt = $pdo->query("
-        SELECT 
-        FacultyMemberID, 
-        FacultyMemberName, 
-        AcademicYear, 
-        TotalPoints
-        FROM Faculty_Member_Score_Table
-    ");
-    $data = $stmt->fetchAll(PDO::FETCH_NUM);
-
-} catch (PDOException $e) {
-    error_log("Database error: " . $e->getMessage());
-}
 ?>
 
 <!DOCTYPE html>
@@ -37,32 +14,24 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Vote Usage Data Table</title>
-    <!-- Include Grid.js CSS -->
-    	<!-- Global stylesheets -->
-	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
-	<link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
-	<link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-	<!-- /global stylesheets -->
 
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-	<!-- Core JS files -->
-	<script src="assets/js/jquery.min.js"></script>
-	<script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/global_assets/js/main/jquery.min.js"></script>
-	<script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
-	<!-- /core JS files -->
+    <!-- Limitless Theme CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 
-	<!-- Theme JS files -->
-	<script src="assets/js/app.js"></script>
-	<script src="assets/js/custom.js"></script>
-	<!-- /theme JS files -->
-    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
     <style>
         body {
@@ -155,6 +124,8 @@ try {
     </style>
 </head>
 <body>
+
+    <?php include 'navbar.php'; ?>
     <div class="title">Faculty Member Score Table</div>
 
     <div class="action-container">
@@ -169,74 +140,90 @@ try {
     <!-- Include Grid.js JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Fetch PHP-encoded data
-            const facultyData = <?php echo json_encode($data); ?>;
+    document.addEventListener("DOMContentLoaded", () => {
+        // Fetch faculty member scores from the API
+        fetch("api/getFacultyMemberScores.php")
+            .then(response => response.json())
+            .then(facultyData => {
+                // Debug: Log the fetched data
+                console.log("Faculty Member Score Data: ", facultyData);
 
-            // Debug: Log data to console
-            console.log("Faculty Member Score Data: ", facultyData);
-
-            // Render Grid.js table
-            const gridjsBasicElement = document.querySelector(".gridjs-example-basic");
-            if (gridjsBasicElement) {
-                const gridjsBasic = new gridjs.Grid({
-                    className: {
-                        table: 'table'
-                    },
-                    columns: [
-                        "Faculty Member ID", 
-                        "Faculty Member Name",
-                        "Academic Year", 
-                        "Total Points"
-                    ],
-                    data: facultyData,
-                    pagination: true,
-                    sort: true,
-                    search: true,
-                    resizable: true,
-                    style: {
-                        table: {
-                            borderCollapse: 'collapse',
-                            margin: '0 auto'
+                // Render Grid.js table with API data
+                const gridjsBasicElement = document.querySelector(".gridjs-example-basic");
+                if (gridjsBasicElement) {
+                    const gridjsBasic = new gridjs.Grid({
+                        className: {
+                            table: 'table'
+                        },
+                        columns: [
+                            "Faculty Member ID",
+                            "Faculty Member Name",
+                            "Academic Year",
+                            "Total Points"
+                        ],
+                        data: facultyData.map(item => [
+                            item.FacultyMemberID,
+                            item.FacultyMemberName,
+                            item.AcademicYear,
+                            item.TotalPoints
+                        ]),
+                        pagination: true,
+                        sort: true,
+                        search: true,
+                        resizable: true,
+                        style: {
+                            table: {
+                                borderCollapse: 'collapse',
+                                margin: '0 auto'
+                            }
+                        },
+                        downloadCSV: true,
+                        downloadButton: {
+                            text: 'Download Data'
                         }
-                    },
-                    downloadCSV: true,
-                    downloadButton: {
-                        text: 'Download Data'
-                    }
-                });
-                gridjsBasic.render(gridjsBasicElement);
-            }
+                    });
+                    gridjsBasic.render(gridjsBasicElement);
+                }
 
-            // Export to Excel functionality
-            const exportToExcel = () => {
-                const headers = [
-                    "Faculty Member ID", 
-                    "Faculty Member Name",
-                    "Academic Year", 
-                    "Total Points"
-                ];
+                // Export to Excel functionality
+                const exportToExcel = () => {
+                    const headers = [
+                        "Faculty Member ID",
+                        "Faculty Member Name",
+                        "Academic Year",
+                        "Total Points"
+                    ];
 
-                const rows = facultyData.map(row => row.join(","));
-                const csvContent = [headers.join(","), ...rows].join("\n");
+                    const rows = facultyData.map(row => [
+                        row.FacultyMemberID,
+                        row.FacultyMemberName,
+                        row.AcademicYear,
+                        row.TotalPoints
+                    ].join(","));
+                    const csvContent = [headers.join(","), ...rows].join("\n");
 
-                const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "faculty_member_scores.csv");
-                document.body.appendChild(link); // Required for Firefox
-                link.click();
-                document.body.removeChild(link); // Clean up
-            };
+                    const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "faculty_member_scores.csv");
+                    document.body.appendChild(link); // Required for Firefox
+                    link.click();
+                    document.body.removeChild(link); // Clean up
+                };
 
-            // Create the download button
-            const downloadButton = document.createElement("button");
-            downloadButton.textContent = "Download CSV";
-            downloadButton.style.margin = "20px auto";
-            downloadButton.style.display = "block";
-            downloadButton.addEventListener("click", exportToExcel);
-            document.body.insertBefore(downloadButton, gridjsBasicElement);
-        });
-    </script>
+                // Create the download button
+                const downloadButton = document.createElement("button");
+                downloadButton.textContent = "Download CSV";
+                downloadButton.style.margin = "20px auto";
+                downloadButton.style.display = "block";
+                downloadButton.addEventListener("click", exportToExcel);
+                document.body.insertBefore(downloadButton, gridjsBasicElement);
+            })
+            .catch(error => {
+                console.error("Error fetching data from the API: ", error);
+            });
+    });
+</script>
+
 </body>
 </html>
