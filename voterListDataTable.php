@@ -184,33 +184,74 @@ try {
     <!-- Include Grid.js JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Fetch PHP-encoded data
-            const StudentData = <?php echo json_encode($data); ?>;
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Fetch student data from API
+        fetch("api/getStudents.php")
+            .then(response => response.json())
+            .then(studentData => {
+                // Debug: Log fetched data
+                console.log("Student Data: ", studentData);
 
-            // Debug: Log data to console
-            console.log("Student Data: ", StudentData);
+                // Transform vote columns
+                const transformedData = studentData.map(row => [
+                    row.StudentID,
+                    row.AcademicYear,
+                    row.StudentFullName,
+                    row.SuNET_Username,
+                    row.Class,
+                    row.Mail,
+                    row.Department,
+                    formatVote(row.A1_Vote),
+                    formatVote(row.A2_Vote),
+                    formatVote(row.B_Vote),
+                    formatVote(row.C_Vote),
+                    formatVote(row.D_Vote)
+                ]);
 
-            // Transform vote columns to "Voted" or "Not Voted"
-            const transformedData = StudentData.map(row =>
-                row.map((cell, index) => {
-                    // Vote columns are at indices 7 to 11
-                    if (index >= 7 && index <= 11) {
-                        return cell === "yes" ? "Voted" : cell === "no" ? "Not Voted" : "-";
-                    }
-                    return cell;
-                })
-            );
+                // Render Grid.js table
+                const gridjsBasicElement = document.querySelector(".gridjs-example-basic");
+                if (gridjsBasicElement) {
+                    const gridjsBasic = new gridjs.Grid({
+                        className: {
+                            table: 'table'
+                        },
+                        columns: [
+                            "Student ID", 
+                            "Academic Year", 
+                            "Name", 
+                            "SUNET Username", 
+                            "Class", 
+                            "Email", 
+                            "Department", 
+                            "A1 Vote", 
+                            "A2 Vote", 
+                            "B Vote", 
+                            "C Vote", 
+                            "D Vote"
+                        ],
+                        data: transformedData,
+                        pagination: true,
+                        sort: true,
+                        search: true,
+                        resizable: true,
+                        style: {
+                            table: {
+                                borderCollapse: 'collapse',
+                                margin: '0 auto'
+                            }
+                        },
+                        downloadCSV: true,
+                        downloadButton: {
+                            text: 'Download Data'
+                        }
+                    });
+                    gridjsBasic.render(gridjsBasicElement);
+                }
 
-            // Render Grid.js table
-            const gridjsBasicElement = document.querySelector(".gridjs-example-basic");
-            if (gridjsBasicElement) {
-                const gridjsBasic = new gridjs.Grid({
-                    className: {
-                        table: 'table'
-                    },
-                    columns: [
+                // Export to CSV functionality
+                const exportToExcel = () => {
+                    const headers = [
                         "Student ID", 
                         "Academic Year", 
                         "Name", 
@@ -223,65 +264,41 @@ try {
                         "B Vote", 
                         "C Vote", 
                         "D Vote"
-                    ],
-                    data: transformedData,
-                    pagination: true,
-                    sort: true,
-                    search: true,
-                    resizable: true,
-                    style: {
-                        table: {
-                            borderCollapse: 'collapse',
-                            margin: '0 auto'
-                        }
-                    },
-                    downloadCSV: true,
-                    downloadButton: {
-                        text: 'Download Data'
-                    }
-                });
-                gridjsBasic.render(gridjsBasicElement);
-            }
+                    ];
 
-            // Export to Excel functionality
-            const exportToExcel = () => {
-                const headers = [
-                    "Student ID", 
-                    "Academic Year", 
-                    "Name", 
-                    "SUNET Username", 
-                    "Class", 
-                    "Email", 
-                    "Department", 
-                    "A1 Vote", 
-                    "A2 Vote", 
-                    "B Vote", 
-                    "C Vote", 
-                    "D Vote"
-                ];
+                    const rows = transformedData.map(row => row.join(","));
+                    const csvContent = [headers.join(","), ...rows].join("\n");
 
-                const rows = transformedData.map(row => row.join(","));
-                const csvContent = [headers.join(","), ...rows].join("\n");
+                    const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "student_data.csv");
+                    document.body.appendChild(link); // Required for Firefox
+                    link.click();
+                    document.body.removeChild(link); // Clean up
+                };
 
-                const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "student_data.csv");
-                document.body.appendChild(link); // Required for Firefox
-                link.click();
-                document.body.removeChild(link); // Clean up
-            };
+                // Create the download button
+                const downloadButton = document.createElement("button");
+                downloadButton.textContent = "Download CSV";
+                downloadButton.style.margin = "20px auto";
+                downloadButton.style.display = "block";
+                downloadButton.addEventListener("click", exportToExcel);
+                document.body.insertBefore(downloadButton, gridjsBasicElement);
+            })
+            .catch(error => {
+                console.error("Error fetching data from the API: ", error);
+            });
 
-            // Create the download button
-            const downloadButton = document.createElement("button");
-            downloadButton.textContent = "Download CSV";
-            downloadButton.style.margin = "20px auto";
-            downloadButton.style.display = "block";
-            downloadButton.addEventListener("click", exportToExcel);
-            document.body.insertBefore(downloadButton, gridjsBasicElement);
-        });
+        // Function to format vote values
+        function formatVote(vote) {
+            if (vote === "Voted") return "Voted";
+            if (vote === "Not Voted") return "Not Voted";
+            return "-"; // No right to vote
+        }
+    });
+</script>
 
-    </script>
 
 </body>
 </html>
