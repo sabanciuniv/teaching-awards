@@ -1,12 +1,32 @@
 <?php
-session_start();
-require_once 'api/authMiddleware.php';
-if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
-    header("Location: login.php");
-    exit();
-}
+    session_start();
+    require_once 'api/authMiddleware.php';
+    if (!isset($_SESSION['user'])) {
+        // Redirect if the user is not logged in
+        header("Location: login.php");
+        exit();
+    }
+
+    // Dynamic category and term setup
+    $category = 'C'; // Adjust dynamically for the Temel Geliştirme Yılı Öğretim Görevlisi Ödülü category
+    $term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202301';
+
+    // Construct API URL
+    $api_url = "http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/fetchTGYinstructors.php?term=$term";
+
+    // Fetch data from the API
+    $response = file_get_contents($api_url);
+    $data = json_decode($response, true);
+
+    // Handle API response
+    if ($data === null || $data['status'] !== 'success') {
+        $instructors = [];
+        $error_message = "Failed to load instructors.";
+    } else {
+        $instructors = $data['data'];
+    }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -142,90 +162,180 @@ if (!isset($_SESSION['user'])) {
     <div class="content container">
         <!-- Award Category Header -->
         <div class="award-category bg-secondary text-white">
-        Temel Geliştirme Yılı Öğretim Görevlisi Ödülü
+            Temel Geliştirme Yılı Öğretim Görevlisi Ödülü
         </div>
 
-        <!-- Instructor Cards -->
-        <div class="row justify-content-center">
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>ENG0001 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>ENG0002 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>ENG0003 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>ENG0004 Instructor</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="instructor-container" class="row justify-content-center"> </div>
+        
+    </div>
 
     <!-- Submit Button -->
-    <button class="submit-btn btn-secondary" onclick="redirectToThankYouPage()">Submit</button>
+    <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
     <!-- JavaScript -->
     <script>
-        function redirectToThankYouPage() {
-            const categoryId = 'C'; // Adjust dynamically if needed
-            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+        let selectedRanks = {}; // To track selected ranks dynamically
+
+        async function fetchInstructors() {
+            try {
+                const response = await fetch('fetchTGYinstructors.php?term=202302');
+                const data = await response.json();
+                const container = document.getElementById('instructor-container');
+
+                if (data.status === 'success') {
+                    container.innerHTML = ''; // Clear existing content
+                    data.data.forEach((instructor, index) => {
+                        const card = `
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
+                                    <h6>${instructor.InstructorName}</h6>
+                                    <p>${instructor.CourseName} Instructor</p>
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle rank-btn"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                                id="rank-btn-${index}"
+                                                data-candidate-id="${instructor.CandidateID}">
+                                            Rank here
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                                            <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                                            <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                                        </div>
+                                    </div>
+                                    <div id="selected-rank-${index}" class="mt-2"></div>
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += card;
+                    });
+
+                    // Attach event listeners to the dropdown options after rendering
+                    attachRankListeners();
+                } else {
+                    container.innerHTML = `<p>${data.message}</p>`;
+                }
+            } catch (error) {
+                console.error('Error fetching instructors:', error);
+                document.getElementById('instructor-container').innerHTML = '<p>Failed to load instructors. Please try again later.</p>';
+            }
         }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+        function attachRankListeners() {
+            document.querySelectorAll('.rank-option').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const rank = this.getAttribute('data-rank');
+                    const index = this.getAttribute('data-index');
+
+                    // Check if the rank is already selected for another candidate
+                    if (Object.values(selectedRanks).includes(rank)) {
+                        alert(`Rank ${rank} is already selected for another instructor.`);
+                        return;
+                    }
+
+                    // Assign the rank to the selected instructor
+                    selectedRanks[index] = rank;
+                    updateUI();
+                });
+            });
+        }
+
+        function updateUI() {
+            // Update the UI to reflect selected ranks
+            document.querySelectorAll('.rank-btn').forEach((btn, index) => {
+                const selectedDiv = document.getElementById(`selected-rank-${index}`);
+                const rank = selectedRanks[index];
+                if (rank) {
+                    btn.textContent = `Rank ${rank}`;
+                    selectedDiv.innerHTML = `
+                        <span>Rank: ${rank}</span>
+                        <button class="btn btn-danger btn-sm ms-2 remove-rank" onclick="removeRank(${index})">X</button>
+                    `;
+                } else {
+                    btn.textContent = `Rank here`;
+                    selectedDiv.innerHTML = '';
+                }
+            });
+
+            // Disable selected ranks in other dropdowns
+            document.querySelectorAll('.rank-option').forEach(option => {
+                const rankValue = option.getAttribute('data-rank');
+                option.classList.toggle('disabled', Object.values(selectedRanks).includes(rankValue));
+            });
+        }
+
+        function removeRank(index) {
+            // Remove the selected rank for the given index
+            delete selectedRanks[index];
+            updateUI();
+        }
+
+        function submitVote() {
+            console.log("Selected Ranks:", selectedRanks); // Debugging step
+
+            const categoryId = 'C'; 
+            const academicYear = '2023'; 
+            let votes = [];
+
+            Object.entries(selectedRanks).forEach(([index, rank]) => {
+                let candidateButton = document.querySelector(`#rank-btn-${index}`);
+                
+                if (candidateButton) {
+                    let candidateID = candidateButton.getAttribute("data-candidate-id");
+                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
+                    
+                    if (candidateID && candidateID.trim() !== "") {
+                        votes.push({ candidateID, rank });
+                    } else {
+                        console.error(`Missing CandidateID for index ${index}`);
+                    }
+                }
+            });
+
+            console.log("Votes Data being sent:", votes); // Debugging step
+
+            if (votes.length === 0) {
+                alert("Please rank at least one candidate.");
+                return;
+            }
+
+            // 🚀 Send JSON data properly
+            fetch("submitVote.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryID: categoryId,
+                    academicYear: academicYear,
+                    votes: votes
+                })
+            })
+            .then(response => response.text()) // Log raw response
+            .then(text => {
+                console.log("Raw Response from Server:", text);
+                try {
+                    return JSON.parse(text); // Convert to JSON
+                } catch (error) {
+                    console.error("Response is not valid JSON:", text);
+                    throw error;
+                }
+            })
+            .then(data => {
+                console.log("Parsed Response from Server:", data);
+                if (data.status === "success") {
+                    window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error("Fetch Error:", error));
+        }
+
+        // Fetch instructors on page load
+        fetchInstructors();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
