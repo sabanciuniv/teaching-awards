@@ -6,6 +6,26 @@ if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
 }
+
+// Dynamic category and term setup
+$category = 'C'; // Adjust dynamically for the Temel Geliştirme Yılı Öğretim Görevlisi Ödülü category
+$term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202301';
+
+// Construct API URL
+$api_url = "http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/fetchFirstYearTAs.php?term=$term";
+
+// Fetch data from the API
+$response = file_get_contents($api_url);
+$data = json_decode($response, true);
+
+// Handle API response
+if ($data === null || $data['status'] !== 'success') {
+    $instructors = [];
+    $error_message = "Failed to load instructors.";
+} else {
+    $instructors = $data['data'];
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -141,149 +161,15 @@ if (!isset($_SESSION['user'])) {
     <div class="content container">
         <!-- Award Category Header -->
         <div class="award-category bg-secondary text-white">
-        Birinci Sınıf Eğitim Asistanı Ödülü
+            Birinci Sınıf Eğitim Asistanı Ödülü
         </div>
 
         <!-- Instructor Cards -->
-        <div class="row justify-content-center">
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>IF100 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>IF100 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>IF100 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>SPS101 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>MATH101 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>MATH101 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>MATH02 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                    <h6>Name Surname</h6>
-                    <p>MATH102 TA</p>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">1st place</a>
-                            <a class="dropdown-item" href="#">2nd place</a>
-                            <a class="dropdown-item" href="#">3rd place</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="ta-container" class="row justify-content-center">
+            
+        </div>
     <!-- Submit Button -->
-    <button class="submit-btn btn-secondary" onclick="redirectToThankYouPage()">Submit</button>
+    <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
     <!-- JavaScript -->
     <script>
@@ -291,6 +177,159 @@ if (!isset($_SESSION['user'])) {
             const categoryId = 'D'; // Adjust dynamically if needed
             window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
         }
+
+        let selectedRanks = {}; // To track selected ranks dynamically
+        function attachRankListeners() {
+            document.querySelectorAll('.rank-option').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const rank = this.getAttribute('data-rank');
+                    const index = this.getAttribute('data-index');
+
+                    // Check if the rank is already selected for another candidate
+                    if (Object.values(selectedRanks).includes(rank)) {
+                        alert(`Rank ${rank} is already selected for another instructor.`);
+                        return;
+                    }
+
+                    // Assign the rank to the selected instructor
+                    selectedRanks[index] = rank;
+                    updateUI();
+                });
+            });
+        }
+
+        function updateUI() {
+            // Update the UI to reflect selected ranks
+            document.querySelectorAll('.rank-btn').forEach((btn, index) => {
+                const selectedDiv = document.getElementById(`selected-rank-${index}`);
+                const rank = selectedRanks[index];
+                if (rank) {
+                    btn.textContent = `Rank ${rank}`;
+                    selectedDiv.innerHTML = `
+                        <span>Rank: ${rank}</span>
+                        <button class="btn btn-danger btn-sm ms-2 remove-rank" onclick="removeRank(${index})">X</button>
+                    `;
+                } else {
+                    btn.textContent = `Rank here`;
+                    selectedDiv.innerHTML = '';
+                }
+            });
+
+            // Disable selected ranks in other dropdowns
+            document.querySelectorAll('.rank-option').forEach(option => {
+                const rankValue = option.getAttribute('data-rank');
+                option.classList.toggle('disabled', Object.values(selectedRanks).includes(rankValue));
+            });
+        }
+
+        function removeRank(index) {
+            // Remove the selected rank for the given index
+            delete selectedRanks[index];
+            updateUI();
+        }
+
+        async function fetchTAs() {
+        try {
+            const response = await fetch('api/fetchFirstYearTAs.php');
+            const data = await response.json();
+            const container = document.getElementById('ta-container');
+
+            if (!container) {
+                console.error("Container with ID 'ta-container' not found.");
+                return;
+            }
+
+            if (data.status === 'success') {
+                container.innerHTML = ''; // Clear existing content
+                data.data.forEach((ta, index) => {
+                    const card = `
+                        <div class="col-md-3">
+                            <div class="card">
+                                <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="TA Photo">
+                                <h6>${ta.TAName}</h6>
+                                <p>${ta.CourseName} TA</p>
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary dropdown-toggle rank-btn"
+                                            type="button"
+                                            data-bs-toggle="dropdown"
+                                            id="rank-btn-${index}"
+                                            data-candidate-id="${ta.TAID}">
+                                        Rank here
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                                        <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                                        <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                                    </div>
+                                </div>
+                                <div id="selected-rank-${index}" class="mt-2"></div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+
+                attachRankListeners(); // Attach event listeners
+            } else {
+                container.innerHTML = `<p>${data.message}</p>`;
+            }
+        } catch (error) {
+            console.error('Error fetching TAs:', error);
+            const container = document.getElementById('ta-container');
+            if (container) {
+                container.innerHTML = '<p>Failed to load TAs. Please try again later.</p>';
+            }
+        }
+    }
+
+    function submitVote() {
+        console.log("Selected Ranks:", selectedRanks); // Debugging step
+
+        const categoryId = 'D'; // Adjust dynamically
+        const academicYear = '2021'; // Adjust dynamically
+        const votes = Object.entries(selectedRanks).map(([index, rank]) => {
+            const candidateButton = document.querySelector(`#rank-btn-${index}`);
+            return {
+                candidateID: candidateButton?.getAttribute("data-candidate-id"),
+                rank,
+            };
+        });
+
+        console.log("Votes Data being sent:", { categoryID: categoryId, academicYear, votes }); // Debugging
+
+        if (votes.length === 0) {
+            alert("Please rank at least one candidate.");
+            return;
+        }
+
+        fetch("submitVote.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                categoryID: categoryId,
+                academicYear: academicYear,
+                votes: votes,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Server Response:", data);
+            if (data.status === "success") {
+                window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error submitting votes:", error);
+        });
+    }
+
+
+
+    fetchTAs();
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
