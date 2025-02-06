@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../database/dbConnection.php';
 
 try {
-    // Establish database connection
+    // db connection
     $pdo = new PDO(
         "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset=utf8mb4",
         $dbConfig['username'],
@@ -32,7 +32,7 @@ try {
     $stmt->execute();
     $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Return JSON response
+    //return json format
     echo json_encode($students, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (PDOException $e) {
