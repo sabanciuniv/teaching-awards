@@ -2,7 +2,6 @@
 session_start();
 require_once 'api/authMiddleware.php';
 
-
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
     header("Location: login.php");
@@ -37,7 +36,6 @@ if ($data === null || $data['status'] !== 'success') {
     <title>Teaching Awards - Sabancı University</title>
 
     <!-- Limitless Theme CSS -->
-
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
@@ -46,14 +44,13 @@ if ($data === null || $data['status'] !== 'success') {
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-
     <style>
         /* General Page Styles */
         html, body {
             height: 100%;
             margin: 0;
             overflow-y: auto; /* Enables vertical scrolling */
-            overflow-x: hidden; /* Prevents horizontal scrolling */
+            overflow-x: hidden; /* Prevents horizontal scrolling */
         }
         body {
             margin: 0;
@@ -65,7 +62,6 @@ if ($data === null || $data['status'] !== 'success') {
         .navbar-brand img {
             height: 40px;
         }
-
         .navbar-brand span {
             font-size: 1.25rem;
             font-weight: bold;
@@ -91,7 +87,7 @@ if ($data === null || $data['status'] !== 'success') {
             display: flex;
             flex-direction: column;
             justify-content: center; /* Vertically center content */
-            align-items: center; /* Horizontally center content */
+            align-items: center;     /* Horizontally center content */
             text-align: center;
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -100,7 +96,6 @@ if ($data === null || $data['status'] !== 'success') {
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-
         .card img {
             width: 80px;
             height: 80px;
@@ -146,6 +141,12 @@ if ($data === null || $data['status'] !== 'success') {
             background-color: #3f51b5;
             z-index: -1;
         }
+
+        /* Disabled option style */
+        .dropdown-item.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
     </style>
 </head>
 
@@ -155,15 +156,13 @@ if ($data === null || $data['status'] !== 'success') {
 
     <?php $backLink = "voteCategory.php"; include 'navbar.php'; ?>
 
-
     <!-- Content Section -->
     <div class="content container">
-		<!-- Award Category -->
-		<div class="award-category bg-secondary text-white">
-        Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2 (Amfi dersleri)
-		</div>
+        <!-- Award Category -->
+        <div class="award-category bg-secondary text-white">
+            Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2 (Amfi dersleri)
+        </div>
     </div>
-
 
     <div class="row justify-content-center">
         <?php if (!empty($instructors)): ?>
@@ -174,14 +173,14 @@ if ($data === null || $data['status'] !== 'success') {
                         <h6><?= htmlspecialchars($instructor['InstructorName'] ?? 'Unknown') ?></h6>
                         <p><?= htmlspecialchars($instructor['CourseName'] ?? 'Unknown Course') ?></p>
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle rank-btn"
-                                    type="button"
-                                    data-bs-toggle="dropdown"
-                                    id="rank-btn-<?= $index ?>"
-                                    data-candidate-id="<?= isset($instructor['InstructorID']) ? htmlspecialchars($instructor['InstructorID']) : 'missing' ?>">
+                            <button
+                                class="btn btn-secondary dropdown-toggle rank-btn"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                id="rank-btn-<?= $index ?>"
+                                data-candidate-id="<?= isset($instructor['InstructorID']) ? htmlspecialchars($instructor['InstructorID']) : 'missing' ?>">
                                 Rank here
                             </button>
-
                             <div class="dropdown-menu">
                                 <a class="dropdown-item rank-option" data-rank="1" data-index="<?= $index ?>" href="#">1st place</a>
                                 <a class="dropdown-item rank-option" data-rank="2" data-index="<?= $index ?>" href="#">2nd place</a>
@@ -200,135 +199,170 @@ if ($data === null || $data['status'] !== 'success') {
     <!-- Submit Button -->
     <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
-
-    <!-- JavaScript -->
+    <!-- Optional redirect (if you need it) -->
     <script>
         function redirectToThankYouPage() {
             const categoryId = 'A2'; // Adjust dynamically if needed
             window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
         }
     </script>
+
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Custom Ranking Logic -->
     <script>
-    // Track selected ranks
-    let selectedRanks = {};
+        // Track selected ranks: { "index": "1"|"2"|"3" }
+        let selectedRanks = {};
 
-    document.querySelectorAll('.rank-option').forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-            let rank = this.getAttribute('data-rank');
-            let index = this.getAttribute('data-index');
+        // Listen for rank selections
+        document.querySelectorAll('.rank-option').forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                let rank = parseInt(this.getAttribute('data-rank'));
+                let index = this.getAttribute('data-index');
 
-            // Assign rank to selected instructor
-            selectedRanks[index] = rank;
-            updateUI();
-            console.log("Updated Selected Ranks:", selectedRanks); // Debugging
+                // We allow only the next rank in order: assignedCount + 1
+                let assignedCount = Object.keys(selectedRanks).length;
+                let nextRank = assignedCount + 1;
 
-        });
-    });
-
-    function updateUI() {
-        // Clear and update each instructor rank display
-        document.querySelectorAll('.rank-btn').forEach((btn, index) => {
-            let selectedDiv = document.getElementById(`selected-rank-${index}`);
-            selectedDiv.innerHTML = '';
-
-            if (selectedRanks[index]) {
-                btn.innerHTML = `Rank ${selectedRanks[index]}`;
-                selectedDiv.innerHTML = `
-                    <span>Rank: ${selectedRanks[index]}</span>
-                    <button class="btn btn-danger btn-sm ms-2 remove-rank" onclick="removeRank(${index})">X</button>
-                `;
-            } else {
-                btn.innerHTML = `Rank here`;
-            }
-
-            // Disable selected ranks in other dropdowns
-            document.querySelectorAll('.rank-option').forEach(option => {
-                let rank = option.getAttribute('data-rank');
-                if (Object.values(selectedRanks).includes(rank)) {
-                    option.classList.add('disabled');
-                } else {
-                    option.classList.remove('disabled');
+                if (rank !== nextRank) {
+                    alert("You must pick rank " + nextRank + " first!");
+                    return;
                 }
+
+                // Assign rank to this instructor
+                selectedRanks[index] = rank.toString();
+                updateUI();
             });
         });
-    }
 
-    function submitVote() {
-        console.log("Selected Ranks:", selectedRanks); // Debugging step
+        // Update the UI whenever ranks change
+        function updateUI() {
+            // Update each instructor's button label and "selected-rank" text
+            document.querySelectorAll('.rank-btn').forEach((btn, index) => {
+                let selectedDiv = document.getElementById(`selected-rank-${index}`);
+                selectedDiv.innerHTML = '';
 
-        const categoryId = 'A2'; 
-        const academicYear = '2023'; 
-        let votes = [];
-
-        Object.entries(selectedRanks).forEach(([index, rank]) => {
-            let candidateButton = document.querySelector(`#rank-btn-${index}`);
-            
-            if (candidateButton) {
-                let candidateID = candidateButton.getAttribute("data-candidate-id");
-                console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
-                
-                if (candidateID && candidateID.trim() !== "") {
-                    votes.push({ candidateID, rank });
+                if (selectedRanks[index]) {
+                    let assignedRank = selectedRanks[index];
+                    btn.innerHTML = `Rank ${assignedRank}`;
+                    selectedDiv.innerHTML = `
+                        <span>Rank: ${assignedRank}</span>
+                        <button class="btn btn-danger btn-sm ms-2 remove-rank" onclick="removeRank(${index})">X</button>
+                    `;
                 } else {
-                    console.error(`Missing CandidateID for index ${index}`);
+                    btn.innerHTML = `Rank here`;
                 }
-            }
-        });
+            });
 
-        console.log("Votes Data being sent:", votes); // Debugging step
+            // Disable or enable drop-down items based on how many ranks are assigned
+            let assignedCount = Object.keys(selectedRanks).length;
+            let nextRank = assignedCount + 1;
 
-        if (votes.length === 0) {
-            alert("Please rank at least one candidate.");
-            return;
+            document.querySelectorAll('.rank-option').forEach(option => {
+                let thisRank = parseInt(option.getAttribute('data-rank'));
+
+                // If we've assigned all 3 ranks, disable everything
+                if (assignedCount >= 3) {
+                    option.classList.add('disabled');
+                } else {
+                    // Enable only if it's the exact next rank
+                    if (thisRank === nextRank) {
+                        option.classList.remove('disabled');
+                    } else {
+                        option.classList.add('disabled');
+                    }
+                }
+            });
         }
 
-        // 🚀 Send JSON data properly
-        fetch("submitVote.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                categoryID: categoryId,
-                academicYear: academicYear,
-                votes: votes
-            })
-        })
-        .then(response => response.text()) // Log raw response
-        .then(text => {
-            console.log("Raw Response from Server:", text);
-            try {
-                return JSON.parse(text); // Convert to JSON
-            } catch (error) {
-                console.error("Response is not valid JSON:", text);
-                throw error;
+        // Removal logic so that:
+        //  - removing rank 3 => remove only rank 3
+        //  - removing rank 2 => remove rank 2 and rank 3
+        //  - removing rank 1 => remove rank 1, rank 2, and rank 3
+        function removeRank(index) {
+            const rankRemovedStr = selectedRanks[index];
+            if (!rankRemovedStr) return; // nothing to remove
+
+            const rankRemoved = parseInt(rankRemovedStr);
+
+            // Remove all instructors who have rank >= rankRemoved
+            for (const [instIndex, instRankStr] of Object.entries(selectedRanks)) {
+                const instRank = parseInt(instRankStr);
+                if (instRank >= rankRemoved) {
+                    delete selectedRanks[instIndex];
+                }
             }
-        })
-        .then(data => {
-            console.log("Parsed Response from Server:", data);
-            if (data.status === "success") {
-                window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(error => console.error("Fetch Error:", error));
-    }
 
+            updateUI();
+        }
 
-    function removeRank(index) {
-        delete selectedRanks[index];
-
-        // Reorder ranks after removal
-        let orderedRanks = Object.entries(selectedRanks).sort((a, b) => a[1] - b[1]);
-        selectedRanks = {};
-        orderedRanks.forEach(([key, value], i) => {
-            selectedRanks[key] = (i + 1).toString();
-        });
-
+        // Initialize UI on load
         updateUI();
-    }
-</script>
+
+        // Submit the vote to the backend
+        function submitVote() {
+            console.log("Selected Ranks:", selectedRanks); // Debugging
+
+            const categoryId = 'A2';
+            const academicYear = '2023'; 
+            let votes = [];
+
+            // Build votes array
+            Object.entries(selectedRanks).forEach(([index, rank]) => {
+                let candidateButton = document.querySelector(`#rank-btn-${index}`);
+                if (candidateButton) {
+                    let candidateID = candidateButton.getAttribute("data-candidate-id");
+                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging
+
+                    if (candidateID && candidateID.trim() !== "") {
+                        votes.push({ candidateID, rank });
+                    } else {
+                        console.error(`Missing CandidateID for index ${index}`);
+                    }
+                }
+            });
+
+            console.log("Votes Data being sent:", votes); // Debugging
+
+            if (votes.length === 0) {
+                alert("Please rank at least one candidate.");
+                return;
+            }
+
+            // Send JSON data
+            fetch("submitVote.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryID: categoryId,
+                    academicYear: academicYear,
+                    votes: votes
+                })
+            })
+            .then(response => response.text())
+            .then(text => {
+                console.log("Raw Response from Server:", text);
+                try {
+                    return JSON.parse(text); // attempt to parse JSON
+                } catch (err) {
+                    console.error("Response is not valid JSON:", text);
+                    throw err;
+                }
+            })
+            .then(data => {
+                console.log("Parsed Response:", data);
+                if (data.status === "success") {
+                    // Redirect to "thank you" page
+                    window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error("Fetch Error:", error));
+        }
+    </script>
+
 </body>
 </html>

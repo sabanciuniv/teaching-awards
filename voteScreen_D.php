@@ -8,8 +8,8 @@ if (!isset($_SESSION['user'])) {
 }
 
 // Dynamic category and term setup
-$category = 'C'; // Adjust dynamically for the Temel Geliştirme Yılı Öğretim Görevlisi Ödülü category
-$term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202301';
+$category = 'C'; // Adjust as needed (Birinci Sınıf Eğitim Asistanı Ödülü category)
+$term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202101';
 
 // Construct API URL
 $api_url = "http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/fetchFirstYearTAs.php?term=$term";
@@ -21,11 +21,10 @@ $data = json_decode($response, true);
 // Handle API response
 if ($data === null || $data['status'] !== 'success') {
     $instructors = [];
-    $error_message = "Failed to load instructors.";
+    $error_message = "Failed to load TAs.";
 } else {
     $instructors = $data['data'];
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -44,16 +43,14 @@ if ($data === null || $data['status'] !== 'success') {
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-
     <style>
         /* General Page Styles */
         html, body {
             height: 100%;
             margin: 0;
             overflow-y: auto; /* Enables vertical scrolling */
-            overflow-x: hidden; /* Prevents horizontal scrolling */
+            overflow-x: hidden; /* Prevents horizontal scrolling */
         }
-        
         body {
             margin: 0;
             font-family: 'Roboto', sans-serif;
@@ -62,11 +59,9 @@ if ($data === null || $data['status'] !== 'success') {
         }
 
         /* Navbar */
-        /* Logo and title in the navbar */
         .navbar-brand img {
             height: 40px;
         }
-
         .navbar-brand span {
             font-size: 1.25rem;
             font-weight: bold;
@@ -92,7 +87,7 @@ if ($data === null || $data['status'] !== 'success') {
             display: flex;
             flex-direction: column;
             justify-content: center; /* Vertically center content */
-            align-items: center; /* Horizontally center content */
+            align-items: center;     /* Horizontally center content */
             text-align: center;
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -101,12 +96,11 @@ if ($data === null || $data['status'] !== 'success') {
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-
         .card img {
             width: 80px;
             height: 80px;
             object-fit: cover;
-            border-radius: 50%; /* Make the image circular */
+            border-radius: 50%;
             margin-bottom: 10px;
         }
 
@@ -147,6 +141,12 @@ if ($data === null || $data['status'] !== 'success') {
             background-color: #3f51b5;
             z-index: -1;
         }
+
+        /* Disabled option style */
+        .dropdown-item.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
     </style>
 </head>
 
@@ -156,181 +156,194 @@ if ($data === null || $data['status'] !== 'success') {
 
     <?php $backLink = "voteCategory.php"; include 'navbar.php'; ?>
 
-
     <!-- Content Section -->
     <div class="content container">
-        <!-- Award Category Header -->
         <div class="award-category bg-secondary text-white">
             Birinci Sınıf Eğitim Asistanı Ödülü
         </div>
 
-        <!-- Instructor Cards -->
         <div id="ta-container" class="row justify-content-center">
-            
+            <?php if (!empty($instructors)): ?>
+                <?php foreach ($instructors as $index => $ta): ?>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="TA Photo">
+                            <h6><?= htmlspecialchars($ta['TAName'] ?? 'Unknown') ?></h6>
+                            <p><?= htmlspecialchars($ta['CourseName'] ?? 'Unknown Course') ?> TA</p>
+                            <div class="dropdown">
+                                <button 
+                                    class="btn btn-secondary dropdown-toggle rank-btn"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    id="rank-btn-<?= $index ?>"
+                                    data-candidate-id="<?= htmlspecialchars($ta['TAID'] ?? '') ?>">
+                                    Rank here
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item rank-option" data-rank="1" data-index="<?= $index ?>" href="#">1st place</a>
+                                    <a class="dropdown-item rank-option" data-rank="2" data-index="<?= $index ?>" href="#">2nd place</a>
+                                    <a class="dropdown-item rank-option" data-rank="3" data-index="<?= $index ?>" href="#">3rd place</a>
+                                </div>
+                            </div>
+                            <div id="selected-rank-<?= $index ?>" class="mt-2"></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-danger">Failed to load TAs. Please try again later.</p>
+            <?php endif; ?>
         </div>
+    </div>
+
     <!-- Submit Button -->
     <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
-    <!-- JavaScript -->
+    <!-- JS (Bootstrap) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom Rank Logic -->
     <script>
-        function redirectToThankYouPage() {
-            const categoryId = 'D'; // Adjust dynamically if needed
-            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
-        }
+        // Must pick rank1, then rank2, then rank3 in that order.
+        // If removing rank1 => remove ranks1,2,3
+        // If removing rank2 => remove ranks2,3
+        // If removing rank3 => remove only rank3
 
-        let selectedRanks = {}; // To track selected ranks dynamically
-        function attachRankListeners() {
-            document.querySelectorAll('.rank-option').forEach(item => {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const rank = this.getAttribute('data-rank');
-                    const index = this.getAttribute('data-index');
+        // selectedRanks = { "index": "1" | "2" | "3" }
+        let selectedRanks = {};
 
-                    // Check if the rank is already selected for another candidate
-                    if (Object.values(selectedRanks).includes(rank)) {
-                        alert(`Rank ${rank} is already selected for another instructor.`);
-                        return;
-                    }
+        // Attach event listeners to all rank-option items
+        document.querySelectorAll('.rank-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                let rank = parseInt(this.getAttribute('data-rank'));
+                let index = this.getAttribute('data-index');
 
-                    // Assign the rank to the selected instructor
-                    selectedRanks[index] = rank;
-                    updateUI();
-                });
+                // How many ranks have been assigned so far?
+                let assignedCount = Object.keys(selectedRanks).length;
+                let nextRank = assignedCount + 1;
+
+                // Enforce the order: must pick the (assignedCount + 1)-th rank
+                if (rank !== nextRank) {
+                    alert("You must pick rank " + nextRank + " first!");
+                    return;
+                }
+
+                // Assign rank to that TA
+                selectedRanks[index] = rank.toString();
+                updateUI();
             });
-        }
+        });
 
         function updateUI() {
-            // Update the UI to reflect selected ranks
+            // Update each button label & "selected-rank" area
             document.querySelectorAll('.rank-btn').forEach((btn, index) => {
-                const selectedDiv = document.getElementById(`selected-rank-${index}`);
-                const rank = selectedRanks[index];
-                if (rank) {
-                    btn.textContent = `Rank ${rank}`;
-                    selectedDiv.innerHTML = `
-                        <span>Rank: ${rank}</span>
+                let selDiv = document.getElementById(`selected-rank-${index}`);
+                selDiv.innerHTML = '';
+
+                if (selectedRanks[index]) {
+                    let r = selectedRanks[index];
+                    btn.textContent = `Rank ${r}`;
+                    selDiv.innerHTML = `
+                        <span>Rank: ${r}</span>
                         <button class="btn btn-danger btn-sm ms-2 remove-rank" onclick="removeRank(${index})">X</button>
                     `;
                 } else {
-                    btn.textContent = `Rank here`;
-                    selectedDiv.innerHTML = '';
+                    btn.textContent = "Rank here";
                 }
             });
 
-            // Disable selected ranks in other dropdowns
+            // Figure out how many ranks assigned
+            let assignedCount = Object.keys(selectedRanks).length;
+            let nextRank = assignedCount + 1;
+
+            // Disable or enable rank options based on nextRank or if 3 are assigned
             document.querySelectorAll('.rank-option').forEach(option => {
-                const rankValue = option.getAttribute('data-rank');
-                option.classList.toggle('disabled', Object.values(selectedRanks).includes(rankValue));
+                let thisRank = parseInt(option.getAttribute('data-rank'));
+                if (assignedCount >= 3) {
+                    // Already assigned 3 => disable everything
+                    option.classList.add('disabled');
+                } else {
+                    // Enable only if it's exactly the next rank
+                    if (thisRank === nextRank) {
+                        option.classList.remove('disabled');
+                    } else {
+                        option.classList.add('disabled');
+                    }
+                }
             });
         }
 
+        // Remove rank logic:
+        // - removing rank3 => remove rank3 only
+        // - removing rank2 => remove rank2 and rank3
+        // - removing rank1 => remove rank1, rank2, rank3
         function removeRank(index) {
-            // Remove the selected rank for the given index
-            delete selectedRanks[index];
+            let rankRemovedStr = selectedRanks[index];
+            if (!rankRemovedStr) return; // no rank to remove
+
+            let rankRemoved = parseInt(rankRemovedStr);
+            // Remove all TAs with rank >= rankRemoved
+            for (const [taIndex, rStr] of Object.entries(selectedRanks)) {
+                if (parseInt(rStr) >= rankRemoved) {
+                    delete selectedRanks[taIndex];
+                }
+            }
+
             updateUI();
         }
 
-        async function fetchTAs() {
-        try {
-            const response = await fetch('api/fetchFirstYearTAs.php');
-            const data = await response.json();
-            const container = document.getElementById('ta-container');
+        // Initialize once at page load
+        updateUI();
 
-            if (!container) {
-                console.error("Container with ID 'ta-container' not found.");
+        // Submit the vote
+        function submitVote() {
+            console.log("Selected Ranks:", selectedRanks);
+
+            const categoryId = 'D'; 
+            const academicYear = '2021'; // Adjust if needed
+            let votes = [];
+
+            // Build votes array from selectedRanks
+            for (const [index, rank] of Object.entries(selectedRanks)) {
+                const btn = document.querySelector(`#rank-btn-${index}`);
+                if (!btn) continue;
+                const candidateID = btn.getAttribute('data-candidate-id') || "";
+                if (candidateID.trim() !== "") {
+                    votes.push({ candidateID, rank });
+                } else {
+                    console.error(`Missing candidateID for index ${index}`);
+                }
+            }
+
+            if (votes.length === 0) {
+                alert("Please rank at least one candidate.");
                 return;
             }
 
-            if (data.status === 'success') {
-                container.innerHTML = ''; // Clear existing content
-                data.data.forEach((ta, index) => {
-                    const card = `
-                        <div class="col-md-3">
-                            <div class="card">
-                                <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="TA Photo">
-                                <h6>${ta.TAName}</h6>
-                                <p>${ta.CourseName} TA</p>
-                                <div class="dropdown">
-                                    <button class="btn btn-secondary dropdown-toggle rank-btn"
-                                            type="button"
-                                            data-bs-toggle="dropdown"
-                                            id="rank-btn-${index}"
-                                            data-candidate-id="${ta.TAID}">
-                                        Rank here
-                                    </button>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
-                                        <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
-                                        <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
-                                    </div>
-                                </div>
-                                <div id="selected-rank-${index}" class="mt-2"></div>
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += card;
-                });
+            console.log("Votes being sent:", votes);
 
-                attachRankListeners(); // Attach event listeners
-            } else {
-                container.innerHTML = `<p>${data.message}</p>`;
-            }
-        } catch (error) {
-            console.error('Error fetching TAs:', error);
-            const container = document.getElementById('ta-container');
-            if (container) {
-                container.innerHTML = '<p>Failed to load TAs. Please try again later.</p>';
-            }
+            fetch("submitVote.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryID: categoryId,
+                    academicYear: academicYear,
+                    votes: votes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Server Response:", data);
+                if (data.status === "success") {
+                    window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error("Error submitting votes:", error);
+            });
         }
-    }
-
-    function submitVote() {
-        console.log("Selected Ranks:", selectedRanks); // Debugging step
-
-        const categoryId = 'D'; // Adjust dynamically
-        const academicYear = '2021'; // Adjust dynamically
-        const votes = Object.entries(selectedRanks).map(([index, rank]) => {
-            const candidateButton = document.querySelector(`#rank-btn-${index}`);
-            return {
-                candidateID: candidateButton?.getAttribute("data-candidate-id"),
-                rank,
-            };
-        });
-
-        console.log("Votes Data being sent:", { categoryID: categoryId, academicYear, votes }); // Debugging
-
-        if (votes.length === 0) {
-            alert("Please rank at least one candidate.");
-            return;
-        }
-
-        fetch("submitVote.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                categoryID: categoryId,
-                academicYear: academicYear,
-                votes: votes,
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Server Response:", data);
-            if (data.status === "success") {
-                window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(error => {
-            console.error("Error submitting votes:", error);
-        });
-    }
-
-
-
-    fetchTAs();
-
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
