@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pdo->beginTransaction();
 
         // Insert nomination data
-        $stmt = $pdo->prepare("INSERT INTO Nomination_Table (SUnetUsername, NomineeName, NomineeSurname, YearID) VALUES (?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO Nomination_Table (SUnetUsername, NomineeName, NomineeSurname, YearID, SubmissionDate) VALUES (?, ?, ?, ?, NOW())");
         if (!$stmt->execute([$username, $nomineeName, $nomineeSurname, $yearID])) {
             throw new Exception("Error inserting nomination data.");
         }
