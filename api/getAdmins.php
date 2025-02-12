@@ -14,7 +14,16 @@ if (!isset($_SESSION['user'])) {
 header("Content-Type: application/json");
 
 try {
-    $stmt = $pdo->query("SELECT AdminSuUsername, Role FROM Admin_Table ORDER BY AdminSuUsername ASC");
+    $stmt = $pdo->query("
+        SELECT AdminSuUsername,
+               Role,
+               GrantedBy,
+               GrantedDate,
+               RemovedBy,
+               RemovedDate
+        FROM Admin_Table
+        ORDER BY AdminSuUsername ASC
+    ");
     $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode($admins);

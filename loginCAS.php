@@ -67,7 +67,6 @@ try {
 
     // (2) Set cookies for the client, valid for 2 hours
     $cookie_lifetime = 2 * 60 * 60; // 2 hours in seconds
-    //$cookie_lifetime = 2; // 2 hours in seconds
     setcookie("username", $user, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
     setcookie("cookie_id", $cookie_id, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
 
@@ -84,11 +83,15 @@ try {
 // BEGIN: Admin Access Check
 // -------------------------
 
-// If the user tries to go to adminDashboard.php, check if they exist in the Admin_Table
+// If the user tries to go to adminDashboard.php, ensure they exist in Admin_Table
+// AND checkRole is not 'Removed'.
 if (isset($_GET['redirect']) && $_GET['redirect'] === 'adminDashboard.php') {
     try {
-        // Check if the username exists in Admin_Table
-        $adminQuery = "SELECT 1 FROM Admin_Table WHERE AdminSuUsername = :username";
+        // Check if the username exists in Admin_Table and has checkRole <> 'Removed'
+        $adminQuery = "SELECT 1 
+                       FROM Admin_Table 
+                       WHERE AdminSuUsername = :username
+                         AND checkRole <> 'Removed'";
         $adminStmt  = $pdo->prepare($adminQuery);
         $adminStmt->execute([':username' => $user]);
         

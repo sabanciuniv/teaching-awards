@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 require_once '../database/dbConnection.php';
@@ -12,7 +11,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     $adminUsername = trim($_POST["admin_username"]);
-    $role = trim($_POST["role"]);
+    $role          = trim($_POST["role"]);
+    $grantedBy     = $_SESSION['user'] ?? 'unknown';
 
     if (empty($adminUsername) || empty($role)) {
         echo json_encode(["status" => "error", "message" => "Both fields are required."]);
@@ -20,26 +20,57 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     try {
-        // Check if the username already exists
-        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM Admin_Table WHERE AdminSuUsername = :username");
+        // STEP 1) Check if row for this username already exists (active or removed).
+        $checkStmt = $pdo->prepare("
+            SELECT checkRole 
+            FROM Admin_Table 
+            WHERE AdminSuUsername = :username
+        ");
         $checkStmt->execute([":username" => $adminUsername]);
-        $count = $checkStmt->fetchColumn();
+        $existingRow = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($count > 0) {
-            echo json_encode(["status" => "error", "message" => "Admin username already exists."]);
-            exit();
+        if ($existingRow) {
+            // The row exists. Is it currently removed or active?
+            if ($existingRow['checkRole'] !== 'Removed') {
+                // That means it's still active
+                echo json_encode([
+                    "status"  => "error",
+                    "message" => "Admin username already exists and is active."
+                ]);
+                exit();
+            } else {
+                // The row is "Removed", so let's do a real DELETE to free the username
+                $deleteStmt = $pdo->prepare("
+                    DELETE FROM Admin_Table 
+                    WHERE AdminSuUsername = :username
+                ");
+                $deleteStmt->execute([":username" => $adminUsername]);
+            }
         }
 
-        // Insert new admin into the database
-        $stmt = $pdo->prepare("INSERT INTO Admin_Table (AdminSuUsername, Role) VALUES (:username, :role)");
+        // STEP 2) Now that there's no row for this username, do a fresh INSERT
+        $stmt = $pdo->prepare("
+            INSERT INTO Admin_Table (AdminSuUsername, Role, GrantedBy, checkRole, GrantedDate)
+            VALUES (:username, :role, :grantedBy, :checkRole, NOW())
+        ");
+        // If you want checkRole to match the role, do that. 
+        // Or if you want it to literally say 'Active', do that instead.
         $stmt->execute([
-            ":username" => $adminUsername,
-            ":role" => $role
+            ":username"  => $adminUsername,
+            ":role"      => $role,
+            ":grantedBy" => $grantedBy,
+            ":checkRole" => $role  // or 'Active'
         ]);
 
-        echo json_encode(["status" => "success", "message" => "Admin added successfully."]);
+        echo json_encode([
+            "status"  => "success",
+            "message" => "Admin added successfully."
+        ]);
     } catch (PDOException $e) {
-        echo json_encode(["status" => "error", "message" => "Database error: " . $e->getMessage()]);
+        echo json_encode([
+            "status"  => "error",
+            "message" => "Database error: " . $e->getMessage()
+        ]);
     }
 } else {
     echo json_encode(["status" => "error", "message" => "Invalid request method."]);

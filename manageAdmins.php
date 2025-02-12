@@ -1,7 +1,3 @@
-
-            
-
-
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
@@ -20,7 +16,6 @@ if (!isset($_SESSION['user'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Admins</title>
 
-
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -36,7 +31,6 @@ if (!isset($_SESSION['user'])) {
 
     <!-- Bootstrap JS Bundle (includes Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 
     <!-- jQuery -->
     <script src="assets/js/main/jquery.min.js"></script>
@@ -55,8 +49,14 @@ if (!isset($_SESSION['user'])) {
     </style>
 </head>
 
-<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
+<?php
+    // Using $backLink for a "Back" button in navbar
+    // Adjust as needed
+    $backLink = "adminDashboard.php"; 
+    include 'navbar.php'; 
+?>
 
+<body>
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header text-white" style="background-color: #45748a;">
@@ -72,17 +72,21 @@ if (!isset($_SESSION['user'])) {
             </div>
 
             <!-- Admin Table -->
-            <div class="table-responsive mt-3" >
+            <div class="table-responsive mt-3">
                 <table class="table table-striped table-bordered">
                     <thead class="table-dark">
                         <tr>
                             <th>Admin Username</th>
                             <th>Role</th>
+                            <th>Granted By</th>
+                            <th>Granted Date</th>
+                            <th>Removed By</th>
+                            <th>Removed Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="adminTable">
-                        <!-- Admin data will be loaded here -->
+                        <!-- Admin data will be loaded here via AJAX -->
                     </tbody>
                 </table>
             </div>
@@ -92,7 +96,7 @@ if (!isset($_SESSION['user'])) {
 
 <!-- ADD ADMIN MODAL -->
 <div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"> <!-- Added modal-dialog-centered -->
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addAdminModalLabel">Add New Admin</h5>
@@ -118,10 +122,10 @@ if (!isset($_SESSION['user'])) {
     </div>
 </div>
 
-
+<!-- Main Script -->
 <script>
 $(document).ready(function () {
-    // Fetch Admins from API
+    // 1) Fetch Admins from API
     function fetchAdmins() {
         $.ajax({
             url: "api/getAdmins.php",
@@ -131,20 +135,39 @@ $(document).ready(function () {
                 $("#adminTable").empty();
                 if (data.length > 0) {
                     data.forEach(function (admin) {
+                        // Build table row
+
+                        // If RemovedDate is set, display the info. Otherwise, leave blank.
+                        let removedBy = admin.RemovedBy ? admin.RemovedBy : "";
+                        let removedDate = admin.RemovedDate ? admin.RemovedDate : "";
+
+                        // If the admin is removed, disable the delete button 
+                        // or show something else instead of the button.
+                        let actionButtons = "";
+                        if (admin.RemovedDate) {
+                            actionButtons = `<button class="btn btn-secondary btn-sm" disabled>Removed</button>`;
+                        } else {
+                            actionButtons = `
+                                <button class="btn btn-danger btn-sm delete-btn" data-username="${admin.AdminSuUsername}">
+                                    <i class="fa-solid fa-trash"></i> Delete
+                                </button>
+                            `;
+                        }
+
                         $("#adminTable").append(`
-                            <tr id="row-${admin.AdminSuUsername}">
+                            <tr>
                                 <td>${admin.AdminSuUsername}</td>
                                 <td>${admin.Role}</td>
-                                <td>
-                                    <button class="btn btn-danger btn-sm delete-btn" data-username="${admin.AdminSuUsername}">
-                                        <i class="fa-solid fa-trash"></i> Delete
-                                    </button>
-                                </td>
+                                <td>${admin.GrantedBy ? admin.GrantedBy : ""}</td>
+                                <td>${admin.GrantedDate ? admin.GrantedDate : ""}</td>
+                                <td>${removedBy}</td>
+                                <td>${removedDate}</td>
+                                <td>${actionButtons}</td>
                             </tr>
                         `);
                     });
                 } else {
-                    $("#adminTable").append('<tr><td colspan="3" class="text-center">No admins found</td></tr>');
+                    $("#adminTable").append('<tr><td colspan="7" class="text-center">No admins found</td></tr>');
                 }
             },
             error: function (xhr, status, error) {
@@ -156,7 +179,7 @@ $(document).ready(function () {
     // Call fetchAdmins on page load
     fetchAdmins();
 
-    // Search Filter
+    // 2) Search Filter
     $("#searchBox").on("keyup", function () {
         var value = $(this).val().toLowerCase();
         $("#adminTable tr").filter(function () {
@@ -164,27 +187,27 @@ $(document).ready(function () {
         });
     });
 
-    // Delete Admin via AJAX
+    // 3) "Delete" Admin via AJAX (actually mark as removed, if you updated deleteAdmin.php)
     $(document).on("click", ".delete-btn", function () {
         var username = $(this).data("username");
 
-        if (confirm("Are you sure you want to delete this admin?")) {
+        if (confirm("Are you sure you want to remove this admin?")) {
             $.ajax({
                 url: "api/deleteAdmin.php",
                 method: "POST",
                 data: { delete_admin: username },
                 success: function (response) {
-                    alert("Admin deleted successfully!");
+                    alert("Admin removed successfully!");
                     fetchAdmins(); // Refresh the table
                 },
                 error: function (xhr, status, error) {
-                    alert("Error deleting admin: " + error);
+                    alert("Error removing admin: " + error);
                 }
             });
         }
     });
 
-    // Add Admin via AJAX
+    // 4) Add Admin via AJAX
     $("#addAdminForm").on("submit", function (event) {
         event.preventDefault();
 

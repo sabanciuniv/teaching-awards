@@ -1,9 +1,7 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 session_start();
 require_once __DIR__ . '/../database/dbConnection.php';
+header("Content-Type: application/json");
 
 if (!isset($_SESSION['user'])) {
     http_response_code(401);
@@ -11,17 +9,24 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-header("Content-Type: application/json");
-
-// Handle DELETE request
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_admin'])) {
-    $adminToDelete = $_POST['delete_admin'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_admin'])) {
+    $adminToRemove = $_POST['delete_admin'];
+    $removedBy     = $_SESSION['user'] ?? 'unknown';
 
     try {
-        $stmt = $pdo->prepare("DELETE FROM Admin_Table WHERE AdminSuUsername = :adminUsername");
-        $stmt->execute([':adminUsername' => $adminToDelete]);
+        $stmt = $pdo->prepare("
+            UPDATE Admin_Table
+            SET checkRole  = 'Removed',
+                RemovedBy  = :removedBy,
+                RemovedDate = NOW()
+            WHERE AdminSuUsername = :adminUsername
+        ");
+        $stmt->execute([
+            ':removedBy'     => $removedBy,
+            ':adminUsername' => $adminToRemove
+        ]);
 
-        echo json_encode(["success" => "Admin deleted successfully", "redirect" => "manageAdmins.php"]);
+        echo json_encode(["success" => "Admin removed successfully"]);
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["error" => "SQL Error: " . $e->getMessage()]);
