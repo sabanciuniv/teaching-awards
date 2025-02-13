@@ -103,6 +103,7 @@ $data = [];
             position: fixed; /* Stick to the bottom */
             bottom: 20px;    /* Distance from the bottom of the page */
             right: 20px;     /* Full width to center the button */
+            z-index: 1000;
         }
 
         .return-button {
@@ -167,7 +168,10 @@ $data = [];
                             item.AcademicYear,
                             item.TotalPoints
                         ]),
-                        pagination: true,
+                        pagination: {
+                            limit: 8,
+                            summary: true
+                        },
                         sort: true,
                         search: true,
                         resizable: true,
