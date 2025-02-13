@@ -67,6 +67,10 @@ session_start();
             </thead>
             <tbody></tbody>
         </table>
+        <!-- Export to CSV Button -->
+        <button id="export-csv" class="btn btn-success d-none">
+            <i class="fa-solid fa-file-csv"></i> Export to CSV
+        </button>
     </div>
 
     <!-- Error Message -->
@@ -95,11 +99,13 @@ session_start();
             const winnersTable = document.getElementById('winners-table');
             const tableBody = winnersTable.querySelector('tbody');
             const errorMessage = document.getElementById('error-message');
+            const exportButton = document.getElementById('export-csv');
 
             // Clear previous data
             tableBody.innerHTML = '';
             errorMessage.classList.add('d-none');
             winnersTable.classList.add('d-none');
+            exportButton.classList.add('d-none');
 
             if (data.winners && data.winners.length > 0) {
                 // Populate the winners table
@@ -116,6 +122,7 @@ session_start();
                 });
 
                 winnersTable.classList.remove('d-none');
+                exportButton.classList.remove('d-none');
             } else if (data.message) {
                 // Show message if no winners found
                 errorMessage.textContent = data.message;
@@ -127,6 +134,14 @@ session_start();
             const errorMessage = document.getElementById('error-message');
             errorMessage.textContent = 'An error occurred while fetching winners data. Please try again later.';
             errorMessage.classList.remove('d-none');
+        }
+    });
+
+    // Export to CSV Button Click
+    document.getElementById('export-csv').addEventListener('click', function () {
+        const category = document.getElementById('category').value;
+        if (category) {
+            window.location.href = `exportWinners.php?category=${category}`;
         }
     });
 
