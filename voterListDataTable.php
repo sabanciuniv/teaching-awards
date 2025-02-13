@@ -266,8 +266,8 @@ try {
                         "D Vote"
                     ];
 
-                    const rows = transformedData.map(row => row.join(","));
-                    const csvContent = [headers.join(","), ...rows].join("\n");
+                    const rows = transformedData.map(row => row.join(";"));
+                    const csvContent = [headers.join(";"), ...rows].join("\n");
 
                     const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
                     const link = document.createElement("a");

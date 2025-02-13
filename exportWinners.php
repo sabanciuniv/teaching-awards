@@ -71,7 +71,8 @@ if ($output === false) {
 
 // Write CSV headers
 $headers = ["Rank", "Name", "Email", "Role", "Academic Year"];
-fputcsv($output, $headers);
+fputcsv($output, $headers, ';'); // Use semicolon as delimiter
+
 
 // Write each winner row
 foreach ($winners as $winner) {
@@ -81,7 +82,7 @@ foreach ($winners as $winner) {
         $winner['candidate_email'],
         $winner['candidate_role'],
         $winner['Academic_year']
-    ]);
+    ], ';');
 }
 
 fclose($output);
