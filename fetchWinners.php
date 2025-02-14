@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . '/database/dbConnection.php';
+require_once _DIR_ . '/database/dbConnection.php';
 
 header('Content-Type: application/json');
 error_reporting(E_ALL);

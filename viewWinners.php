@@ -97,10 +97,6 @@ include 'navbar.php';
             </thead>
             <tbody></tbody>
         </table>
-        <!-- Export to CSV Button -->
-        <button id="export-csv" class="btn btn-success d-none">
-            <i class="fa-solid fa-file-csv"></i> Export to CSV
-        </button>
     </div>
 
     <!-- Error/Message Display -->
@@ -130,13 +126,11 @@ include 'navbar.php';
             const winnersTable = document.getElementById('winners-table');
             const tableBody = winnersTable.querySelector('tbody');
             const errorMessage = document.getElementById('error-message');
-            const exportButton = document.getElementById('export-csv');
 
             // Clear previous data
             tableBody.innerHTML = '';
             errorMessage.classList.add('d-none');
             winnersTable.classList.add('d-none');
-            exportButton.classList.add('d-none');
 
             if (data.error) {
                 errorMessage.textContent = data.error;
@@ -166,14 +160,6 @@ include 'navbar.php';
                 });
 
                 winnersTable.classList.remove('d-none');
-<<<<<<< HEAD
-=======
-                exportButton.classList.remove('d-none');
-            } else if (data.message) {
-                // Show message if no winners found
-                errorMessage.textContent = data.message;
-                errorMessage.classList.remove('d-none');
->>>>>>> 4c0bb968e3893dd3163a7bc8cd71d0b4071a32aa
             }
         } catch (error) {
             // Handle errors
@@ -183,19 +169,6 @@ include 'navbar.php';
             errorMessage.classList.remove('d-none');
         }
     });
-<<<<<<< HEAD
-=======
-
-    // Export to CSV Button Click
-    document.getElementById('export-csv').addEventListener('click', function () {
-        const category = document.getElementById('category').value;
-        if (category) {
-            window.location.href = `exportWinners.php?category=${category}`;
-        }
-    });
-
-
->>>>>>> 4c0bb968e3893dd3163a7bc8cd71d0b4071a32aa
 </script>
 
 </body>
