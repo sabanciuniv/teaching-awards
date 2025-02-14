@@ -50,3 +50,5 @@ try {
     error_log('Database Error: ' . $e->getMessage());
     echo json_encode(['status' => 'error', 'message' => 'Database query failed.']);
 }
+
+

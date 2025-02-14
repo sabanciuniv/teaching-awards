@@ -1,6 +1,19 @@
 <?php
-// Start session and include required files
+// Start session
 session_start();
+
+// Include DB connection (adjust the path as needed)
+require_once __DIR__ . '/database/dbConnection.php';
+
+// Fetch all available years from the AcademicYear_Table to populate the dropdown
+try {
+    $stmtYears = $pdo->prepare("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
+    $stmtYears->execute();
+    $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // Handle the error in a way suitable for your environment
+    die("Error fetching academic years: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,14 +47,30 @@ session_start();
 </head>
 <body>
 
-<?php $backLink = "index.php"; include 'navbar.php'; ?>
-<div class="container">
-    <h1 class="text-center my-4">View Winners by Category</h1>
+<?php 
+// Include your navbar; adjust the path or remove if not needed
+$backLink = "index.php"; 
+include 'navbar.php'; 
+?>
 
-    <!-- Dropdown for Category Selection -->
+<div class="container">
+    <h1 class="text-center my-4">View Winners by Category &amp; Year</h1>
+
+    <!-- Form for Category & Year Selection -->
     <div class="mb-4">
         <form id="filter-form" class="d-flex justify-content-center">
-            <select id="category" name="category" class="form-select w-50" required>
+            <!-- Year Dropdown -->
+            <select id="year" name="year" class="form-select w-25 me-3" required>
+                <option value="" disabled selected>Select Year</option>
+                <?php foreach($academicYears as $year): ?>
+                    <option value="<?php echo $year['YearID']; ?>">
+                        <?php echo htmlspecialchars($year['Academic_year']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <!-- Category Dropdown -->
+            <select id="category" name="category" class="form-select w-25 me-5" required>
                 <option value="" disabled selected>Select Category</option>
                 <option value="1">A1</option>
                 <option value="2">A2</option>
@@ -49,7 +78,8 @@ session_start();
                 <option value="4">C</option>
                 <option value="5">D</option>
             </select>
-            <button type="submit" class="btn btn-primary ms-5">View Winners</button>
+
+            <button type="submit" class="btn btn-primary">View Winners</button>
         </form>
     </div>
 
@@ -69,7 +99,7 @@ session_start();
         </table>
     </div>
 
-    <!-- Error Message -->
+    <!-- Error/Message Display -->
     <div id="error-message" class="alert alert-danger d-none"></div>
 </div>
 
@@ -77,15 +107,16 @@ session_start();
     document.getElementById('filter-form').addEventListener('submit', async function (event) {
         event.preventDefault();
 
+        const year = document.getElementById('year').value;
         const category = document.getElementById('category').value;
 
-        if (!category) {
-            alert('Please select a category.');
+        if (!year || !category) {
+            alert('Please select both a year and a category.');
             return;
         }
 
         try {
-            const response = await fetch(`fetchWinners.php?category=${category}`, {
+            const response = await fetch(`fetchWinners.php?year=${year}&category=${category}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -100,6 +131,19 @@ session_start();
             tableBody.innerHTML = '';
             errorMessage.classList.add('d-none');
             winnersTable.classList.add('d-none');
+
+            if (data.error) {
+                errorMessage.textContent = data.error;
+                errorMessage.classList.remove('d-none');
+                return;
+            }
+
+            if (data.message) {
+                // Show any message (e.g. "No votes found")
+                errorMessage.textContent = data.message;
+                errorMessage.classList.remove('d-none');
+                return;
+            }
 
             if (data.winners && data.winners.length > 0) {
                 // Populate the winners table
@@ -116,10 +160,6 @@ session_start();
                 });
 
                 winnersTable.classList.remove('d-none');
-            } else if (data.message) {
-                // Show message if no winners found
-                errorMessage.textContent = data.message;
-                errorMessage.classList.remove('d-none');
             }
         } catch (error) {
             // Handle errors
@@ -129,8 +169,6 @@ session_start();
             errorMessage.classList.remove('d-none');
         }
     });
-
-
 </script>
 
 </body>

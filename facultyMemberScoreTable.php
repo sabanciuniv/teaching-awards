@@ -125,7 +125,7 @@ $data = [];
 </head>
 <body>
 
-    <?php include 'navbar.php'; ?>
+    <?php $backLink = "reportPage.php"; include 'navbar.php'; ?>
     <div class="title">Faculty Member Score Table</div>
 
     <div class="action-container">
