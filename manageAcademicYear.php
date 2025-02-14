@@ -119,25 +119,41 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                 <!-- Add New Academic Year Form -->
                 <h5 class="mb-3">Add New Academic Year</h5>
                 <form method="POST" action="">
+                    <!-- Select Academic Year -->
                     <div class="mb-3">
                         <label for="academic_year" class="form-label">Academic Year</label>
-                        <input type="number" name="academic_year" class="form-control" required>
+                        <select class="form-select" id="academic-year-select" name="academic_year" required>
+                            <option value="" disabled selected>Select Academic Year</option>
+                            <option value="2023-2024">2023-2024</option>
+                            <option value="2024-2025">2024-2025</option>
+                            <option value="2025-2026">2025-2026</option>
+                            <option value="2026-2027">2026-2027</option>
+                        </select>
                     </div>
 
+                    <!-- Start Date & Time -->
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Start Date & Time</label>
-                        <input type="datetime-local" name="start_date" class="form-control" required>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="ph-calendar"></i></span>
+                            <input type="text" id="start-date-picker" name="start_date" class="form-control" placeholder="Select start date & time" required>
+                        </div>
                     </div>
 
+                    <!-- End Date & Time -->
                     <div class="mb-3">
                         <label for="end_date" class="form-label">End Date & Time</label>
-                        <input type="datetime-local" name="end_date" class="form-control" required>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="ph-calendar"></i></span>
+                            <input type="text" id="end-date-picker" name="end_date" class="form-control" placeholder="Select end date & time" required>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success" style="background-color: #45748a;border-color: #45748a; color: white;">
+                    <button type="submit" class="btn btn-success" style="background-color: #45748a; border-color: #45748a; color: white;">
                         <i class="fa-solid fa-plus"></i> Add Academic Year
                     </button>
                 </form>
+
 
                 <hr>
 
@@ -180,29 +196,37 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
     </body>
     </html>
 
-
-    <!-- JS: jQuery (Required for Bootstrap & Date Picker) -->
+    <!-- Include jQuery and Date Picker Scripts -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bootstrap & Required JS Libraries -->
-    <script src="assets/js/main/bootstrap.bundle.min.js"></script>
-
-    <!-- Moment.js (For Date Formatting) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-
-    <!-- Date Picker JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
     <!-- Initialize Date Picker -->
     <script>
         $(document).ready(function () {
-            $(".datepicker").datepicker({
-                format: "dd-mm-yyyy",
-                weekStart: 1, //  Monday as the first day of the week is set
-                autoclose: true,
-                todayHighlight: true
+        // Initialize date pickers with month selection enabled
+        function initializeDatePicker(id) {
+            $(id).daterangepicker({
+                singleDatePicker: true,
+                timePicker: true,
+                timePickerIncrement: 15,
+                timePicker24Hour: true,
+                showDropdowns: true,   // Enables dropdown for year selection
+                autoApply: true,       // Auto-applies the selected date
+                locale: {
+                    format: 'YYYY-MM-DD HH:mm'
+                }
+            }).on('show.daterangepicker', function (ev, picker) {
+                // Enables month selection when clicking on the month name
+                $('.daterangepicker select.monthselect').show();
+                $('.daterangepicker select.yearselect').show();
             });
-        });
+        }
+
+        initializeDatePicker('#start-date-picker');
+        initializeDatePicker('#end-date-picker');
+    });
     </script>
 
 </body>

@@ -167,7 +167,10 @@ $data = [];
                             item.AcademicYear,
                             item.TotalPoints
                         ]),
-                        pagination: true,
+                        pagination:{
+                            limit: 8,
+                            summary: true
+                        },
                         sort: true,
                         search: true,
                         resizable: true,
@@ -199,8 +202,8 @@ $data = [];
                         row.FacultyMemberName,
                         row.AcademicYear,
                         row.TotalPoints
-                    ].join(","));
-                    const csvContent = [headers.join(","), ...rows].join("\n");
+                    ].join(";"));
+                    const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\n");
 
                     const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
                     const link = document.createElement("a");
