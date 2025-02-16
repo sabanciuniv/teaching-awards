@@ -19,15 +19,16 @@ try {
     // Query to get Instructors and add the totatl points for display
     $query = "
         SELECT 
-            c.id AS FacultyMemberID,
+            c.id AS FacultyMemberID, 
             c.Name AS FacultyMemberName,
-            v.AcademicYear,
+            ay.Academic_year AS AcademicYear,  
             SUM(v.Points) AS TotalPoints
         FROM Votes_Table v
         JOIN Candidate_Table c ON v.CandidateID = c.id
+        JOIN AcademicYear_Table ay ON v.AcademicYear = ay.YearID  
         WHERE c.Role = 'Instructor'
-        GROUP BY c.id, c.Name, v.AcademicYear
-        ORDER BY v.AcademicYear DESC, TotalPoints DESC
+        GROUP BY c.id, c.Name, ay.Academic_year
+        ORDER BY ay.Academic_year DESC, TotalPoints DESC
     ";
 
     $stmt = $pdo->prepare($query);
