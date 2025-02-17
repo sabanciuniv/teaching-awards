@@ -49,7 +49,14 @@ try {
 
 <?php 
 // Include your navbar; adjust the path or remove if not needed
-$backLink = "index.php"; 
+$backLink = isset($_SESSION['previous_page']) && $_SESSION['previous_page'] === 'adminDashboard.php'
+    ? "adminDashboard.php"
+    : "index.php";
+
+// Clear referrer after use
+unset($_SESSION['previous_page']);
+
+
 include 'navbar.php'; 
 ?>
 

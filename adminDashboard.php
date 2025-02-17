@@ -33,6 +33,7 @@ try {
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -221,11 +222,20 @@ try {
                 <div class="note">(only for IT admins)</div>
             <?php endif; ?>
 
-            <button 
-                class="btn btn-secondary w-100 mb-2" 
-                onclick="window.location.href='viewWinners.php';">
+            <button class="btn btn-secondary w-100 mb-2" 
+                onclick="setAdminReferrer();">
                 Excellence in Teaching Awards by Year
             </button>
+
+            <script>
+                function setAdminReferrer() {
+                    // Store referrer in session via an AJAX request
+                    fetch("storeReferrer.php", { method: "POST" }).then(() => {
+                        window.location.href = "viewWinners.php";
+                    });
+                }
+            </script>
+
             <button 
                 class="btn btn-secondary w-100 mb-2" 
                 onclick="alert('Sync instructor-course functionality not implemented yet.')">
