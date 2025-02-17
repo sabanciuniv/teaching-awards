@@ -223,7 +223,7 @@ try {
 
             <button 
                 class="btn btn-secondary w-100 mb-2" 
-                onclick="alert('Excellence in Teaching Awards by Year functionality not implemented yet.')">
+                onclick="window.location.href='viewWinners.php';">
                 Excellence in Teaching Awards by Year
             </button>
             <button 
