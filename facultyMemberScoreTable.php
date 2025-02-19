@@ -18,14 +18,15 @@ try {
     <title>All Faculty Scores by Category &amp; Year</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Include your CSS/JS as in your example -->
+    <!-- CSS -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
     <link href="assets/css/components.min.css" rel="stylesheet">
     <link href="assets/css/layout.min.css" rel="stylesheet">
     <link href="assets/css/all.min.css" rel="stylesheet">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
-    
+
+    <!-- JavaScript -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/global_assets/js/main/jquery.min.js"></script>
@@ -33,9 +34,13 @@ try {
     <script src="assets/js/app.js"></script>
     <script src="assets/js/custom.js"></script>
 
-    <!-- Grid.js CSS -->
+    <!-- Grid.js CSS/JS -->
     <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
-
+    <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+    
+    <!-- For CSV file saving -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+    
     <style>
         body {
             overflow: auto;
@@ -103,7 +108,7 @@ try {
                 <?php endforeach; ?>
             </select>
 
-            <!-- Category Dropdown (integer IDs) -->
+            <!-- Category Dropdown -->
             <select id="category" class="form-select me-3" required>
                 <option value="" disabled selected>Select Category</option>
                 <option value="1">A1</option>
@@ -119,7 +124,7 @@ try {
 
     <!-- Grid.js Table Container -->
     <div class="table-container">
-        <div class="gridjs-example" id="scores-grid"></div>
+        <div id="scores-grid" class="gridjs-example"></div>
     </div>
 
     <!-- Error Message Display -->
@@ -131,31 +136,29 @@ try {
     <button class="action-button" onclick="window.location.href='reportPage.php'">
         Return
     </button>
-    <button class="action-button" id="downloadBtn">
+
+    <!-- Hide the Download CSV button by default -->
+    <button class="action-button" id="downloadBtn" style="display:none;">
         Download CSV
     </button>
 </div>
 
-<!-- Grid.js and FileSaver for CSV -->
-<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    let currentData = [];  // Will store the results for CSV export
-
+    let currentData = [];  // Store fetched results for CSV export
+    const downloadButton = document.getElementById('downloadBtn');
     const filterForm = document.getElementById('filter-form');
     const errorMessage = document.getElementById('error-message');
-    const scoresGrid = document.getElementById('scores-grid');
     let gridInstance; // We'll keep a reference to the Grid.js instance
 
-    // Helper: Create or re-render the Grid.js table
+    // Helper function: Create or re-render the Grid.js table
     function renderGrid(dataArray) {
         // If grid already created, destroy it first
         if (gridInstance) {
             gridInstance.destroy();
         }
 
-        // Build the new instance
+        // Initialize a new Grid.js instance
         gridInstance = new gridjs.Grid({
             columns: [
                 "CandidateID",
@@ -188,34 +191,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
-        gridInstance.render(scoresGrid);
+
+        gridInstance.render(document.getElementById('scores-grid'));
     }
 
-    // Filter form submission
+    // Handle filter form submission
     filterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Hide the download button each time we fetch (in case no data next time)
+        downloadButton.style.display = 'none';
+
+        // Clear any old error
+        errorMessage.classList.add('d-none');
+        errorMessage.textContent = '';
 
         const year = document.getElementById('year').value;
         const category = document.getElementById('category').value;
 
+        // Validate dropdowns
         if (!year || !category) {
-            alert("Please select a year and a category.");
+            alert('Please select a year and a category.');
             return;
         }
 
-        // Clear old error
-        errorMessage.classList.add('d-none');
-        errorMessage.textContent = "";
-
+        // Attempt to fetch data from the backend
         try {
             const url = `getFacultyMemberScores.php?year=${year}&category=${category}`;
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const response = await fetch(url, { method: 'GET' });
             const data = await response.json();
 
-            // Check for error or message
+            // Check for server-side errors
             if (data.error) {
                 errorMessage.textContent = data.error;
                 errorMessage.classList.remove('d-none');
@@ -229,25 +235,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            // If we have scores, render them in the table
             if (data.facultyScores && data.facultyScores.length > 0) {
-                // Store data for CSV
                 currentData = data.facultyScores;
-
-                // Render table
                 renderGrid(currentData);
+
+                // Show download button now that we have valid data
+                downloadButton.style.display = 'block';
+            } else {
+                // No data
+                if (gridInstance) gridInstance.destroy();
             }
         } catch (error) {
-            console.error("Error fetching data:", error);
-            errorMessage.textContent = "An error occurred while fetching data. Please try again.";
+            console.error('Error fetching data:', error);
+            errorMessage.textContent = 'An error occurred while fetching data. Please try again.';
             errorMessage.classList.remove('d-none');
         }
     });
 
-    // Download CSV button
-    const downloadButton = document.getElementById('downloadBtn');
+    // Handle CSV Download
     downloadButton.addEventListener('click', () => {
+        // If no data, do nothing
         if (!currentData.length) {
-            alert("No data to download. Please fetch scores first.");
+            alert('No data to download. Please fetch scores first.');
             return;
         }
 
@@ -261,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "Academic Year"
         ];
 
-        // Convert each row to semicolon-delimited (change to commas if you prefer)
+        // Convert each row to semicolon-delimited CSV (use ',' if you prefer)
         const rows = currentData.map(item => [
             item.CandidateID,
             item.candidate_name,
@@ -271,10 +281,11 @@ document.addEventListener("DOMContentLoaded", () => {
             item.Academic_year
         ].join(';'));
 
+        // Add BOM (\uFEFF) for correct encoding in Excel, etc.
         const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join("\n");
         const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
 
-        // Create a hidden link and click it
+        // Create a hidden link and auto-click to download
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", "faculty_scores.csv");
