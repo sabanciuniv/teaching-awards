@@ -53,16 +53,13 @@ try {
         }
 
         .action-container {
-            position: fixed; /* Stick to the bottom */
+            position: fixed; 
             bottom: 20px;    
             right: 20px;     
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
         }
 
-        /* Shared button style for BOTH Return & Download CSV */
-        .action-button {
+        /* Shared styles for both buttons */
+        .action-button, .return-button {
             background-color: #007bff;
             color: white;
             border: none;
@@ -72,10 +69,13 @@ try {
             cursor: pointer;
             transition: background-color 0.3s ease;
             margin-bottom: 10px;
-            width: 130px;
+            width: 160px;
             text-align: center;
         }
-        .action-button:hover {
+
+
+        
+        .action-button:hover, .return-button:hover {
             background-color: #0056b3;
         }
 
@@ -131,15 +131,16 @@ try {
     <div id="error-message" class="alert alert-danger d-none"></div>
 </div>
 
-<!-- Fixed Action Container (Return & Download Buttons) -->
+<!-- Fixed Action Container (Download CSV, then Return Buttons) -->
 <div class="action-container">
-    <button class="action-button" onclick="window.location.href='reportPage.php'">
-        Return
-    </button>
-
     <!-- Hide the Download CSV button by default -->
     <button class="action-button" id="downloadBtn" style="display:none;">
         Download CSV
+    </button>
+
+    <!-- Return to Category Page Button -->
+    <button class="return-button" onclick="window.location.href='reportPage.php'">
+        Return to Category Page
     </button>
 </div>
 
@@ -199,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
     filterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Hide the download button each time we fetch (in case no data next time)
+        // Hide the download button each time we fetch new data
         downloadButton.style.display = 'none';
 
         // Clear any old error
