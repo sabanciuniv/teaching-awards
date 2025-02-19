@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
     header("Location: login.php");
@@ -9,23 +10,9 @@ if (!isset($_SESSION['user'])) {
 
 // Get category and term from the URL or set default values
 $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A1';
-$term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202301';
-
-// Construct API URL with dynamic values
-$api_url = "http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getInstructors.php?category=$category&term=$term";
-
-// Fetch data from the API
-$response = file_get_contents($api_url);
-$data = json_decode($response, true);
-
-// Handle API response
-if ($data === null || $data['status'] !== 'success') {
-    $instructors = [];
-    $error_message = "Failed to load instructors.";
-} else {
-    $instructors = $data['data'];
-}
+$term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202101';
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -162,45 +149,18 @@ if ($data === null || $data['status'] !== 'success') {
         <div class="award-category bg-secondary text-white">
             Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1 (Küçük sınıf dersleri)
         </div>
+        <div class="row justify-content-center mt-4" id="instructors-list">
+            <p class="text-muted">Loading instructors...</p>
+        </div>
     </div>
 
-    <div class="row justify-content-center">
-        <?php if (!empty($instructors)): ?>
-            <?php foreach ($instructors as $index => $instructor): ?>
-                <div class="col-md-3">
-                    <div class="card">
-                        <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                        <h6><?= htmlspecialchars($instructor['InstructorName'] ?? 'Unknown') ?></h6>
-                        <p><?= htmlspecialchars($instructor['CourseName'] ?? 'Unknown Course') ?></p>
-                        <div class="dropdown">
-                            <button 
-                                class="btn btn-secondary dropdown-toggle rank-btn"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                id="rank-btn-<?= $index ?>"
-                                data-candidate-id="<?= isset($instructor['InstructorID']) ? htmlspecialchars($instructor['InstructorID']) : 'missing' ?>">
-                                Rank here
-                            </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item rank-option" data-rank="1" data-index="<?= $index ?>" href="#">1st place</a>
-                                <a class="dropdown-item rank-option" data-rank="2" data-index="<?= $index ?>" href="#">2nd place</a>
-                                <a class="dropdown-item rank-option" data-rank="3" data-index="<?= $index ?>" href="#">3rd place</a>
-                            </div>
-                        </div>
-                        <div id="selected-rank-<?= $index ?>" class="mt-2"></div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p class="text-danger"><?= $error_message ?></p>
-        <?php endif; ?>
-    </div>
 
     <!-- Submit Button -->
     <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
     <!-- JavaScript (Bootstrap) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
     <!-- Custom JavaScript for Ranking & Voting -->
     <script>
@@ -212,6 +172,62 @@ if ($data === null || $data['status'] !== 'success') {
 
         // Track selected ranks { "instructorIndex": "1"|"2"|"3" }
         let selectedRanks = {};
+
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const category = "<?= $category ?>";
+            const term = "<?= $term ?>";
+            const apiUrl = `http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getInstructors.php?category=${category}&term=${term}`;
+
+            fetch(apiUrl, { credentials: "include" }) // Ensures session cookies are sent
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        displayInstructors(data.data);
+                    } else {
+                        document.getElementById("instructors-list").innerHTML = `<p class="text-danger">${data.message}</p>`;
+                    }
+                })
+                .catch(error => console.error("Error fetching instructors:", error));
+        });
+
+        function displayInstructors(instructors) {
+            const container = document.getElementById("instructors-list");
+            container.innerHTML = ""; // Clear existing content
+
+            if (instructors.length === 0) {
+                container.innerHTML = `<p class="text-warning">No instructors found.</p>`;
+                return;
+            }
+
+            instructors.forEach((instructor, index) => {
+                container.innerHTML += `
+                    <div class="col-md-3">
+                        <div class="card">
+                            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
+                            <h6>${instructor.InstructorName || 'Unknown'}</h6>
+                            <p>${instructor.CourseName || 'Unknown Course'}</p>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle rank-btn"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    id="rank-btn-${index}"
+                                    data-candidate-id="${instructor.InstructorID}">
+                                    Rank here
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                                    <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                                    <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                                </div>
+                            </div>
+                            <div id="selected-rank-${index}" class="mt-2"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        
+        
 
         // Enforce strict rank order on selection
         document.querySelectorAll('.rank-option').forEach(item => {
@@ -234,6 +250,7 @@ if ($data === null || $data['status'] !== 'success') {
                 updateUI();
             });
         });
+    }
 
         // Update UI after any change
         function updateUI() {
