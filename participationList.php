@@ -1,132 +1,267 @@
 <?php
-require_once 'api/authMiddleware.php';
-$config = include('config.php');
+session_start();
+require_once __DIR__ . '/database/dbConnection.php';
+
+// Fetch available academic years from DB
+try {
+    $stmtYears = $pdo->prepare("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
+    $stmtYears->execute();
+    $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    die("Error fetching academic years: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Voting Participation by Year</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voting Participation Report</title>
 
-    <!-- Bootstrap and FontAwesome -->
+    <!-- Limitless Theme Styles -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+    <link href="assets/css/components.min.css" rel="stylesheet">
+    <link href="assets/css/layout.min.css" rel="stylesheet">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Grid.js Theme -->
+
+    <!-- Grid.js -->
     <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
-    
+
     <style>
-        body { 
-            overflow: auto; 
+        body {
+            overflow: auto;
+            background-color: #f9f9f9;
         }
-        .title { 
-            text-align: center; 
-            margin: 20px 0; 
-            font-size: 24px; 
-            font-weight: bold; 
+
+        /* Title Styling */
+        .title {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
         }
+
+        .form-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            margin: 20px auto;
+            max-width: 90%;
+        }
+
+        .error-message {
+            display: none;
+            text-align: center;
+            color: #dc3545;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
         .action-container {
-            position: fixed; /* Stick to the bottom */
-            bottom: 20px;    /* Distance from the bottom of the page */
-            right: 20px;     /* Full width to center the button */
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
         }
-        .return-button {
-            background-color: #007bff; 
-            color: white; 
-            border: none; 
-            padding: 10px 15px;
-            font-size: 14px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            transition: background-color 0.3s ease;
+
+        /* Match button colors */
+        .return-button, 
+        .btn-custom {
+            background-color: #45748a !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 200px;
+            text-align: center;
+            transition: 0.3s ease;
         }
-        .return-button:hover { 
-            background-color: #0056b3; 
+
+        .return-button:hover, 
+        .btn-custom:hover {
+            background-color: #365a6b !important;
+        }
+
+        /* Custom Download Button */
+        .download-button {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            background: transparent;
+            padding: 15px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 200px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.3s ease;
+        }
+
+        .download-button i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .download-button:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Custom Year Dropdown */
+        .year-dropdown .btn {
+            width: 200px;
+            text-align: left;
+        }
+
+        .year-dropdown .dropdown-menu {
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <div class="title">Voting Participation Report</div>
-    <div class="action-container">
-        <button 
-            class="return-button" 
-            onclick="window.location.href='reportPage.php'">
-            Return to Category Page
+
+<div class="container">
+    <h2 class="title">Voting Participation by Year</h2>
+
+    <!-- Year Selection -->
+    <div class="form-section">
+        <div class="btn-group year-dropdown">
+            <button id="yearSelectBtn" class="btn btn-custom dropdown-toggle" data-bs-toggle="dropdown">
+                Select Year
+            </button>
+            <div class="dropdown-menu">
+                <?php foreach ($academicYears as $y): ?>
+                    <a href="#" class="dropdown-item year-option" data-value="<?= $y['YearID'] ?>">
+                        <?= htmlspecialchars($y['Academic_year']) ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <button id="viewReportBtn" class="btn btn-custom">
+            <i class="fa fa-eye"></i> View Report
         </button>
     </div>
 
-    <div class="gridjs-example-basic" style="margin: 20px;"></div>
+    <!-- Error Message -->
+    <div id="error-message" class="error-message"></div>
 
-    <!-- Load JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
-    
-    <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        fetch("./api/getVotingParticipation.php")
-            .then(response => response.json())
-            .then(participationData => {
-                console.log("Participation Data: ", participationData);
+    <!-- Table -->
+    <div class="table-container">
+        <div class="gridjs-example" id="participation-grid"></div>
+    </div>
+</div>
 
-                const gridjsBasicElement = document.querySelector(".gridjs-example-basic");
-                if (gridjsBasicElement) {
-                    new gridjs.Grid({
-                        className: { table: 'table' },
-                        columns: [
-                            "Academic Year",
-                            "Students Voted",
-                            "Total Students",
-                            "Participation Percentage"
-                        ],
-                        data: participationData.map(row => [
-                            row.AcademicYear, // Fixed Key Name
-                            row.OyVeren, // Students Voted
-                            row.ToplamKisi, // Total Students
-                            `${row.OyKullanimOrani}%` // Participation Percentage
-                        ]),
-                        pagination: { limit: 8, summary: true },
-                        sort: true,
-                        search: true,
-                        resizable: true,
-                        style: { table: { borderCollapse: 'collapse', margin: '0 auto' } }
-                    }).render(gridjsBasicElement);
-                }
+<!-- Action Container -->
+<div class="action-container">
+    <button class="return-button" onclick="window.location.href='reportPage.php'">
+        <i class="fa fa-arrow-left"></i> Return to Category Page
+    </button>
 
-                // Export to CSV
-                const exportToCSV = () => {
-                    const headers = ["Academic Year", "Students Voted", "Total Students", "Participation Percentage"];
-                    const rows = participationData.map(row => [
-                        row.AcademicYear,
-                        row.OyVeren,
-                        row.ToplamKisi,
-                        `${row.OyKullanimOrani}%`
-                    ].join(";"));
-                    const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\n");
+    <button id="downloadBtn" class="download-button d-none">
+        <i class="fa fa-download"></i>
+        Download
+    </button>
+</div>
 
-                    const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", "voting_participation_report.csv");
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
+<!-- Load JS Libraries -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-                const downloadButton = document.createElement("button");
-                downloadButton.textContent = "Download CSV";
-                downloadButton.style.margin = "20px auto";
-                downloadButton.style.display = "block";
-                downloadButton.addEventListener("click", exportToCSV);
-                document.body.insertBefore(downloadButton, gridjsBasicElement);
-            })
-            .catch(error => {
-                console.error("Error fetching data: ", error);
-            });
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    let gridInstance;
+    let currentData = [];
+    let selectedYear = null;
+
+    const yearSelectBtn = document.getElementById("yearSelectBtn");
+    const yearOptions = document.querySelectorAll(".year-option");
+    const viewReportBtn = document.getElementById("viewReportBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const participationGrid = document.getElementById("participation-grid");
+    const errorMessage = document.getElementById("error-message");
+
+    // Handle Year Selection from Dropdown
+    yearOptions.forEach(option => {
+        option.addEventListener("click", function() {
+            selectedYear = this.getAttribute("data-value");
+            yearSelectBtn.textContent = this.textContent;
+
+            if (gridInstance) gridInstance.destroy();
+            errorMessage.style.display = "none";
+            downloadBtn.classList.add("d-none");
+        });
     });
-    </script>
+
+    viewReportBtn.addEventListener("click", async () => {
+        if (!selectedYear) {
+            alert("⚠️ Please select a year.");
+            return;
+        }
+
+        try {
+            const apiUrl = `api/getVotingParticipation.php?yearID=${selectedYear}`;
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (data.error) {
+                errorMessage.textContent = data.error;
+                errorMessage.style.display = "block";
+                return;
+            }
+
+            errorMessage.style.display = "none";
+            currentData = data;
+            downloadBtn.classList.remove("d-none");
+
+            if (gridInstance) gridInstance.destroy();
+
+            new gridjs.Grid({
+                columns: ["Category", "Students Voted", "Total Students", "Participation Percentage"],
+                data: data.map(row => [
+                    row.CategoryName, row.Students_Voted, row.Total_Students, `${row.Participation_Percentage}%`
+                ]),
+                pagination: { limit: 8, summary: true },
+                search: true,
+                sort: true
+            }).render(participationGrid);
+        } catch (error) {
+            console.error("❌ Fetch Error:", error);
+        }
+    });
+
+    downloadBtn.addEventListener("click", () => {
+        const csvContent = ["Category,Students Voted,Total Students,Participation Percentage"]
+            .concat(currentData.map(row => 
+                `${row.CategoryName};${row.Students_Voted};${row.Total_Students};${row.Participation_Percentage}%`
+            ))
+            .join("\n");
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Voting_Participation_Report.csv";
+        link.click();
+    });
+});
+</script>
 
 </body>
 </html>
