@@ -1,5 +1,11 @@
 <?php
 session_start();
+require_once 'api/authMiddleware.php';
+// If the user is not logged in, redirect to the login page
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit();
+}
 require_once __DIR__ . '/database/dbConnection.php'; // Adjust if needed
 
 // Fetch available academic years from DB
