@@ -219,7 +219,6 @@ try {
                     onclick="window.location.href='manageAdmins.php';">
                     Manage Admins
                 </button>
-                <div class="note">(only for IT admins)</div>
             <?php endif; ?>
 
             <button class="btn btn-secondary w-100 mb-2" 
