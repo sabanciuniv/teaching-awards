@@ -1,4 +1,12 @@
 <?php
+session_start();
+require_once 'api/authMiddleware.php';
+if (!isset($_SESSION['user'])) {
+    // Redirect if the user is not logged in
+    header("Location: login.php");
+    exit();
+}
+
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -17,7 +25,7 @@
             die("Error: Uploads directory is not writable.");
         }
         // Sanitize user inputs
-        $username = htmlspecialchars($_POST['SUnetUsername'] ?? '');
+        $username = $_SESSION['user'];
         $nomineeName = htmlspecialchars($_POST['NomineeName'] ?? '');
         $nomineeSurname = htmlspecialchars($_POST['NomineeSurname'] ?? '');
         $yearID = htmlspecialchars($_POST['year_id'] ?? '');
