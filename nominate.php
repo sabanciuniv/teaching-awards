@@ -251,6 +251,7 @@ if (!isset($_SESSION['user'])) {
                                 <input type="text" name="NomineeSurname" class="form-control text-secondary border-secondary" 
                                        placeholder="Enter nominee's surname" required>
                             </div>
+                            
                             <!-- Upload References -->
                             <div class="file-input">
                                 <div class="file-preview">
@@ -273,6 +274,15 @@ if (!isset($_SESSION['user'])) {
                                 </div>
                             </div>
 
+                            <!-- NEW: Checkbox to accept rules and data sharing -->
+                            <div class="form-check mt-4 mb-3">
+                                <!-- Make the label text black -->
+                                <input class="form-check-input" type="checkbox" id="rulesAccepted" name="rulesAccepted" value="true">
+                                <label class="form-check-label" for="rulesAccepted" style="color: black;">
+                                    I accept the rules and agree to share my data for the nomination process.
+                                </label>
+                            </div>
+
                             <!-- Submit Button -->
                             <button type="submit" class="btn btn-secondary bg-secondary text-white">
                                 Submit <i class="icon-paperplane"></i>
@@ -285,28 +295,24 @@ if (!isset($_SESSION['user'])) {
     </div>
 
     <script>
-    // Array to store all selected files
+    // =============== FILE UPLOAD LOGIC ===============
     let selectedFiles = [];
 
-    // Handle manual file selection via input
     document.getElementById("fileDropZone").addEventListener("click", function(event) {
-        event.stopPropagation();  // Prevent click event bubbling
+        event.stopPropagation();
         document.getElementById("fileInput").click();
     });
 
-    // Handle file selection from input element
     document.getElementById("fileInput").addEventListener("change", function(event) {
         addFilesToSelection(event.target.files);
     });
-    
-    // Handle file drag over effect
+
     function handleDragOver(event) {
         event.preventDefault();
         event.stopPropagation();
         document.getElementById("fileDropZone").classList.add("dragging");
     }
 
-    // Handle file drop event
     function handleFileDrop(event) {
         event.preventDefault();
         event.stopPropagation();
@@ -315,7 +321,6 @@ if (!isset($_SESSION['user'])) {
     }
 
     function addFilesToSelection(files) {
-        // Add new files to the array, avoiding duplicates
         Array.from(files).forEach((file) => {
             if (!selectedFiles.some((f) => f.name === file.name && f.size === file.size)) {
                 selectedFiles.push(file);
@@ -327,7 +332,7 @@ if (!isset($_SESSION['user'])) {
     function updateFilePreview() {
         const fileThumbnails = document.getElementById("fileThumbnails");
         const fileCaption = document.getElementById("fileCaption");
-        fileThumbnails.innerHTML = ""; // Clear existing thumbnails
+        fileThumbnails.innerHTML = "";
         fileCaption.value = selectedFiles.length + " file(s) selected";
 
         selectedFiles.forEach((file, index) => {
@@ -341,17 +346,13 @@ if (!isset($_SESSION['user'])) {
             };
             reader.readAsDataURL(file);
 
-            // Single-file remove button
             const removeButton = document.createElement("button");
             removeButton.type = "button";
             removeButton.className = "btn-remove-file";
             removeButton.ariaLabel = "Remove";
-            // Red "X" icon
             removeButton.innerHTML = '<i class="fa fa-times"></i>';
-
-            // Stop propagation to prevent triggering file input click
             removeButton.onclick = function (event) {
-                event.stopPropagation();  
+                event.stopPropagation();
                 removeFile(index);
             };
 
@@ -362,23 +363,31 @@ if (!isset($_SESSION['user'])) {
     }
 
     function removeFile(index) {
-        selectedFiles.splice(index, 1); // Remove file at the given index
-        updateFilePreview(); // Update the preview
+        selectedFiles.splice(index, 1);
+        updateFilePreview();
     }
 
     function clearAllFiles() {
-        selectedFiles = []; // Clear all files
-        updateFilePreview(); // Update the preview
+        selectedFiles = [];
+        updateFilePreview();
     }
 
-    // Remove dragging effect when drag leaves the zone
     document.getElementById("fileDropZone").addEventListener("dragleave", () => {
         document.getElementById("fileDropZone").classList.remove("dragging");
     });
 
+    // =============== FORM SUBMISSION LOGIC ===============
     document.getElementById("nominationForm").addEventListener("submit", function(event) {
         event.preventDefault();
 
+        // Check if the user accepted the rules
+        const checkbox = document.getElementById("rulesAccepted");
+        if (!checkbox.checked) {
+            alert("Please accept the rules before submitting.");
+            return;
+        }
+
+        // Check if at least one file is uploaded
         if (selectedFiles.length === 0) {
             alert("Please upload at least one file.");
             return;
@@ -386,7 +395,7 @@ if (!isset($_SESSION['user'])) {
 
         let formData = new FormData(this);
 
-        selectedFiles.forEach((file, index) => {
+        selectedFiles.forEach((file) => {
             formData.append("ReferenceLetterFiles[]", file);
         });
 
@@ -400,7 +409,7 @@ if (!isset($_SESSION['user'])) {
             if (data.includes("Error")) {
                 alert("Submission failed!");
             } else {
-                window.location.href = `thankYou.php?context=nominate`; // Redirect after successful submission
+                window.location.href = `thankYou.php?context=nominate`;
             }
         })
         .catch(error => {
@@ -413,6 +422,7 @@ if (!isset($_SESSION['user'])) {
         document.querySelector('button[type="submit"]').disabled = false;
     });
 
+    // =============== FETCH ACADEMIC YEAR ON PAGE LOAD ===============
     document.addEventListener("DOMContentLoaded", function () {
         fetch('api/getAcademicYear.php')
             .then(response => response.json())
