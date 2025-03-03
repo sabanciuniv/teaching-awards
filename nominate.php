@@ -398,7 +398,7 @@ if (!isset($_SESSION['user'])) {
         .then(data => {
             console.log("Server response:", data);
             if (data.includes("Error")) {
-                alert("Submission failed: " + data);
+                alert("Submission failed!");
             } else {
                 window.location.href = `thankYou.php?context=nominate`; // Redirect after successful submission
             }
@@ -424,7 +424,7 @@ if (!isset($_SESSION['user'])) {
                 }
             })
             .catch(error => {
-                console.error('Error fetching academic year:', error);
+                console.error('Error fetching academic year');
             });
     });
     </script>
