@@ -48,7 +48,6 @@ if (!isset($_SESSION['user'])) {
             height: 100vh;
         }
 
-        /* Remove the narrower max-width and let them expand as needed */
         .card {
             background-color: #f9f9f9;
             color: white;
@@ -74,7 +73,6 @@ if (!isset($_SESSION['user'])) {
             padding: 15px; 
         }
 
-        /* Remove the max-height so it no longer scrolls */
         .card-body {
             font-size: 14px;
             color: #000;
@@ -99,6 +97,7 @@ if (!isset($_SESSION['user'])) {
             border-radius: 5px;
             padding: 10px;
             background: #fff;
+            position: relative;
         }
 
         .file-drop-zone {
@@ -120,6 +119,7 @@ if (!isset($_SESSION['user'])) {
             border-color: #45748a;
             background-color: #e6f4f9;
         }
+
         .file-preview-thumbnails {
             display: flex;
             gap: 10px;
@@ -143,11 +143,25 @@ if (!isset($_SESSION['user'])) {
             max-height: 100%;
         }
 
-        .btn-close {
+        /* Custom remove buttons */
+        .btn-remove-all,
+        .btn-remove-file {
             position: absolute;
             top: 5px;
             right: 5px;
             z-index: 10;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-remove-all i,
+        .btn-remove-file i {
+            color: red;
+            font-size: 1.2rem;
+        }
+        .btn-remove-all:hover i,
+        .btn-remove-file:hover i {
+            color: darkred;
         }
 
         .file-caption-name {
@@ -162,7 +176,7 @@ if (!isset($_SESSION['user'])) {
 
         /* Make both columns the same height */
         .row.align-items-stretch {
-            height: auto; /* allows content to define height */
+            height: auto; /* lets content define height */
         }
         .col-md-6.d-flex {
             display: flex !important;
@@ -178,7 +192,6 @@ if (!isset($_SESSION['user'])) {
 
     <!-- Nomination Form Card -->
     <div class="container mt-5">
-        <!-- Use align-items-stretch so both columns match in height -->
         <div class="row align-items-stretch">
             <!-- Rules & Guidelines (Left) -->
             <div class="col-md-6 d-flex">
@@ -186,7 +199,6 @@ if (!isset($_SESSION['user'])) {
                     <div class="card-header bg-secondary text-white">
                         <strong>📜 Rules & Guidelines</strong>
                     </div>
-                    <!-- Removed max-height and overflow -->
                     <div class="card-body" style="font-size: 14px;">
                         <p><strong>Purpose:</strong> The Teaching Assistant Award was created to acknowledge Teaching Assistants who excel in their activities.</p>
                         <p><strong>Eligibility:</strong></p>
@@ -242,7 +254,10 @@ if (!isset($_SESSION['user'])) {
                             <!-- Upload References -->
                             <div class="file-input">
                                 <div class="file-preview">
-                                    <button type="button" class="btn-close fileinput-remove" aria-label="Close" onclick="clearAllFiles()"></button>
+                                    <!-- Button to clear all files -->
+                                    <button type="button" class="btn-remove-all" aria-label="Close" onclick="clearAllFiles()">
+                                        <i class="fa fa-times"></i>
+                                    </button>
                                     <div class="file-drop-zone clearfix" 
                                          id="fileDropZone"
                                          ondragover="handleDragOver(event)" 
@@ -326,14 +341,17 @@ if (!isset($_SESSION['user'])) {
             };
             reader.readAsDataURL(file);
 
+            // Single-file remove button
             const removeButton = document.createElement("button");
             removeButton.type = "button";
-            removeButton.className = "btn-close btn-remove-file";
+            removeButton.className = "btn-remove-file";
             removeButton.ariaLabel = "Remove";
+            // Red "X" icon
+            removeButton.innerHTML = '<i class="fa fa-times"></i>';
 
-            // Stop propagation to prevent triggering click event on the drop zone
+            // Stop propagation to prevent triggering file input click
             removeButton.onclick = function (event) {
-                event.stopPropagation();  // Prevents triggering file input click
+                event.stopPropagation();  
                 removeFile(index);
             };
 
@@ -389,7 +407,6 @@ if (!isset($_SESSION['user'])) {
             console.error("Error submitting the form:", error);
             alert("Error submitting the form. Please try again.");
         });
-
     });
 
     document.getElementById('nominationForm').addEventListener('submit', function () {
