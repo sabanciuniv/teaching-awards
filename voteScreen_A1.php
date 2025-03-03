@@ -10,7 +10,6 @@ if (!isset($_SESSION['user'])) {
 
 // Get category and term from the URL or set default values
 $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A1';
-$term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202101';
 ?>
 
 
@@ -317,12 +316,37 @@ $term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202101';
         // Call updateUI() once at the start to initialize any needed disabling
         updateUI();
 
+
+        //get the current academic year
+        async function getAcademicYear() {
+            try {
+                const response = await fetch("api/getAcademicYear.php", { credentials: "include" });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    return data.academicYear; // Return formatted academic year
+                } else {
+                    console.error("Error fetching academic year:", data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching academic year:", error);
+                return null;
+            }
+        }
+
+
         // Submit the vote data
-        function submitVote() {
+        async function submitVote() {
             console.log("Selected Ranks:", selectedRanks); // Debugging step
 
             const categoryId = 'A1';
-            const academicYear = '2023'; 
+            const academicYear = await getAcademicYear(); // get academic year dynamically
+            if(!academicYear)
+            {
+                alert("failed to get the academic year.");
+                return;
+            }
             let votes = [];
 
             Object.entries(selectedRanks).forEach(([index, rank]) => {

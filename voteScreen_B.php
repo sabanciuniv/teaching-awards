@@ -1,12 +1,17 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
     header("Location: login.php");
     exit();
 }
+
+// Get category and term from the URL or set default values
+$category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B';
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -146,109 +151,9 @@ if (!isset($_SESSION['user'])) {
             Yılın Mezunları Ödülü
         </div>
 
-        <!-- Instructor/Candidate Cards -->
-        <div class="row justify-content-center">
-            <!-- Card 1 -->
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Candidate Photo">
-                    <h6>Name Surname</h6>
-                    <p>MATH203 Instructor</p>
-                    <div class="dropdown">
-                        <button
-                            class="btn btn-secondary dropdown-toggle rank-btn"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            id="rank-btn-0"
-                            data-candidate-id="candidate_1">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item rank-option" data-rank="1" data-index="0" href="#">1st place</a>
-                            <a class="dropdown-item rank-option" data-rank="2" data-index="0" href="#">2nd place</a>
-                            <a class="dropdown-item rank-option" data-rank="3" data-index="0" href="#">3rd place</a>
-                        </div>
-                    </div>
-                    <div id="selected-rank-0" class="mt-2"></div>
-                </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Candidate Photo">
-                    <h6>Name Surname</h6>
-                    <p>MATH201 Instructor</p>
-                    <div class="dropdown">
-                        <button
-                            class="btn btn-secondary dropdown-toggle rank-btn"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            id="rank-btn-1"
-                            data-candidate-id="candidate_2">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item rank-option" data-rank="1" data-index="1" href="#">1st place</a>
-                            <a class="dropdown-item rank-option" data-rank="2" data-index="1" href="#">2nd place</a>
-                            <a class="dropdown-item rank-option" data-rank="3" data-index="1" href="#">3rd place</a>
-                        </div>
-                    </div>
-                    <div id="selected-rank-1" class="mt-2"></div>
-                </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Candidate Photo">
-                    <h6>Name Surname</h6>
-                    <p>CS201 Instructor</p>
-                    <div class="dropdown">
-                        <button
-                            class="btn btn-secondary dropdown-toggle rank-btn"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            id="rank-btn-2"
-                            data-candidate-id="candidate_3">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item rank-option" data-rank="1" data-index="2" href="#">1st place</a>
-                            <a class="dropdown-item rank-option" data-rank="2" data-index="2" href="#">2nd place</a>
-                            <a class="dropdown-item rank-option" data-rank="3" data-index="2" href="#">3rd place</a>
-                        </div>
-                    </div>
-                    <div id="selected-rank-2" class="mt-2"></div>
-                </div>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="col-md-3">
-                <div class="card">
-                    <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Candidate Photo">
-                    <h6>Name Surname</h6>
-                    <p>CS201 Instructor</p>
-                    <div class="dropdown">
-                        <button
-                            class="btn btn-secondary dropdown-toggle rank-btn"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            id="rank-btn-3"
-                            data-candidate-id="candidate_4">
-                            Rank here
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item rank-option" data-rank="1" data-index="3" href="#">1st place</a>
-                            <a class="dropdown-item rank-option" data-rank="2" data-index="3" href="#">2nd place</a>
-                            <a class="dropdown-item rank-option" data-rank="3" data-index="3" href="#">3rd place</a>
-                        </div>
-                    </div>
-                    <div id="selected-rank-3" class="mt-2"></div>
-                </div>
-            </div>
+        <div class="row justify-content-center mt-4" id="instructors-list">
+            <p class="text-muted">Loading instructors...</p>
         </div>
-    </div>
 
     <!-- Submit Button -->
     <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
@@ -258,8 +163,68 @@ if (!isset($_SESSION['user'])) {
 
     <!-- Custom JavaScript for Ranking & Removal Logic -->
     <script>
-        // Track selected ranks: { "cardIndex": "1"|"2"|"3" }
+        // Not strictly used in this flow, but kept if needed for any redirection
+        function redirectToThankYouPage() {
+            const categoryId = 'A1'; // Adjust dynamically if needed
+            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+        }
+
+        // Track selected ranks { "instructorIndex": "1"|"2"|"3" }
         let selectedRanks = {};
+
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const category = "<?= $category ?>";
+            const term = "<?= $term ?>";
+            const apiUrl = `http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getInstructors.php?category=${category}&term=${term}`;
+
+            fetch(apiUrl, { credentials: "include" }) // Ensures session cookies are sent
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        displayInstructors(data.data);
+                    } else {
+                        document.getElementById("instructors-list").innerHTML = `<p class="text-danger">${data.message}</p>`;
+                    }
+                })
+                .catch(error => console.error("Error fetching instructors:", error));
+        });
+
+        function displayInstructors(instructors) {
+            const container = document.getElementById("instructors-list");
+            container.innerHTML = ""; // Clear existing content
+
+            if (instructors.length === 0) {
+                container.innerHTML = `<p class="text-warning">No instructors found.</p>`;
+                return;
+            }
+
+            instructors.forEach((instructor, index) => {
+                container.innerHTML += `
+                    <div class="col-md-3">
+                        <div class="card">
+                            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
+                            <h6>${instructor.InstructorName || 'Unknown'}</h6>
+                            <p>${instructor.CourseName || 'Unknown Course'}</p>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle rank-btn"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    id="rank-btn-${index}"
+                                    data-candidate-id="${instructor.InstructorID}">
+                                    Rank here
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                                    <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                                    <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                                </div>
+                            </div>
+                            <div id="selected-rank-${index}" class="mt-2"></div>
+                        </div>
+                    </div>
+                `;
+            });
 
         // Strict order: must choose rank 1 first, then 2, then 3
         document.querySelectorAll('.rank-option').forEach(item => {
@@ -283,6 +248,7 @@ if (!isset($_SESSION['user'])) {
                 updateUI();
             });
         });
+    }
 
         // Update UI (button text, disable/enable rank options, etc.)
         function updateUI() {
@@ -349,18 +315,90 @@ if (!isset($_SESSION['user'])) {
         // Initialize UI
         updateUI();
 
-        // Submit function (demo version)
-        // You could adapt this if you want to send data to the server via fetch
-        function submitVote() {
-            // For demonstration, log the selected ranks and simply redirect
-            console.log("Selected Ranks:", selectedRanks);
 
-            // Optionally, send them to a server or do something else
-            // fetch(...)
 
-            // For now, just redirect
-            const categoryId = 'B'; // arbitrary ID
-            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+        //get the current academic year
+        async function getAcademicYear() {
+            try {
+                const response = await fetch("api/getAcademicYear.php", { credentials: "include" });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    return data.academicYear; // Return formatted academic year
+                } else {
+                    console.error("Error fetching academic year:", data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching academic year:", error);
+                return null;
+            }
+        }
+
+
+        // Submit the vote data
+        async function submitVote() {
+            console.log("Selected Ranks:", selectedRanks); // Debugging step
+
+            const categoryId = 'B';
+            const academicYear = await getAcademicYear(); // get academic year dynamically
+            if(!academicYear)
+            {
+                alert("failed to get the academic year.");
+                return;
+            }
+            let votes = [];
+
+            Object.entries(selectedRanks).forEach(([index, rank]) => {
+                let candidateButton = document.querySelector(`#rank-btn-${index}`);
+                if (candidateButton) {
+                    let candidateID = candidateButton.getAttribute("data-candidate-id");
+                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
+
+                    if (candidateID && candidateID.trim() !== "") {
+                        votes.push({ candidateID, rank });
+                    } else {
+                        console.error(`Missing CandidateID for index ${index}`);
+                    }
+                }
+            });
+
+            console.log("Votes Data being sent:", votes); // Debugging step
+
+            if (votes.length === 0) {
+                alert("Please rank at least one candidate.");
+                return;
+            }
+
+            // Send the vote data as JSON to submitVote.php
+            fetch("submitVote.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryID: categoryId,
+                    academicYear: academicYear,
+                    votes: votes
+                })
+            })
+            .then(response => response.text()) // Log raw response
+            .then(text => {
+                console.log("Raw Response from Server:", text);
+                try {
+                    return JSON.parse(text); // Convert to JSON
+                } catch (error) {
+                    console.error("Response is not valid JSON:", text);
+                    throw error;
+                }
+            })
+            .then(data => {
+                console.log("Parsed Response from Server:", data);
+                if (data.status === "success") {
+                    window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error("Fetch Error:", error));
         }
     </script>
 

@@ -315,20 +315,44 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A2
         // Initialize UI on load
         updateUI();
 
-        // Submit the vote to the backend
-        function submitVote() {
-            console.log("Selected Ranks:", selectedRanks); // Debugging
+
+        //get the current academic year
+        async function getAcademicYear() {
+            try {
+                const response = await fetch("api/getAcademicYear.php", { credentials: "include" });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    return data.academicYear; // Return formatted academic year
+                } else {
+                    console.error("Error fetching academic year:", data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching academic year:", error);
+                return null;
+            }
+        }
+
+
+        // Submit the vote data
+        async function submitVote() {
+            console.log("Selected Ranks:", selectedRanks); // Debugging step
 
             const categoryId = 'A2';
-            const academicYear = '2023'; 
+            const academicYear = await getAcademicYear(); // get academic year dynamically
+            if(!academicYear)
+            {
+                alert("failed to get the academic year.");
+                return;
+            }
             let votes = [];
 
-            // Build votes array
             Object.entries(selectedRanks).forEach(([index, rank]) => {
                 let candidateButton = document.querySelector(`#rank-btn-${index}`);
                 if (candidateButton) {
                     let candidateID = candidateButton.getAttribute("data-candidate-id");
-                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging
+                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
 
                     if (candidateID && candidateID.trim() !== "") {
                         votes.push({ candidateID, rank });
@@ -338,14 +362,14 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A2
                 }
             });
 
-            console.log("Votes Data being sent:", votes); // Debugging
+            console.log("Votes Data being sent:", votes); // Debugging step
 
             if (votes.length === 0) {
                 alert("Please rank at least one candidate.");
                 return;
             }
 
-            // Send JSON data
+            // Send the vote data as JSON to submitVote.php
             fetch("submitVote.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -355,20 +379,19 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A2
                     votes: votes
                 })
             })
-            .then(response => response.text())
+            .then(response => response.text()) // Log raw response
             .then(text => {
                 console.log("Raw Response from Server:", text);
                 try {
-                    return JSON.parse(text); // attempt to parse JSON
-                } catch (err) {
+                    return JSON.parse(text); // Convert to JSON
+                } catch (error) {
                     console.error("Response is not valid JSON:", text);
-                    throw err;
+                    throw error;
                 }
             })
             .then(data => {
-                console.log("Parsed Response:", data);
+                console.log("Parsed Response from Server:", data);
                 if (data.status === "success") {
-                    // Redirect to "thank you" page
                     window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
                 } else {
                     alert(data.message);

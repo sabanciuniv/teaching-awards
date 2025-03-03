@@ -1,30 +1,15 @@
 <?php
-    session_start();
-    require_once 'api/authMiddleware.php';
-    if (!isset($_SESSION['user'])) {
-        // Redirect if the user is not logged in
-        header("Location: login.php");
-        exit();
-    }
+session_start();
+require_once 'api/authMiddleware.php';
 
-    // Dynamic category and term setup
-    $category = 'C'; // Adjust dynamically for the Temel Geliştirme Yılı Öğretim Görevlisi Ödülü category
-    $term = isset($_GET['term']) ? htmlspecialchars($_GET['term']) : '202301';
+if (!isset($_SESSION['user'])) {
+    // Redirect if the user is not logged in
+    header("Location: login.php");
+    exit();
+}
 
-    // Construct API URL
-    $api_url = "http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/fetchTGYinstructors.php?term=$term";
-
-    // Fetch data from the API
-    $response = file_get_contents($api_url);
-    $data = json_decode($response, true);
-
-    // Handle API response
-    if ($data === null || $data['status'] !== 'success') {
-        $instructors = [];
-        $error_message = "Failed to load instructors.";
-    } else {
-        $instructors = $data['data'];
-    }
+// Get category and term from the URL or set default values
+$category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'C';
 ?>
 
 <!DOCTYPE html>
@@ -164,39 +149,11 @@
         <div class="award-category bg-secondary text-white">
             Temel Geliştirme Yılı Öğretim Görevlisi Ödülü
         </div>
-
-        <div id="instructor-container" class="row justify-content-center">
-            <?php if (!empty($instructors)): ?>
-                <?php foreach ($instructors as $index => $instructor): ?>
-                    <div class="col-md-3">
-                        <div class="card">
-                            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                            <h6><?= htmlspecialchars($instructor['InstructorName'] ?? 'Unknown') ?></h6>
-                            <p><?= htmlspecialchars($instructor['CourseName'] ?? 'Unknown Course') ?></p>
-                            <div class="dropdown">
-                                <button 
-                                    class="btn btn-secondary dropdown-toggle rank-btn"
-                                    type="button"
-                                    data-bs-toggle="dropdown"
-                                    id="rank-btn-<?= $index ?>"
-                                    data-candidate-id="<?= htmlspecialchars($instructor['CandidateID'] ?? '') ?>">
-                                    Rank here
-                                </button>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item rank-option" data-rank="1" data-index="<?= $index ?>" href="#">1st place</a>
-                                    <a class="dropdown-item rank-option" data-rank="2" data-index="<?= $index ?>" href="#">2nd place</a>
-                                    <a class="dropdown-item rank-option" data-rank="3" data-index="<?= $index ?>" href="#">3rd place</a>
-                                </div>
-                            </div>
-                            <div id="selected-rank-<?= $index ?>" class="mt-2"></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <p class="text-danger">Failed to load instructors.</p>
-            <?php endif; ?>
+        <div class="row justify-content-center mt-4" id="instructors-list">
+            <p class="text-muted">Loading instructors...</p>
         </div>
     </div>
+      
 
     <!-- Submit Button -->
     <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
@@ -212,7 +169,68 @@
         // If removing rank 3 => remove only rank 3
 
         // { indexOfInstructor: "1"|"2"|"3" }
+               // Not strictly used in this flow, but kept if needed for any redirection
+               function redirectToThankYouPage() {
+            const categoryId = 'A1'; // Adjust dynamically if needed
+            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+        }
+
+        // Track selected ranks { "instructorIndex": "1"|"2"|"3" }
         let selectedRanks = {};
+
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const category = "<?= $category ?>";
+            const term = "<?= $term ?>";
+            const apiUrl = `http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getInstructors.php?category=${category}&term=${term}`;
+
+            fetch(apiUrl, { credentials: "include" }) // Ensures session cookies are sent
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        displayInstructors(data.data);
+                    } else {
+                        document.getElementById("instructors-list").innerHTML = `<p class="text-danger">${data.message}</p>`;
+                    }
+                })
+                .catch(error => console.error("Error fetching instructors:", error));
+        });
+
+        function displayInstructors(instructors) {
+            const container = document.getElementById("instructors-list");
+            container.innerHTML = ""; // Clear existing content
+
+            if (instructors.length === 0) {
+                container.innerHTML = `<p class="text-warning">No instructors found.</p>`;
+                return;
+            }
+
+            instructors.forEach((instructor, index) => {
+                container.innerHTML += `
+                    <div class="col-md-3">
+                        <div class="card">
+                            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
+                            <h6>${instructor.InstructorName || 'Unknown'}</h6>
+                            <p>${instructor.CourseName || 'Unknown Course'}</p>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle rank-btn"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    id="rank-btn-${index}"
+                                    data-candidate-id="${instructor.InstructorID}">
+                                    Rank here
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                                    <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                                    <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                                </div>
+                            </div>
+                            <div id="selected-rank-${index}" class="mt-2"></div>
+                        </div>
+                    </div>
+                `;
+            });
 
         // Attach event listeners for rank selections
         document.querySelectorAll('.rank-option').forEach(item => {
@@ -234,6 +252,7 @@
                 updateUI();
             });
         });
+    }
 
         // Update UI after any change in selectedRanks
         function updateUI() {
@@ -297,19 +316,46 @@
         // Called initially to set up the UI
         updateUI();
 
-        // Submit the vote data
-        function submitVote() {
-            console.log("Selected Ranks:", selectedRanks); // Debug
+   
 
-            const categoryId = 'C'; 
-            const academicYear = '2023';
+        //get the current academic year
+        async function getAcademicYear() {
+            try {
+                const response = await fetch("api/getAcademicYear.php", { credentials: "include" });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    return data.academicYear; // Return formatted academic year
+                } else {
+                    console.error("Error fetching academic year:", data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching academic year:", error);
+                return null;
+            }
+        }
+
+
+        // Submit the vote data
+        async function submitVote() {
+            console.log("Selected Ranks:", selectedRanks); // Debugging step
+
+            const categoryId = 'C';
+            const academicYear = await getAcademicYear(); // get academic year dynamically
+            if(!academicYear)
+            {
+                alert("failed to get the academic year.");
+                return;
+            }
             let votes = [];
 
-            // Build the votes array from selectedRanks
             Object.entries(selectedRanks).forEach(([index, rank]) => {
                 let candidateButton = document.querySelector(`#rank-btn-${index}`);
                 if (candidateButton) {
                     let candidateID = candidateButton.getAttribute("data-candidate-id");
+                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
+
                     if (candidateID && candidateID.trim() !== "") {
                         votes.push({ candidateID, rank });
                     } else {
@@ -318,13 +364,14 @@
                 }
             });
 
-            console.log("Votes to send:", votes);
+            console.log("Votes Data being sent:", votes); // Debugging step
 
             if (votes.length === 0) {
                 alert("Please rank at least one candidate.");
                 return;
             }
 
+            // Send the vote data as JSON to submitVote.php
             fetch("submitVote.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -334,18 +381,18 @@
                     votes: votes
                 })
             })
-            .then(response => response.text())
+            .then(response => response.text()) // Log raw response
             .then(text => {
-                console.log("Raw Server Response:", text);
+                console.log("Raw Response from Server:", text);
                 try {
-                    return JSON.parse(text);
-                } catch (err) {
-                    console.error("Response not valid JSON:", text);
-                    throw err;
+                    return JSON.parse(text); // Convert to JSON
+                } catch (error) {
+                    console.error("Response is not valid JSON:", text);
+                    throw error;
                 }
             })
             .then(data => {
-                console.log("Parsed Server Response:", data);
+                console.log("Parsed Response from Server:", data);
                 if (data.status === "success") {
                     window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
                 } else {

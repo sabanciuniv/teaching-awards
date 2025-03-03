@@ -70,6 +70,7 @@ if (!isset($_SESSION['user'])) {
                     $codedName = 'Ref_' . $academicYear . "_" . uniqid() . "." . $fileExtension;
                     $uploadPath = __DIR__ . '/uploads/' . $codedName;
                     if (move_uploaded_file($tmp_name, $uploadPath)) {
+                        chmod($uploadPath, 0775); //permission for all to download the document
                         $stmt = $pdo->prepare("INSERT INTO AdditionalDocuments_Table (NominationID, DocumentType, DocumentCodedName, DocumentOriginalName) VALUES (?, ?, ?, ?)");
                         if (!$stmt->execute([$nominationID, $fileExtension, $codedName, $originalName])) {
                             throw new Exception("Error inserting document data.");
