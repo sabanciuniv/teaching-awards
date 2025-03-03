@@ -48,29 +48,23 @@ if (!isset($_SESSION['user'])) {
             height: 100vh;
         }
 
+        /* Remove the narrower max-width and let them expand as needed */
         .card {
-            background-color: #f9f9f9 ;
+            background-color: #f9f9f9;
             color: white;
             border: 1px solid #45748a;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             width: 100%;
-            max-width: 500px;
         }
 
-        .col{
-            background-color: #f9f9f9 ;
+        .col {
+            background-color: #f9f9f9;
             color: white;
             border: 1px solid #45748a;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             width: 100%;
-            max-width: 500px;
-        }
-
-        .card-body {
-            font-size: 14px;
-            color: #000;
         }
 
         .card-header {
@@ -80,15 +74,19 @@ if (!isset($_SESSION['user'])) {
             padding: 15px; 
         }
 
+        /* Remove the max-height so it no longer scrolls */
+        .card-body {
+            font-size: 14px;
+            color: #000;
+        }
 
         .form-body {
-            padding: 20px;
+            padding: 30px;
         }
 
         .form-control {
             color: var(--bs-secondary);
         }
-
 
         .file-input {
             position: relative;
@@ -114,8 +112,8 @@ if (!isset($_SESSION['user'])) {
         }
 
         .file-drop-zone p {
-            color: #45748a; /* Set the text color */
-            font-weight: bold; 
+            color: #45748a;
+            font-weight: bold;
         }
 
         .file-drop-zone.dragging {
@@ -162,6 +160,16 @@ if (!isset($_SESSION['user'])) {
             display: none;
         }
 
+        /* Make both columns the same height */
+        .row.align-items-stretch {
+            height: auto; /* allows content to define height */
+        }
+        .col-md-6.d-flex {
+            display: flex !important;
+        }
+        .col-md-6.d-flex .card {
+            flex: 1; /* fill available space equally */
+        }
     </style>
 </head>
 <body>
@@ -170,89 +178,96 @@ if (!isset($_SESSION['user'])) {
 
     <!-- Nomination Form Card -->
     <div class="container mt-5">
-        <div class="row">
+        <!-- Use align-items-stretch so both columns match in height -->
+        <div class="row align-items-stretch">
             <!-- Rules & Guidelines (Left) -->
-            <div class="col-md-6">
-                <div class="card">
+            <div class="col-md-6 d-flex">
+                <div class="card flex-fill">
                     <div class="card-header bg-secondary text-white">
                         <strong>📜 Rules & Guidelines</strong>
                     </div>
-                    <div class="card-body" style="max-height: 460px; overflow-y: auto; font-size: 14px;">
-                    <p><strong>Purpose:</strong> The Teaching Assistant Award was created to acknowledge Teaching Assistants who excel in their activities.</p>
+                    <!-- Removed max-height and overflow -->
+                    <div class="card-body" style="font-size: 14px;">
+                        <p><strong>Purpose:</strong> The Teaching Assistant Award was created to acknowledge Teaching Assistants who excel in their activities.</p>
+                        <p><strong>Eligibility:</strong></p>
+                        <ul>
+                            <li>The nominee must be a current graduate student.</li>
+                            <li>The nominee must be a TA in at least one course during the 2023-2024 academic year.</li>
+                        </ul>
 
-                    <p><strong>Eligibility:</strong></p>
-                    <ul>
-                        <li>The nominee must be a current graduate student.</li>
-                        <li>The nominee must be a TA in at least one course during the 2023-2024 academic year.</li>
-                    </ul>
+                        <p><strong>Criteria:</strong></p>
+                        <ul>
+                            <li>(a) Being nominated by more than one person</li>
+                            <li>(b) Being nominated both by faculty and by students</li>
+                            <li>(c) Course evaluation results</li>
+                            <li>(d) Data/Feedback about their work in more than one course (from course instructors)</li>
+                            <li>(e) Whether nomination letters have been provided individually if nominated by a group of students</li>
+                            <li>(f) GPA of the nominee</li>
+                        </ul>
 
-                    <p><strong>Criteria:</strong></p>
-                    <ul>
-                        <li>(a) Being nominated by more than one person</li>
-                        <li>(b) Being nominated both by faculty and by students</li>
-                        <li>(c) Course evaluation results</li>
-                        <li>(d) Data/Feedback about their work in more than one course (from course instructors)</li>
-                        <li>(e) Whether nomination letters have been provided individually if nominated by a group of students</li>
-                        <li>(f) GPA of the nominee</li>
-                    </ul>
-
-                    <p><strong>For questions about the nomination guidelines and process, please contact:</strong></p>
-                    <p>Deniz İnan - <a href="mailto:deniz.inan@sabanciuniv.edu">deniz.inan@sabanciuniv.edu</a></p>
+                        <p><strong>For questions about the nomination guidelines and process, please contact:</strong></p>
+                        <p>Deniz İnan - <a href="mailto:deniz.inan@sabanciuniv.edu">deniz.inan@sabanciuniv.edu</a></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-secondary text-white text-center">Nomination Form</div>
-                <!-- Form Body -->
-                <div class="form-body">
-                <form id="nominationForm" action="submitNomination.php" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="year_id" id="year_id">
-        
-                    <!-- Your Username -->
-                        <div class="mb-3">
-                            <label class="form-label text-secondary">Your Username</label>
-                            <input type="text" name="SUnetUsername" class="form-control border-secondary text-secondary" value="<?php echo htmlspecialchars($_SESSION['user']); ?>" readonly>
-                        </div>
-                        <!-- Nominee's Name -->
-                        <div class="mb-3">
-                            <label class="form-label text-secondary">Nominee's Name</label>
-                            <input type="text" name="NomineeName" class="form-control text-secondary border-secondary" placeholder="Enter nominee's name" required>
-                        </div>
-                        <!-- Nominee's Surname -->
-                        <div class="mb-3">
-                            <label class="form-label text-secondary">Nominee's Surname</label>
-                            <input type="text" name="NomineeSurname" class="form-control text-secondary border-secondary" placeholder="Enter nominee's surname" required>
-                        </div>
-                        <!-- Upload References -->
-                        <div class="file-input">
-                            <div class="file-preview">
-                                <button type="button" class="btn-close fileinput-remove" aria-label="Close" onclick="clearAllFiles()"></button>
-                                <div class="file-drop-zone clearfix" 
-                                    id="fileDropZone"
-                                    ondragover="handleDragOver(event)" 
-                                    ondrop="handleFileDrop(event)">
-                                    <p>Drag and drop files here, or click to select files</p>
-                                    <div class="file-preview-thumbnails clearfix" id="fileThumbnails"></div>
+
+            <!-- Nomination Form (Right) -->
+            <div class="col-md-6 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-header bg-secondary text-white text-center">
+                        Nomination Form
+                    </div>
+                    <div class="form-body">
+                        <form id="nominationForm" action="submitNomination.php" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="year_id" id="year_id">
+            
+                            <!-- Your Username -->
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Your Username</label>
+                                <input type="text" name="SUnetUsername" class="form-control border-secondary text-secondary" 
+                                       value="<?php echo htmlspecialchars($_SESSION['user']); ?>" readonly>
+                            </div>
+                            <!-- Nominee's Name -->
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Nominee's Name</label>
+                                <input type="text" name="NomineeName" class="form-control text-secondary border-secondary" 
+                                       placeholder="Enter nominee's name" required>
+                            </div>
+                            <!-- Nominee's Surname -->
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Nominee's Surname</label>
+                                <input type="text" name="NomineeSurname" class="form-control text-secondary border-secondary" 
+                                       placeholder="Enter nominee's surname" required>
+                            </div>
+                            <!-- Upload References -->
+                            <div class="file-input">
+                                <div class="file-preview">
+                                    <button type="button" class="btn-close fileinput-remove" aria-label="Close" onclick="clearAllFiles()"></button>
+                                    <div class="file-drop-zone clearfix" 
+                                         id="fileDropZone"
+                                         ondragover="handleDragOver(event)" 
+                                         ondrop="handleFileDrop(event)">
+                                        <p>Drag and drop files here, or click to select files</p>
+                                        <div class="file-preview-thumbnails clearfix" id="fileThumbnails"></div>
+                                    </div>
+                                </div>
+                                <input type="file" id="fileInput" name="ReferenceLetterFiles[]" multiple style="display: none;">
+                                <div class="file-caption">
+                                    <input type="text" class="file-caption-name form-control" id="fileCaption" readonly 
+                                           placeholder="No file selected">
                                 </div>
                             </div>
-                            <input type="file" id="fileInput" name="ReferenceLetterFiles[]" multiple style="display: none;">
-                            <div class="file-caption">
-                                <input type="text" class="file-caption-name form-control" id="fileCaption" readonly placeholder="No file selected">
-                            </div>
-                        </div>
 
-                        <!-- Submit Button -->
-                        <button type="submit" class="btn btn-secondary bg-secondary text-white">
-                            Submit <i class="icon-paperplane"></i>
-                        </button>
-
-                    </form>
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-secondary bg-secondary text-white">
+                                Submit <i class="icon-paperplane"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
 
     <script>
     // Array to store all selected files
@@ -263,7 +278,6 @@ if (!isset($_SESSION['user'])) {
         event.stopPropagation();  // Prevent click event bubbling
         document.getElementById("fileInput").click();
     });
-
 
     // Handle file selection from input element
     document.getElementById("fileInput").addEventListener("change", function(event) {
@@ -292,7 +306,6 @@ if (!isset($_SESSION['user'])) {
                 selectedFiles.push(file);
             }
         });
-
         updateFilePreview();
     }
 
@@ -379,12 +392,9 @@ if (!isset($_SESSION['user'])) {
 
     });
 
-
     document.getElementById('nominationForm').addEventListener('submit', function () {
         document.querySelector('button[type="submit"]').disabled = false;
     });
-
-
 
     document.addEventListener("DOMContentLoaded", function () {
         fetch('api/getAcademicYear.php')
@@ -402,7 +412,6 @@ if (!isset($_SESSION['user'])) {
     });
     </script>
 
-    
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
