@@ -294,6 +294,22 @@ if (!isset($_SESSION['user'])) {
         </div>
     </div>
 
+    <!-- Bootstrap Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="errorModalLabel">Oh snap!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="errorModalMessage"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     // =============== FILE UPLOAD LOGIC ===============
     let selectedFiles = [];
@@ -383,13 +399,13 @@ if (!isset($_SESSION['user'])) {
         // Check if the user accepted the rules
         const checkbox = document.getElementById("rulesAccepted");
         if (!checkbox.checked) {
-            alert("Please accept the rules before submitting.");
+            showError("Please accept the rules before submitting.");
             return;
         }
 
         // Check if at least one file is uploaded
         if (selectedFiles.length === 0) {
-            alert("Please upload at least one file.");
+            showError("Please upload at least one file.");
             return;
         }
 
@@ -407,20 +423,31 @@ if (!isset($_SESSION['user'])) {
         .then(data => {
             console.log("Server response:", data);
             if (data.includes("Error")) {
-                alert("Submission failed!");
+                showError("Submission failed!");
             } else {
                 window.location.href = `thankYou.php?context=nominate`;
             }
         })
         .catch(error => {
             console.error("Error submitting the form:", error);
-            alert("Error submitting the form. Please try again.");
+            showError("Error submitting the form. Please try again.");
         });
     });
 
     document.getElementById('nominationForm').addEventListener('submit', function () {
         document.querySelector('button[type="submit"]').disabled = false;
     });
+
+    function showError(message) {
+        document.getElementById("errorModalMessage").innerHTML = message;
+        let errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
+        errorModal.show();
+
+        document.getElementById("errorModal").addEventListener("hidden.bs.modal", function () {
+            document.body.classList.remove("modal-open");
+            document.querySelector(".modal-backdrop")?.remove();
+        });
+    }
 
     // =============== FETCH ACADEMIC YEAR ON PAGE LOAD ===============
     document.addEventListener("DOMContentLoaded", function () {
