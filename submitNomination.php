@@ -63,7 +63,7 @@ if (!isset($_SESSION['user'])) {
                         throw new Exception("Invalid file type: " . $originalName);
                     }
                     // Validate file size (max 5MB)
-                    if ($_FILES['ReferenceLetterFiles']['size'][$key] > 5 * 1024 * 1024) {
+                    if ($_FILES['ReferenceLetterFiles']['size'][$key] > 20 * 1024 * 1024) {
                         throw new Exception("File size exceeds limit for: " . $originalName);
                     }
                     // Generate a unique and sanitized file name with academic year
