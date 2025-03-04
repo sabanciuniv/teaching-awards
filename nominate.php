@@ -292,8 +292,12 @@ if (!isset($_SESSION['user'])) {
                 </div>
             </div>
         </div>
-    </div>
+        <div class="btn-view">
+            <a href="previousNominations.php" class="btn btn-info"><i class="fas fa-history"></i> View Previous Nominations</a>
+        </div>
 
+    </div>
+    
     <!-- Bootstrap Error Modal -->
     <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-sm">
