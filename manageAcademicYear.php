@@ -11,27 +11,32 @@ if (!isset($_SESSION['user'])) {
 }
 
 // Handle UPDATE request
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_academic_year'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'])) {
     $academicYearId = intval($_POST['academic_year_id']);
     $academicYear   = $_POST['academic_year']; // user-editable year in the edit form
-    $startDate      = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
-    $endDate        = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
+
+    // 1) Convert from user-provided (e.g. "DD-MM-YYYY HH:mm") to DB DATETIME format "YYYY-MM-DD HH:mm:ss"
+    //    But the modal uses <input type="datetime-local">, which is typically "YYYY-MM-DDTHH:MM".
+    //    We'll still parse it with strtotime, then store in "YYYY-MM-DD HH:mm:ss".
+    $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
+    $endDate   = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
     // Validate input
     if (empty($academicYear) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
         die("Error: All fields are required.");
     }
-
     if (strtotime($_POST['start_date']) >= strtotime($_POST['end_date'])) {
         die("Error: Start date must be before the end date.");
     }
 
     try {
-        $stmt = $pdo->prepare("UPDATE AcademicYear_Table 
-                               SET Academic_year = :year, 
-                                   Start_date_time = :start, 
-                                   End_date_time = :end 
-                               WHERE YearID = :id");
+        $stmt = $pdo->prepare("
+            UPDATE AcademicYear_Table
+               SET Academic_year  = :year,
+                   Start_date_time = :start,
+                   End_date_time   = :end
+             WHERE YearID = :id
+        ");
         $stmt->execute([
             ':year'  => $academicYear,
             ':start' => $startDate,
@@ -46,15 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_academic_year']
 }
 
 // Handle ADD request
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['academic_year'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['academic_year'])) {
     $academicYear = intval($_POST['academic_year']);
-    $startDate    = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
-    $endDate      = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
+
+    // 2) Convert from "DD-MM-YYYY HH:mm" to "YYYY-MM-DD HH:mm:ss"
+    $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
+    $endDate   = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
     if (empty($academicYear) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
         die("Error: All fields are required.");
     }
-    
     if (strtotime($_POST['start_date']) >= strtotime($_POST['end_date'])) {
         die("Error: Start date must be before the end date.");
     }
@@ -68,8 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['academic_year'])) {
             die("Error: This academic year ($academicYear) already exists!");
         }
 
-        $stmt = $pdo->prepare("INSERT INTO AcademicYear_Table (Academic_year, Start_date_time, End_date_time) 
-                               VALUES (:year, :start, :end)");
+        $stmt = $pdo->prepare("
+            INSERT INTO AcademicYear_Table (Academic_year, Start_date_time, End_date_time)
+            VALUES (:year, :start, :end)
+        ");
         $stmt->execute([
             ':year'  => $academicYear,
             ':start' => $startDate,
@@ -145,11 +153,15 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                     <?php 
                     // +1 logic for current academic year
                     $displayCurrentYear = $currentAcademicYear['Academic_year'] . '-' . ($currentAcademicYear['Academic_year'] + 1);
+
+                    // The DB column is stored as "YYYY-MM-DD HH:mm:ss", so we convert it for display
+                    $displayStart = date("d-m-Y H:i", strtotime($currentAcademicYear['Start_date_time']));
+                    $displayEnd   = date("d-m-Y H:i", strtotime($currentAcademicYear['End_date_time']));
                     ?>
                     <div class="alert alert-success" style="margin-top: 15px;">
                         <h5>Current Academic Year: <strong><?= $displayCurrentYear; ?></strong></h5>
-                        <p>Start Date: <strong><?= date("d-m-Y H:i", strtotime($currentAcademicYear['Start_date_time'])); ?></strong></p>
-                        <p>End Date: <strong><?= date("d-m-Y H:i", strtotime($currentAcademicYear['End_date_time'])); ?></strong></p>
+                        <p>Start Date: <strong><?= $displayStart; ?></strong></p>
+                        <p>End Date: <strong><?= $displayEnd; ?></strong></p>
                     </div>
                 <?php else: ?>
                     <div class="alert alert-danger">No Academic Year Found</div>
@@ -174,6 +186,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                         <label for="start_date" class="form-label">Start Date & Time</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="ph-calendar"></i></span>
+                            <!-- We'll show user "DD-MM-YYYY HH:mm" in the date picker -->
                             <input type="text" id="start-date-picker" name="start_date" class="form-control" placeholder="Select start date & time" required>
                         </div>
                     </div>
@@ -211,17 +224,25 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                                 <?php 
                                 // +1 logic for each row
                                 $displayYear = $year['Academic_year'] . '-' . ($year['Academic_year'] + 1);
+
+                                // Convert DB "YYYY-MM-DD HH:mm:ss" to "d-m-Y H:i"
+                                $displayStart = date("d-m-Y H:i", strtotime($year['Start_date_time']));
+                                $displayEnd   = date("d-m-Y H:i", strtotime($year['End_date_time']));
+
+                                // For the edit modal, the <input type="datetime-local"> wants "YYYY-MM-DDTHH:MM"
+                                $editStart = date("Y-m-d\TH:i", strtotime($year['Start_date_time']));
+                                $editEnd   = date("Y-m-d\TH:i", strtotime($year['End_date_time']));
                                 ?>
                                 <tr>
                                     <td><?= $displayYear; ?></td>
-                                    <td><?= date("d-m-Y H:i", strtotime($year['Start_date_time'])); ?></td>
-                                    <td><?= date("d-m-Y H:i", strtotime($year['End_date_time'])); ?></td>
+                                    <td><?= $displayStart; ?></td>
+                                    <td><?= $displayEnd; ?></td>
                                     <td>
                                         <button class="btn btn-primary btn-sm edit-btn" 
                                             data-id="<?= htmlspecialchars($year['YearID']); ?>"  
                                             data-year="<?= htmlspecialchars($year['Academic_year']); ?>"
-                                            data-start="<?= date('Y-m-d\TH:i', strtotime($year['Start_date_time'])); ?>"  
-                                            data-end="<?= date('Y-m-d\TH:i', strtotime($year['End_date_time'])); ?>">  
+                                            data-start="<?= $editStart; ?>"
+                                            data-end="<?= $editEnd; ?>">
                                             <i class="fa-solid fa-pen"></i> Edit
                                         </button>
                                     </td>
@@ -235,7 +256,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
         </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- EDIT MODAL -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -256,6 +277,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                         <!-- Start Date -->
                         <div class="mb-3">
                             <label for="start_date" class="form-label">Start Date & Time</label>
+                            <!-- We pass "YYYY-MM-DDTHH:MM" to <input type="datetime-local"> -->
                             <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
                         </div>
 
@@ -287,7 +309,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
     <!-- Initialize Date Picker -->
     <script>
         $(document).ready(function () {
-            // Initialize date pickers with month selection enabled
+            // Let the user see "DD-MM-YYYY HH:mm" in the pickers
             function initializeDatePicker(id) {
                 $(id).daterangepicker({
                     singleDatePicker: true,
@@ -297,10 +319,10 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                     showDropdowns: true,
                     autoApply: true,
                     locale: {
-                        format: 'YYYY-MM-DD HH:mm'
+                        format: 'DD-MM-YYYY HH:mm'
                     }
                 }).on('show.daterangepicker', function (ev, picker) {
-                    // Enables month/year selection
+                    // Show month/year dropdown
                     $('.daterangepicker select.monthselect').show();
                     $('.daterangepicker select.yearselect').show();
                 });
@@ -308,21 +330,19 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
 
             initializeDatePicker('#start-date-picker');
             initializeDatePicker('#end-date-picker');
-        });
-    </script>
 
-    <script>
-        $(document).ready(function () {
+            // When user clicks "Edit", populate the modal with the existing data
             $(".edit-btn").click(function () {
                 let id    = $(this).data("id");
                 let year  = $(this).data("year");
+                // We'll set the datetime-local inputs from the "YYYY-MM-DDTHH:MM" strings
                 let start = $(this).data("start");
                 let end   = $(this).data("end");
 
                 $("#academic_year_id").val(id);
                 $("#academic_year").val(year);
-                $("#start_date").val(start); 
-                $("#end_date").val(end);      
+                $("#start_date").val(start);
+                $("#end_date").val(end);
 
                 $("#editModal").modal("show");
             });
