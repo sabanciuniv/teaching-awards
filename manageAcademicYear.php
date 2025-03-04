@@ -13,9 +13,9 @@ if (!isset($_SESSION['user'])) {
 // Handle UPDATE request
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_academic_year'])) {
     $academicYearId = intval($_POST['academic_year_id']);
-    $academicYear = $_POST['academic_year'];
-    $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
-    $endDate = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
+    $academicYear   = $_POST['academic_year']; // user-editable year in the edit form
+    $startDate      = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
+    $endDate        = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
     // Validate input
     if (empty($academicYear) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
@@ -33,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_academic_year']
                                    End_date_time = :end 
                                WHERE YearID = :id");
         $stmt->execute([
-            ':year' => $academicYear,
+            ':year'  => $academicYear,
             ':start' => $startDate,
-            ':end' => $endDate,
-            ':id' => $academicYearId
+            ':end'   => $endDate,
+            ':id'    => $academicYearId
         ]);
         echo "<script>alert('Academic Year Updated Successfully!'); window.location.href='manageAcademicYear.php';</script>";
         exit();
@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_academic_year']
 // Handle ADD request
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['academic_year'])) {
     $academicYear = intval($_POST['academic_year']);
-    $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
-    $endDate = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
+    $startDate    = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
+    $endDate      = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
     if (empty($academicYear) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
         die("Error: All fields are required.");
@@ -58,13 +58,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['academic_year'])) {
     if (strtotime($_POST['start_date']) >= strtotime($_POST['end_date'])) {
         die("Error: Start date must be before the end date.");
     }
-    
+
+    // Check if this academic year already exists
     try {
-        $stmt = $pdo->prepare("INSERT INTO AcademicYear_Table (Academic_year, Start_date_time, End_date_time) VALUES (:year, :start, :end)");
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM AcademicYear_Table WHERE Academic_year = :year");
+        $checkStmt->execute([':year' => $academicYear]);
+        $exists = $checkStmt->fetchColumn();
+        if ($exists > 0) {
+            die("Error: This academic year ($academicYear) already exists!");
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO AcademicYear_Table (Academic_year, Start_date_time, End_date_time) 
+                               VALUES (:year, :start, :end)");
         $stmt->execute([
-            ':year' => $academicYear,
+            ':year'  => $academicYear,
             ':start' => $startDate,
-            ':end' => $endDate
+            ':end'   => $endDate
         ]);
 
         echo "<script>alert('New Academic Year Added Successfully!'); window.location.href='adminDashboard.php';</script>"; 
@@ -73,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['academic_year'])) {
         die("SQL Error: " . $e->getMessage());
     }
 }
-
 
 // Fetch academic years
 $academicYears = [];
@@ -152,16 +160,13 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                 <!-- Add New Academic Year Form -->
                 <h5 class="mb-3">Add New Academic Year</h5>
                 <form method="POST" action="">
-                    <!-- Select Academic Year -->
+                    <!-- Academic Year -->
                     <div class="mb-3">
                         <label for="academic_year" class="form-label">Academic Year</label>
-                        <select class="form-select" id="academic-year-select" name="academic_year" required>
-                            <option value="" disabled selected>Select Academic Year</option>
-                            <option value="2023-2024">2023-2024</option>
-                            <option value="2024-2025">2024-2025</option>
-                            <option value="2025-2026">2025-2026</option>
-                            <option value="2026-2027">2026-2027</option>
-                        </select>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="ph-calendar"></i></span>
+                            <input type="number" id="academic_year" name="academic_year" class="form-control" placeholder="Enter academic year (e.g. 2023)" required>
+                        </div>
                     </div>
 
                     <!-- Start Date & Time -->
@@ -186,7 +191,6 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                         <i class="fa-solid fa-plus"></i> Add Academic Year
                     </button>
                 </form>
-
 
                 <hr>
 
@@ -220,7 +224,6 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                                             data-end="<?= date('Y-m-d\TH:i', strtotime($year['End_date_time'])); ?>">  
                                             <i class="fa-solid fa-pen"></i> Edit
                                         </button>
-
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -291,13 +294,13 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                     timePicker: true,
                     timePickerIncrement: 15,
                     timePicker24Hour: true,
-                    showDropdowns: true,   // Enables dropdown for year selection
-                    autoApply: true,       // Auto-applies the selected date
+                    showDropdowns: true,
+                    autoApply: true,
                     locale: {
                         format: 'YYYY-MM-DD HH:mm'
                     }
                 }).on('show.daterangepicker', function (ev, picker) {
-                    // Enables month selection when clicking on the month name
+                    // Enables month/year selection
                     $('.daterangepicker select.monthselect').show();
                     $('.daterangepicker select.yearselect').show();
                 });
@@ -308,14 +311,13 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
         });
     </script>
 
-
     <script>
         $(document).ready(function () {
             $(".edit-btn").click(function () {
-                let id = $(this).data("id");
-                let year = $(this).data("year");
+                let id    = $(this).data("id");
+                let year  = $(this).data("year");
                 let start = $(this).data("start");
-                let end = $(this).data("end");
+                let end   = $(this).data("end");
 
                 $("#academic_year_id").val(id);
                 $("#academic_year").val(year);
