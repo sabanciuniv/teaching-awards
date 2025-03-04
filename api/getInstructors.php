@@ -38,8 +38,8 @@ try {
         exit();
     }
 
-    $currentAcademicYear = $academicYear['Academic_year'] . '02'; //get the current year in academic year table then add '02' for the spring term
-    
+    $currentAcademicYear = $academicYear['Academic_year'] . '%'; 
+        
     // Fetch StudentID of the logged-in user
     $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");
     $stmtStudent->execute(['suNetUsername' => $suNetUsername]);
@@ -50,7 +50,7 @@ try {
         exit();
     }
 
-    $studentID = $student['StudentID'];
+    $studentID = $student['id'];
 
     // Fetch CourseIDs that the student is enrolled in
     $stmtCourses = $pdo->prepare("SELECT CourseID FROM Student_Course_Relation WHERE `student.id` = :studentID AND EnrollmentStatus = 'enrolled'");
@@ -91,7 +91,7 @@ try {
         WHERE i.Role = 'Instructor' 
         AND i.Status = 'Etkin' 
         AND r.CategoryID = ?
-        AND r.Term = ?
+        AND r.Term LIKE ?
         AND r.CourseID IN (" . implode(',', array_fill(0, count($courses), '?')) . ")
     ";
 

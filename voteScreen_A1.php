@@ -12,7 +12,6 @@ if (!isset($_SESSION['user'])) {
 $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A1';
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>

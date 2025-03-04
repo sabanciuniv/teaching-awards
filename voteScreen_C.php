@@ -171,7 +171,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'C'
         // { indexOfInstructor: "1"|"2"|"3" }
                // Not strictly used in this flow, but kept if needed for any redirection
                function redirectToThankYouPage() {
-            const categoryId = 'A1'; // Adjust dynamically if needed
+            const categoryId = 'C'; // Adjust dynamically if needed
             window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
         }
 
