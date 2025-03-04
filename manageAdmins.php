@@ -46,12 +46,23 @@ if (!isset($_SESSION['user'])) {
             max-width: 400px;
             margin-bottom: 15px;
         }
+        /* Optional styling for pagination links */
+        .pagination {
+            margin-top: 1rem;
+        }
+        .pagination .page-item .page-link {
+            color: #45748a;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #45748a;
+            border-color: #45748a;
+            color: #fff;
+        }
     </style>
 </head>
 
 <?php
     // Using $backLink for a "Back" button in navbar
-    // Adjust as needed
     $backLink = "adminDashboard.php"; 
     include 'navbar.php'; 
 ?>
@@ -90,6 +101,11 @@ if (!isset($_SESSION['user'])) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- PAGINATION CONTROLS -->
+            <nav>
+                <ul class="pagination" id="paginationControls"></ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -125,6 +141,11 @@ if (!isset($_SESSION['user'])) {
 <!-- Main Script -->
 <script>
 $(document).ready(function () {
+    // Global variables for pagination
+    let allAdmins = [];
+    let currentPage = 1;
+    const pageSize = 9; // 9 admins per page
+
     // 1) Fetch Admins from API
     function fetchAdmins() {
         $.ajax({
@@ -132,43 +153,14 @@ $(document).ready(function () {
             method: "GET",
             dataType: "json",
             success: function (data) {
-                $("#adminTable").empty();
-                if (data.length > 0) {
-                    data.forEach(function (admin) {
-                        // Build table row
-
-                        // If RemovedDate is set, display the info. Otherwise, leave blank.
-                        let removedBy = admin.RemovedBy ? admin.RemovedBy : "";
-                        let removedDate = admin.RemovedDate ? admin.RemovedDate : "";
-
-                        // If the admin is removed, disable the delete button 
-                        // or show something else instead of the button.
-                        let actionButtons = "";
-                        if (admin.RemovedDate) {
-                            actionButtons = `<button class="btn btn-secondary btn-sm" disabled>Removed</button>`;
-                        } else {
-                            actionButtons = `
-                                <button class="btn btn-danger btn-sm delete-btn" data-username="${admin.AdminSuUsername}">
-                                    <i class="fa-solid fa-trash"></i> Delete
-                                </button>
-                            `;
-                        }
-
-                        $("#adminTable").append(`
-                            <tr>
-                                <td>${admin.AdminSuUsername}</td>
-                                <td>${admin.Role}</td>
-                                <td>${admin.GrantedBy ? admin.GrantedBy : ""}</td>
-                                <td>${admin.GrantedDate ? admin.GrantedDate : ""}</td>
-                                <td>${removedBy}</td>
-                                <td>${removedDate}</td>
-                                <td>${actionButtons}</td>
-                            </tr>
-                        `);
-                    });
-                } else {
-                    $("#adminTable").append('<tr><td colspan="7" class="text-center">No admins found</td></tr>');
-                }
+                // Store fetched data
+                allAdmins = data || [];
+                // Sort in ascending order by GrantedDate so the first added appear first
+                allAdmins.sort(function(a, b) {
+                    return new Date(b.GrantedDate) - new Date(a.GrantedDate);
+                });
+                // Initially render page 1
+                renderPage(1);
             },
             error: function (xhr, status, error) {
                 console.error("Error fetching admins:", error);
@@ -176,21 +168,114 @@ $(document).ready(function () {
         });
     }
 
-    // Call fetchAdmins on page load
-    fetchAdmins();
-
-    // 2) Search Filter
-    $("#searchBox").on("keyup", function () {
-        var value = $(this).val().toLowerCase();
-        $("#adminTable tr").filter(function () {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+    // 2) Render a given page of the (filtered) admin data
+    function renderPage(page) {
+        // Filter by search term
+        const searchTerm = $("#searchBox").val().toLowerCase();
+        let filtered = allAdmins.filter(admin => {
+            const combined = (admin.AdminSuUsername + admin.Role + admin.GrantedBy + admin.GrantedDate + (admin.RemovedBy || "") + (admin.RemovedDate || "")).toLowerCase();
+            return combined.includes(searchTerm);
         });
+
+        // Calculate pagination
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / pageSize);
+
+        // Ensure page is in range
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages || 1;
+        currentPage = page;
+
+        // Slice data for current page
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageData = filtered.slice(startIndex, endIndex);
+
+        // Build table rows
+        $("#adminTable").empty();
+        if (pageData.length === 0) {
+            $("#adminTable").append('<tr><td colspan="7" class="text-center">No admins found</td></tr>');
+        } else {
+            pageData.forEach(function (admin) {
+                let removedBy = admin.RemovedBy ? admin.RemovedBy : "";
+                let removedDate = admin.RemovedDate ? admin.RemovedDate : "";
+                let actionButtons = "";
+                if (admin.RemovedDate) {
+                    actionButtons = `<button class="btn btn-secondary btn-sm" disabled>Removed</button>`;
+                } else {
+                    actionButtons = `
+                        <button class="btn btn-danger btn-sm delete-btn" data-username="${admin.AdminSuUsername}">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    `;
+                }
+                $("#adminTable").append(`
+                    <tr>
+                        <td>${admin.AdminSuUsername}</td>
+                        <td>${admin.Role}</td>
+                        <td>${admin.GrantedBy || ""}</td>
+                        <td>${admin.GrantedDate || ""}</td>
+                        <td>${removedBy}</td>
+                        <td>${removedDate}</td>
+                        <td>${actionButtons}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        // Render pagination controls
+        renderPaginationControls(totalPages, page);
+    }
+
+    // 3) Render pagination links
+    function renderPaginationControls(totalPages, current) {
+        $("#paginationControls").empty();
+        if (totalPages <= 1) return;
+
+        // Previous button
+        const prevDisabled = current === 1 ? "disabled" : "";
+        $("#paginationControls").append(`
+            <li class="page-item ${prevDisabled}">
+                <a class="page-link" href="#" aria-label="Previous" data-page="${current - 1}">&laquo;</a>
+            </li>
+        `);
+
+        // Page number buttons
+        for (let i = 1; i <= totalPages; i++) {
+            const active = (i === current) ? "active" : "";
+            $("#paginationControls").append(`
+                <li class="page-item ${active}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+
+        // Next button
+        const nextDisabled = current === totalPages ? "disabled" : "";
+        $("#paginationControls").append(`
+            <li class="page-item ${nextDisabled}">
+                <a class="page-link" href="#" aria-label="Next" data-page="${current + 1}">&raquo;</a>
+            </li>
+        `);
+    }
+
+    // 4) Handle pagination link clicks
+    $(document).on("click", "#paginationControls .page-link", function (e) {
+        e.preventDefault();
+        const newPage = parseInt($(this).data("page"));
+        if (!isNaN(newPage)) {
+            renderPage(newPage);
+        }
     });
 
-    // 3) "Delete" Admin via AJAX (actually mark as removed, if you updated deleteAdmin.php)
+    // 5) Live search
+    $("#searchBox").on("keyup", function () {
+        renderPage(1);
+    });
+
+    // 6) Delete Admin via AJAX
     $(document).on("click", ".delete-btn", function () {
         var username = $(this).data("username");
-
         if (confirm("Are you sure you want to remove this admin?")) {
             $.ajax({
                 url: "api/deleteAdmin.php",
@@ -198,7 +283,7 @@ $(document).ready(function () {
                 data: { delete_admin: username },
                 success: function (response) {
                     alert("Admin removed successfully!");
-                    fetchAdmins(); // Refresh the table
+                    fetchAdmins();
                 },
                 error: function (xhr, status, error) {
                     alert("Error removing admin: " + error);
@@ -207,10 +292,9 @@ $(document).ready(function () {
         }
     });
 
-    // 4) Add Admin via AJAX
+    // 7) Add Admin via AJAX
     $("#addAdminForm").on("submit", function (event) {
         event.preventDefault();
-
         $.ajax({
             url: "api/addAdmin.php",
             method: "POST",
@@ -224,7 +308,7 @@ $(document).ready(function () {
                     alert(response.message);
                     $("#addAdminForm")[0].reset();
                     $("#addAdminModal").modal("hide");
-                    fetchAdmins(); // Refresh the table
+                    fetchAdmins();
                 } else {
                     alert("Error: " + response.message);
                 }
@@ -235,6 +319,9 @@ $(document).ready(function () {
             }
         });
     });
+
+    // Initial load
+    fetchAdmins();
 });
 </script>
 
