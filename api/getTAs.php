@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 
 try {
     $stmt = $pdo->query("SELECT id, Name, Mail, Role, Status FROM Candidate_Table WHERE Role = 'TA'");
-    $instructors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $TAs  = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'status' => 'success',
