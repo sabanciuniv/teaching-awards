@@ -184,6 +184,7 @@ if (!isset($_SESSION['user'])) {
         .col-md-6.d-flex .card {
             flex: 1; /* fill available space equally */
         }
+        
     </style>
 </head>
 <body>
@@ -274,7 +275,7 @@ if (!isset($_SESSION['user'])) {
                                 </div>
                             </div>
 
-                            <!-- NEW: Checkbox to accept rules and data sharing -->
+                            <!--Checkbox to accept rules and data sharing -->
                             <div class="form-check mt-4 mb-3">
                                 <!-- Make the label text black -->
                                 <input class="form-check-input" type="checkbox" id="rulesAccepted" name="rulesAccepted" value="true">
@@ -293,7 +294,7 @@ if (!isset($_SESSION['user'])) {
             </div>
         </div>
         <div class="btn-view">
-            <a href="previousNominations.php" class="btn btn-info"><i class="fas fa-history"></i> View Previous Nominations</a>
+            <a href="previousNominations.php" class="btn btn-secondary text-white"><i class="fas fa-history"></i> View Previous Nominations</a>
         </div>
 
     </div>

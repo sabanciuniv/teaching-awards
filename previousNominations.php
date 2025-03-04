@@ -127,10 +127,33 @@ try {
             color: black;
         }
 
-
         .back-button {
             margin-top: 20px;
         }
+
+        .nominations-container {
+            max-height: 500px; /* Adjust height as needed */
+            overflow-y: auto; /* Enable vertical scrolling */
+            overflow-x: hidden; /* Hide horizontal scrolling */
+            padding-right: 10px; /* Prevent scrollbar cutoff */
+            margin-bottom: 20px; /* Add spacing below */
+        }
+
+        /* Optional: Style the scrollbar */
+        .nominations-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .nominations-container::-webkit-scrollbar-thumb {
+            background-color: #6c757d; /* Secondary color */
+            border-radius: 5px;
+        }
+
+        .nominations-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+
     </style>
 </head>
 <body>
@@ -143,48 +166,50 @@ try {
         <?php if (isset($noNominations)) { ?>
             <div class="alert alert-info text-center">You have not made any nominations yet.</div>
         <?php } else { ?>
-            <div class="accordion">
-            <?php foreach ($nominations as $index => $nomination) { ?>
-                <div class="accordion-item bg-secondary text-white">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button bg-secondary text-white fw-semibold collapsed"
-                                type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapsed_item<?php echo $index; ?>">
-                            Nomination for <?php echo htmlspecialchars($nomination['NomineeName'] . " " . $nomination['NomineeSurname']); ?>
-                        </button>
-                    </h2>
-                    <div id="collapsed_item<?php echo $index; ?>" class="accordion-collapse collapse">
-                        <div class="accordion-body bg-light text-dark">
-                            <p><strong>Nominee Name:</strong> <?php echo htmlspecialchars($nomination['NomineeName']); ?></p>
-                            <p><strong>Nominee Surname:</strong> <?php echo htmlspecialchars($nomination['NomineeSurname']); ?></p>
-                            <p><strong>Submission Date:</strong> <?php echo htmlspecialchars($nomination['SubmissionDate']); ?></p>
+            <div class="nominations-container"> <!-- Scrollable Container -->
+                <div class="accordion">
+                <?php foreach ($nominations as $index => $nomination) { ?>
+                    <div class="accordion-item bg-secondary text-white">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-secondary text-white fw-semibold collapsed"
+                                    type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapsed_item<?php echo $index; ?>">
+                                Nomination for <?php echo htmlspecialchars($nomination['NomineeName'] . " " . $nomination['NomineeSurname']); ?>
+                            </button>
+                        </h2>
+                        <div id="collapsed_item<?php echo $index; ?>" class="accordion-collapse collapse">
+                            <div class="accordion-body bg-light text-dark">
+                                <p><strong>Nominee Name:</strong> <?php echo htmlspecialchars($nomination['NomineeName']); ?></p>
+                                <p><strong>Nominee Surname:</strong> <?php echo htmlspecialchars($nomination['NomineeSurname']); ?></p>
+                                <p><strong>Submission Date:</strong> <?php echo htmlspecialchars($nomination['SubmissionDate']); ?></p>
 
-                            <!-- Document Downloads -->
-                            <?php if (!empty($nomination['DocumentCodedName'])) { ?>
-                                <p><strong>Uploaded Documents:</strong></p>
-                                <ul class="document-list">
-                                    <li>
-                                        <a href="uploads/<?php echo urlencode($nomination['DocumentCodedName']); ?>"
-                                        download="<?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>">
-                                            <?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>
-                                        </a>
-                                    </li>
-                                </ul>
-                            <?php } else { ?>
-                                <p><strong>Uploaded Documents:</strong> No files uploaded</p>
-                            <?php } ?>
+                                <!-- Document Downloads -->
+                                <?php if (!empty($nomination['DocumentCodedName'])) { ?>
+                                    <p><strong>Uploaded Documents:</strong></p>
+                                    <ul class="document-list">
+                                        <li>
+                                            <a href="uploads/<?php echo urlencode($nomination['DocumentCodedName']); ?>"
+                                            download="<?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>">
+                                                <?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                <?php } else { ?>
+                                    <p><strong>Uploaded Documents:</strong> No files uploaded</p>
+                                <?php } ?>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <?php } ?>
-        </div>
+                <?php } ?>
+            </div>
 
 
         <?php } ?>
 
-        <div class="text-center back-button">
-            <a href="index.php" class="btn btn-secondary"> Return to Main Page</a>
-        </div>
+        
+    </div>
+    <div class="text-center back-button">
+        <a href="index.php" class="btn btn-secondary"> Return to Main Page</a>
     </div>
 
 </body>
