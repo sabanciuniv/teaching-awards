@@ -41,7 +41,7 @@ try {
     $currentAcademicYear = $academicYear['Academic_year'] . '02'; //get the current year in academic year table then add '02' for the spring term
     
     // Fetch StudentID of the logged-in user
-    $stmtStudent = $pdo->prepare("SELECT StudentID FROM Student_Table WHERE SuNET_Username = :suNetUsername");
+    $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");
     $stmtStudent->execute(['suNetUsername' => $suNetUsername]);
     $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
 
@@ -53,7 +53,7 @@ try {
     $studentID = $student['StudentID'];
 
     // Fetch CourseIDs that the student is enrolled in
-    $stmtCourses = $pdo->prepare("SELECT CourseID FROM Student_Course_Relation WHERE StudentID = :studentID AND EnrollmentStatus = 'enrolled'");
+    $stmtCourses = $pdo->prepare("SELECT CourseID FROM Student_Course_Relation WHERE `student.id` = :studentID AND EnrollmentStatus = 'enrolled'");
     $stmtCourses->execute(['studentID' => $studentID]);
     $courses = $stmtCourses->fetchAll(PDO::FETCH_COLUMN);
 
