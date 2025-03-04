@@ -299,8 +299,7 @@ if (!isset($_SESSION['user'])) {
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="errorModalLabel">Oh snap!</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="errorModalLabel">Something went wrong!</h5>
                 </div>
                 <div class="modal-body" id="errorModalMessage"></div>
                 <div class="modal-footer">
@@ -423,7 +422,7 @@ if (!isset($_SESSION['user'])) {
         .then(data => {
             console.log("Server response:", data);
             if (data.includes("Error")) {
-                showError("Submission failed!");
+                showError("Submission failed! Wrong file format.");
             } else {
                 window.location.href = `thankYou.php?context=nominate`;
             }
