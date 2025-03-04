@@ -137,3 +137,42 @@ WHERE CandidateCourseID NOT IN (
     FROM Candidate_Course_Relation
     GROUP BY CourseID, CandidateID, Academic_Year, CategoryID, Term
 );
+
+
+--student course relation query
+
+INSERT INTO Student_Category_Relation (student_id, categoryID)
+SELECT DISTINCT scr.`student.id`,
+    CASE
+        -- Category ID 1: Specific courses
+        WHEN CONCAT(c.Subject_Code, ' ', c.Course_Number) IN
+            ('TLL 101', 'TLL 102', 'AL 102')
+            THEN 1
+
+        -- Category ID 2: Another set of courses
+        WHEN CONCAT(c.Subject_Code, ' ', c.Course_Number) IN
+            ('SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101',
+             'NS 102', 'HIST 191', 'HIST 192')
+            THEN 2
+
+        -- Category ID 4: ENG courses
+        WHEN CONCAT(c.Subject_Code, ' ', c.Course_Number) IN
+            ('ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004')
+            THEN 4
+
+        -- Category ID 5: TA-related courses
+        WHEN CONCAT(c.Subject_Code, ' ', c.Course_Number) IN
+            ('AL 102', 'CIP 101N', 'HIST 191', 'HIST 192', 'IF 100', 'MATH 101',
+             'MATH 102', 'NS 101', 'NS 102', 'SPS 101', 'SPS 102')
+            THEN 5
+
+        -- Category ID 3: Everything else
+        WHEN CONCAT(c.Subject_Code, ' ', c.Course_Number) NOT IN
+            ('TLL 101', 'TLL 102', 'AL 102',
+             'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101',
+             'NS 102', 'HIST 191', 'HIST 192', 'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004')
+            THEN 3
+    END AS categoryID
+FROM Student_Course_Relation scr
+JOIN Courses_Table c ON scr.CourseID = c.CourseID
+HAVING categoryID IS NOT NULL;

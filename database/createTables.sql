@@ -117,3 +117,12 @@ CREATE TABLE WinnerList_Table (
     FOREIGN KEY (WinnerID) REFERENCES Candidate_Table(id),
     FOREIGN KEY (CategoryID) REFERENCES Category_Table(CategoryID)
 );
+
+CREATE TABLE Student_Category_Relation (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    categoryID INT NOT NULL,
+    FOREIGN KEY (student_id) REFERENCES Student_Table(id) ON DELETE CASCADE,
+    FOREIGN KEY (categoryID) REFERENCES Category_Table(CategoryID) ON DELETE CASCADE
+);
+

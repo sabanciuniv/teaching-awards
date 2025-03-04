@@ -130,38 +130,42 @@ if (!isset($_SESSION['user'])) {
     <script>
         async function fetchCategories() {
             try {
-                const response = await fetch('api/getCategories.php');
+                const response = await fetch('api/getAllowedCategories.php'); // Fetch from the correct API
                 const data = await response.json();
 
-                if (data.status === "success") {
+                if (data.status === "success" && data.categories.length > 0) {
                     renderCategories(data.categories);
                 } else {
-                    console.error("Error fetching categories:", data.message);
+                    console.error("No categories found:", data.message);
+                    document.getElementById('categories-container').innerHTML = "<p>No available voting categories.</p>";
                 }
             } catch (error) {
                 console.error("Fetch Error:", error);
+                document.getElementById('categories-container').innerHTML = "<p>Error loading categories.</p>";
             }
         }
 
         function renderCategories(categories) {
             const container = document.getElementById('categories-container');
-            container.innerHTML = '';
+            container.innerHTML = ''; // Clear previous content
 
             categories.forEach(category => {
                 const card = document.createElement('div');
                 card.className = 'card category-card bg-secondary';
-                card.onclick = () => window.location.href = `voteScreen_${category.id}.php`;
+                card.onclick = () => window.location.href = `voteScreen_${category.CategoryCode}.php`;
 
                 const cardBody = document.createElement('div');
                 cardBody.className = 'card-body';
-                cardBody.textContent = category.name;
+                cardBody.textContent = category.CategoryDescription; // Use API field names
 
                 card.appendChild(cardBody);
                 container.appendChild(card);
             });
-        }
+}
 
-        document.addEventListener('DOMContentLoaded', fetchCategories);
+    // Load categories when the page loads
+    document.addEventListener('DOMContentLoaded', fetchCategories);
+
     </script>
 
 
