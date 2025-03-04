@@ -193,8 +193,8 @@ try {
 
             <button 
                 class="btn btn-secondary w-100 mb-2" 
-                onclick="alert('Sync instructor-course functionality not implemented yet.')">
-                Sync instructor-course
+                onclick="window.location.href='configurationPage.php';">
+                Configuration Page
             </button>
             <a href="reportPage.php" style="text-decoration: none;">
                 <button class="btn btn-secondary w-100">Get Reports</button>
