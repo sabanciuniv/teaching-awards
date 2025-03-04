@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_academic_year']
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
     $endDate = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
-        // Validate input
+    // Validate input
     if (empty($academicYear) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
         die("Error: All fields are required.");
     }
@@ -73,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['academic_year'])) {
         die("SQL Error: " . $e->getMessage());
     }
 }
-
 
 
 // Fetch academic years
@@ -135,8 +134,12 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
 
                 <!-- Current Academic Year -->
                 <?php if ($currentAcademicYear): ?>
+                    <?php 
+                    // +1 logic for current academic year
+                    $displayCurrentYear = $currentAcademicYear['Academic_year'] . '-' . ($currentAcademicYear['Academic_year'] + 1);
+                    ?>
                     <div class="alert alert-success" style="margin-top: 15px;">
-                        <h5>Current Academic Year: <strong><?= $currentAcademicYear['Academic_year']; ?></strong></h5>
+                        <h5>Current Academic Year: <strong><?= $displayCurrentYear; ?></strong></h5>
                         <p>Start Date: <strong><?= date("d-m-Y H:i", strtotime($currentAcademicYear['Start_date_time'])); ?></strong></p>
                         <p>End Date: <strong><?= date("d-m-Y H:i", strtotime($currentAcademicYear['End_date_time'])); ?></strong></p>
                     </div>
@@ -201,8 +204,12 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                         </thead>
                         <tbody>
                             <?php foreach ($academicYears as $year): ?>
+                                <?php 
+                                // +1 logic for each row
+                                $displayYear = $year['Academic_year'] . '-' . ($year['Academic_year'] + 1);
+                                ?>
                                 <tr>
-                                    <td><?= $year['Academic_year']; ?></td>
+                                    <td><?= $displayYear; ?></td>
                                     <td><?= date("d-m-Y H:i", strtotime($year['Start_date_time'])); ?></td>
                                     <td><?= date("d-m-Y H:i", strtotime($year['End_date_time'])); ?></td>
                                     <td>
@@ -277,28 +284,28 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
     <!-- Initialize Date Picker -->
     <script>
         $(document).ready(function () {
-        // Initialize date pickers with month selection enabled
-        function initializeDatePicker(id) {
-            $(id).daterangepicker({
-                singleDatePicker: true,
-                timePicker: true,
-                timePickerIncrement: 15,
-                timePicker24Hour: true,
-                showDropdowns: true,   // Enables dropdown for year selection
-                autoApply: true,       // Auto-applies the selected date
-                locale: {
-                    format: 'YYYY-MM-DD HH:mm'
-                }
-            }).on('show.daterangepicker', function (ev, picker) {
-                // Enables month selection when clicking on the month name
-                $('.daterangepicker select.monthselect').show();
-                $('.daterangepicker select.yearselect').show();
-            });
-        }
+            // Initialize date pickers with month selection enabled
+            function initializeDatePicker(id) {
+                $(id).daterangepicker({
+                    singleDatePicker: true,
+                    timePicker: true,
+                    timePickerIncrement: 15,
+                    timePicker24Hour: true,
+                    showDropdowns: true,   // Enables dropdown for year selection
+                    autoApply: true,       // Auto-applies the selected date
+                    locale: {
+                        format: 'YYYY-MM-DD HH:mm'
+                    }
+                }).on('show.daterangepicker', function (ev, picker) {
+                    // Enables month selection when clicking on the month name
+                    $('.daterangepicker select.monthselect').show();
+                    $('.daterangepicker select.yearselect').show();
+                });
+            }
 
-        initializeDatePicker('#start-date-picker');
-        initializeDatePicker('#end-date-picker');
-    });
+            initializeDatePicker('#start-date-picker');
+            initializeDatePicker('#end-date-picker');
+        });
     </script>
 
 
@@ -318,7 +325,6 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                 $("#editModal").modal("show");
             });
         });
-
     </script>
 
 </body>
