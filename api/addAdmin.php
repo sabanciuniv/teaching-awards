@@ -20,46 +20,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     try {
-        // STEP 1) Check if row for this username already exists (active or removed).
+        // STEP 1) Check if there's ANY active (non-Removed) row for this username.
+        // If yes, we do NOT allow re-adding to avoid duplicates.
         $checkStmt = $pdo->prepare("
-            SELECT checkRole 
+            SELECT AdminID, checkRole 
             FROM Admin_Table 
             WHERE AdminSuUsername = :username
+              AND checkRole != 'Removed'
+            LIMIT 1
         ");
         $checkStmt->execute([":username" => $adminUsername]);
-        $existingRow = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        $activeRow = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($existingRow) {
-            // The row exists. Is it currently removed or active?
-            if ($existingRow['checkRole'] !== 'Removed') {
-                // That means it's still active
-                echo json_encode([
-                    "status"  => "error",
-                    "message" => "Admin username already exists and is active."
-                ]);
-                exit();
-            } else {
-                // The row is "Removed", so let's do a real DELETE to free the username
-                $deleteStmt = $pdo->prepare("
-                    DELETE FROM Admin_Table 
-                    WHERE AdminSuUsername = :username
-                ");
-                $deleteStmt->execute([":username" => $adminUsername]);
-            }
+        if ($activeRow) {
+            // That means there's already a row that isn't removed
+            echo json_encode([
+                "status"  => "error",
+                "message" => "Admin username already exists and is active."
+            ]);
+            exit();
         }
 
-        // STEP 2) Now that there's no row for this username, do a fresh INSERT
+        // STEP 2) If we get here, either no row exists, or only 'Removed' row(s) exist for that username.
+        // Insert a brand new row, preserving the old records.
         $stmt = $pdo->prepare("
             INSERT INTO Admin_Table (AdminSuUsername, Role, GrantedBy, checkRole, GrantedDate)
             VALUES (:username, :role, :grantedBy, :checkRole, NOW())
         ");
-        // If you want checkRole to match the role, do that. 
-        // Or if you want it to literally say 'Active', do that instead.
         $stmt->execute([
             ":username"  => $adminUsername,
             ":role"      => $role,
             ":grantedBy" => $grantedBy,
-            ":checkRole" => $role  // or 'Active'
+            // If you want checkRole to literally be the role, use $role,
+            // or if you want it to be 'Active', you can do 'Active' here.
+            ":checkRole" => $role
         ]);
 
         echo json_encode([
