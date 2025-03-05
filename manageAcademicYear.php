@@ -15,9 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'
     $academicYearId = intval($_POST['academic_year_id']);
     $academicYear   = $_POST['academic_year']; // user-editable year in the edit form
 
-    // 1) Convert from user-provided (e.g. "DD-MM-YYYY HH:mm") to DB DATETIME format "YYYY-MM-DD HH:mm:ss"
-    //    But the modal uses <input type="datetime-local">, which is typically "YYYY-MM-DDTHH:MM".
-    //    We'll still parse it with strtotime, then store in "YYYY-MM-DD HH:mm:ss".
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
     $endDate   = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
@@ -331,11 +328,11 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
             initializeDatePicker('#start-date-picker');
             initializeDatePicker('#end-date-picker');
 
-            // When user clicks "Edit", populate the modal with the existing data
+           
             $(".edit-btn").click(function () {
                 let id    = $(this).data("id");
                 let year  = $(this).data("year");
-                // We'll set the datetime-local inputs from the "YYYY-MM-DDTHH:MM" strings
+                
                 let start = $(this).data("start");
                 let end   = $(this).data("end");
 
