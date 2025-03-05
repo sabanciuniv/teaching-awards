@@ -17,17 +17,17 @@ try {
     }
 
     $username = ($_SESSION['user']); //
-    $stmt = $pdo->prepare("SELECT StudentID FROM Student_Table WHERE SuNET_Username = ?");
+    $stmt = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = ?");
     $stmt->execute([$username]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$student || !isset($student['StudentID'])) {
+    if (!$student || !isset($student['id'])) {
         error_log("User not found in Student_Table. Username: $username");
         echo json_encode(["status" => "error", "message" => "User not found in Student_Table."]);
         exit();
     }
 
-    $voterID = $student['StudentID']; 
+    $voterID = $student['id']; 
 
     $jsonInput = file_get_contents('php://input');
     $data = json_decode($jsonInput, true);
@@ -93,13 +93,20 @@ try {
 
         $rank = $vote['rank'];
         $points = isset($pointsDistribution[$rank - 1]) ? $pointsDistribution[$rank - 1] : 0;
+        
+        $result = $insertStmt->execute([$academicYearID, $voterID, $vote['candidateID'], $categoryID, $points, $rank]);
 
-        $insertStmt->execute([$academicYearID, $voterID, $vote['candidateID'], $categoryID, $points, $rank]);
+        if (!$result) {
+            $errorInfo = $insertStmt->errorInfo();
+            error_log("Vote insert failed: " . json_encode($errorInfo));
+            echo json_encode(["status" => "error", "message" => "Vote insert failed: " . json_encode($errorInfo)]);
+            $pdo->rollBack(); // Ensure rollback on failure
+            exit();
+        } else {
+            error_log("Vote inserted successfully: VoterID=$voterID, CandidateID={$vote['candidateID']}, Rank=$rank, Points=$points");
+        }
+    
     }
-
-    $voteColumn = $categoryCode . "_Vote"; 
-    $updateStmt = $pdo->prepare("UPDATE Student_Table SET `$voteColumn` = 'Voted' WHERE StudentID = ?");
-    $updateStmt->execute([$voterID]);
 
     $pdo->commit();
 
