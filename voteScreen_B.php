@@ -8,10 +8,8 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-// Get category and term from the URL or set default values
 $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B';
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -28,6 +26,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script> <!-- SortableJS for Drag & Drop -->
 
     <style>
         /* General Page Styles */
@@ -154,20 +153,15 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
         <div class="row justify-content-center mt-4" id="instructors-list">
             <p class="text-muted">Loading instructors...</p>
         </div>
+        <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
+    </div>
 
-    <!-- Submit Button -->
-    <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
     <!-- JavaScript (Bootstrap) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom JavaScript for Ranking & Removal Logic -->
     <script>
-        // Not strictly used in this flow, but kept if needed for any redirection
-        function redirectToThankYouPage() {
-            const categoryId = 'A1'; // Adjust dynamically if needed
-            window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
-        }
 
         // Track selected ranks { "instructorIndex": "1"|"2"|"3" }
         let selectedRanks = {};
@@ -338,8 +332,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
 
         // Submit the vote data
         async function submitVote() {
-            console.log("Selected Ranks:", selectedRanks); // Debugging step
-
+            console.log("Selected Ranks:", selectedRanks);
             const categoryId = 'B';
             const academicYear = await getAcademicYear(); // get academic year dynamically
             if(!academicYear)
@@ -347,30 +340,23 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
                 alert("failed to get the academic year.");
                 return;
             }
-            let votes = [];
 
+            let votes = [];
             Object.entries(selectedRanks).forEach(([index, rank]) => {
                 let candidateButton = document.querySelector(`#rank-btn-${index}`);
                 if (candidateButton) {
                     let candidateID = candidateButton.getAttribute("data-candidate-id");
-                    console.log(`CandidateID for index ${index}:`, candidateID); // Debugging step
-
-                    if (candidateID && candidateID.trim() !== "") {
+                    if (candidateID) {
                         votes.push({ candidateID, rank });
-                    } else {
-                        console.error(`Missing CandidateID for index ${index}`);
                     }
                 }
             });
-
-            console.log("Votes Data being sent:", votes); // Debugging step
 
             if (votes.length === 0) {
                 alert("Please rank at least one candidate.");
                 return;
             }
 
-            // Send the vote data as JSON to submitVote.php
             fetch("submitVote.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -393,7 +379,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
             .then(data => {
                 console.log("Parsed Response from Server:", data);
                 if (data.status === "success") {
-                    window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
+                    window.location.href = `thankYou.php?context=vote&completedCategoryId=${data.categoryID || 'B'}`;
                 } else {
                     alert(data.message);
                 }
