@@ -21,30 +21,24 @@ $username = $_SESSION['user'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabancı University Teaching Awards</title>
-    <!-- Global stylesheets -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+    <!-- Limitless Theme CSS -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-    <!-- /global stylesheets -->
 
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <!-- Core JS files -->
+    <!-- Scripts -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
-
-    <!-- /core JS files -->
-
-    <!-- Theme JS files -->
     <script src="assets/js/app.js"></script>
-    <script src="assets/js/custom.js"></script>
-    <!-- /theme JS files -->
+
 
     <style>
         body {
