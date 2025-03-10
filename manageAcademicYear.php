@@ -13,6 +13,14 @@ if (!isset($_SESSION['user'])) {
 // Handle UPDATE request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'])) {
     $academicYearId = intval($_POST['academic_year_id']);
+
+    // === NEW LINES (checker) ===
+    $rawAcademicYear = $_POST['academic_year'];
+    if (!preg_match('/^\d{4}$/', $rawAcademicYear)) {
+        die("Error: Academic year must be a 4-digit integer (e.g. 2023).");
+    }
+    // ===========================
+
     $academicYear   = $_POST['academic_year']; // user-editable year in the edit form
 
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
@@ -49,6 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'
 
 // Handle ADD request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['academic_year'])) {
+    // === NEW LINES (checker) ===
+    $rawAcademicYear = $_POST['academic_year'];
+    if (!preg_match('/^\d{4}$/', $rawAcademicYear)) {
+        echo "<script>alert('Error: Academic year must be a 4-digit integer (e.g. 2023).');
+              window.location.href='manageAcademicYear.php';</script>";
+        exit();
+    }
+    
+    // ===========================
+
     $academicYear = intval($_POST['academic_year']);
 
     // 2) Convert from "DD-MM-YYYY HH:mm" to "YYYY-MM-DD HH:mm:ss"
