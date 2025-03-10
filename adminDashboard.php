@@ -193,7 +193,7 @@ try {
 
             <button 
                 class="btn btn-secondary w-100 mb-2" 
-                onclick="window.location.href='configurationPage.php';">
+                onclick="window.location.href='configuration.php';">
                 Configuration Page
             </button>
             <a href="reportPage.php" style="text-decoration: none;">
