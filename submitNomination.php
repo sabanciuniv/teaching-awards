@@ -28,11 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     require_once __DIR__ . '/database/dbConnection.php';
 
+    $uploadDir = "/var/www/html/odul/uploads/";
+
     // Ensure uploads folder exists and is writable
-    if (!is_dir(__DIR__ . '/uploads')) {
-        mkdir(__DIR__ . '/uploads', 0777, true);
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
     }
-    if (!is_writable(__DIR__ . '/uploads')) {
+    if (!is_writable($uploadDir)) {
         die("Error: Uploads directory is not writable.");
     }
 
@@ -80,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($_FILES['ReferenceLetterFiles']['error'][$key] == 0) {
                 $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
-                $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'txt', 'ppt', 'pptx', 'jpg', 'jpeg', 'png'];
                 if (!in_array($fileExtension, $allowedExtensions)) {
                     throw new Exception("Invalid file type: " . $originalName);
                 }
@@ -92,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Generate a unique coded name
                 $codedName = 'Ref_' . $academicYear . "_" . uniqid() . "." . $fileExtension;
-                $uploadPath = __DIR__ . '/uploads/' . $codedName;
+                $uploadPath = $uploadDir . $codedName;
 
                 if (move_uploaded_file($tmp_name, $uploadPath)) {
                     chmod($uploadPath, 0775);
