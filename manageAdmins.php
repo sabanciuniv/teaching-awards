@@ -34,18 +34,27 @@ if (!isset($_SESSION['user'])) {
 
     <!-- jQuery -->
     <script src="assets/js/main/jquery.min.js"></script>
-    <script src="assets/js/main/bootstrap.bundle.min.js"></script>
+    <!-- Removed duplicate bootstrap.bundle.min.js to avoid conflicts -->
 
     <style>
+        /* Make the page scrollable if content is tall */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
         body {
             background-color: #f9f9f9;
             padding-top: 70px;
+            overflow-y: auto;
         }
+        
         .search-box {
             width: 100%;
             max-width: 400px;
             margin-bottom: 15px;
         }
+
         /* Optional styling for pagination links */
         .pagination {
             margin-top: 1rem;
@@ -57,6 +66,25 @@ if (!isset($_SESSION['user'])) {
             background-color: #45748a;
             border-color: #45748a;
             color: #fff;
+        }
+
+        /* Indicate sortable columns with a pointer and optional arrow icons */
+        th.sortable {
+            cursor: pointer;
+            position: relative; /* so we can place arrows */
+        }
+        /* Default arrow styling for the currently sorted column */
+        th.sortable.asc::after {
+            content: ' \25B2'; /* up arrow */
+            position: absolute;
+            right: 8px;
+            color: #ccc;
+        }
+        th.sortable.desc::after {
+            content: ' \25BC'; /* down arrow */
+            position: absolute;
+            right: 8px;
+            color: #ccc;
         }
     </style>
 </head>
@@ -87,12 +115,13 @@ if (!isset($_SESSION['user'])) {
                 <table class="table table-striped table-bordered">
                     <thead class="table-dark">
                         <tr>
-                            <th>Admin Username</th>
-                            <th>Role</th>
-                            <th>Granted By</th>
-                            <th>Granted Date</th>
-                            <th>Removed By</th>
-                            <th>Removed Date</th>
+                            <!-- Add data-sort attribute and class "sortable" to each sortable column header -->
+                            <th data-sort="AdminSuUsername" class="sortable">Admin Username</th>
+                            <th data-sort="Role" class="sortable">Role</th>
+                            <th data-sort="GrantedBy" class="sortable">Granted By</th>
+                            <th data-sort="GrantedDate" class="sortable">Granted Date</th>
+                            <th data-sort="RemovedBy" class="sortable">Removed By</th>
+                            <th data-sort="RemovedDate" class="sortable">Removed Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -141,10 +170,12 @@ if (!isset($_SESSION['user'])) {
 <!-- Main Script -->
 <script>
 $(document).ready(function () {
-    // Global variables for pagination
+    // Global variables for pagination and sorting
     let allAdmins = [];
     let currentPage = 1;
     const pageSize = 9; // 9 admins per page
+    let currentSortField = null;
+    let currentSortDirection = "asc"; // default ascending for clicked column
 
     // 1) Fetch Admins from API
     function fetchAdmins() {
@@ -153,13 +184,22 @@ $(document).ready(function () {
             method: "GET",
             dataType: "json",
             success: function (data) {
-                // Store fetched data
                 allAdmins = data || [];
-                // Sort in ascending order by GrantedDate so the first added appear first
-                allAdmins.sort(function(a, b) {
-                    return new Date(b.GrantedDate) - new Date(a.GrantedDate);
-                });
-                // Initially render page 1
+                // If no column sort is chosen, use default sort:
+                // Active admins first (RemovedDate empty), then descending by GrantedDate.
+                if (!currentSortField) {
+                    allAdmins.sort(function(a, b) {
+                        let aStatus = a.RemovedDate ? 1 : 0;
+                        let bStatus = b.RemovedDate ? 1 : 0;
+                        if (aStatus !== bStatus) {
+                            return aStatus - bStatus; // active (0) comes first
+                        }
+                        return new Date(b.GrantedDate) - new Date(a.GrantedDate);
+                    });
+                } else {
+                    // Otherwise, sort using the chosen column criteria
+                    sortAdminsByField(currentSortField, currentSortDirection);
+                }
                 renderPage(1);
             },
             error: function (xhr, status, error) {
@@ -168,30 +208,53 @@ $(document).ready(function () {
         });
     }
 
-    // 2) Render a given page of the (filtered) admin data
+    // 2) Sorting function by chosen column
+    function sortAdminsByField(field, direction) {
+        allAdmins.sort(function(a, b) {
+            let valA = a[field] || "";
+            let valB = b[field] || "";
+            // If the field is a date, convert to Date objects
+            if (field === "GrantedDate" || field === "RemovedDate") {
+                valA = new Date(valA);
+                valB = new Date(valB);
+            }
+            // For string values, use localeCompare
+            if (typeof valA === "string" && typeof valB === "string") {
+                let cmp = valA.localeCompare(valB);
+                return direction === "asc" ? cmp : -cmp;
+            } else {
+                // For dates or numeric
+                return direction === "asc" ? valA - valB : valB - valA;
+            }
+        });
+    }
+
+    // 3) Render a given page of the (filtered) admin data
     function renderPage(page) {
-        // Filter by search term
         const searchTerm = $("#searchBox").val().toLowerCase();
         let filtered = allAdmins.filter(admin => {
-            const combined = (admin.AdminSuUsername + admin.Role + admin.GrantedBy + admin.GrantedDate + (admin.RemovedBy || "") + (admin.RemovedDate || "")).toLowerCase();
+            const combined = (
+                admin.AdminSuUsername +
+                admin.Role +
+                admin.GrantedBy +
+                admin.GrantedDate +
+                (admin.RemovedBy || "") +
+                (admin.RemovedDate || "")
+            ).toLowerCase();
             return combined.includes(searchTerm);
         });
 
-        // Calculate pagination
         const totalItems = filtered.length;
         const totalPages = Math.ceil(totalItems / pageSize);
 
-        // Ensure page is in range
         if (page < 1) page = 1;
         if (page > totalPages) page = totalPages || 1;
         currentPage = page;
 
-        // Slice data for current page
         const startIndex = (page - 1) * pageSize;
         const endIndex = startIndex + pageSize;
         const pageData = filtered.slice(startIndex, endIndex);
 
-        // Build table rows
         $("#adminTable").empty();
         if (pageData.length === 0) {
             $("#adminTable").append('<tr><td colspan="7" class="text-center">No admins found</td></tr>');
@@ -223,16 +286,14 @@ $(document).ready(function () {
             });
         }
 
-        // Render pagination controls
         renderPaginationControls(totalPages, page);
     }
 
-    // 3) Render pagination links
+    // 4) Render pagination links
     function renderPaginationControls(totalPages, current) {
         $("#paginationControls").empty();
         if (totalPages <= 1) return;
 
-        // Previous button
         const prevDisabled = current === 1 ? "disabled" : "";
         $("#paginationControls").append(`
             <li class="page-item ${prevDisabled}">
@@ -240,7 +301,6 @@ $(document).ready(function () {
             </li>
         `);
 
-        // Page number buttons
         for (let i = 1; i <= totalPages; i++) {
             const active = (i === current) ? "active" : "";
             $("#paginationControls").append(`
@@ -250,7 +310,6 @@ $(document).ready(function () {
             `);
         }
 
-        // Next button
         const nextDisabled = current === totalPages ? "disabled" : "";
         $("#paginationControls").append(`
             <li class="page-item ${nextDisabled}">
@@ -259,7 +318,7 @@ $(document).ready(function () {
         `);
     }
 
-    // 4) Handle pagination link clicks
+    // 5) Handle pagination link clicks
     $(document).on("click", "#paginationControls .page-link", function (e) {
         e.preventDefault();
         const newPage = parseInt($(this).data("page"));
@@ -268,12 +327,33 @@ $(document).ready(function () {
         }
     });
 
-    // 5) Live search
+    // 6) Live search
     $("#searchBox").on("keyup", function () {
         renderPage(1);
     });
 
-    // 6) Delete Admin via AJAX
+    // 7) Column header click for sorting
+    $(document).on("click", "th.sortable", function () {
+        const field = $(this).data("sort");
+        
+        // Toggle or set the sort direction
+        if (currentSortField === field) {
+            currentSortDirection = (currentSortDirection === "asc") ? "desc" : "asc";
+        } else {
+            currentSortField = field;
+            currentSortDirection = "asc";
+        }
+
+        // Remove existing arrow classes from all headers
+        $("th.sortable").removeClass("asc desc");
+        // Add the new direction class to the clicked header
+        $(this).addClass(currentSortDirection);
+
+        sortAdminsByField(currentSortField, currentSortDirection);
+        renderPage(1);
+    });
+
+    // 8) Delete Admin via AJAX
     $(document).on("click", ".delete-btn", function () {
         var username = $(this).data("username");
         if (confirm("Are you sure you want to remove this admin?")) {
@@ -292,7 +372,7 @@ $(document).ready(function () {
         }
     });
 
-    // 7) Add Admin via AJAX
+    // 9) Add Admin via AJAX
     $("#addAdminForm").on("submit", function (event) {
         event.preventDefault();
         $.ajax({
