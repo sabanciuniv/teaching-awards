@@ -23,22 +23,17 @@ if (!$categoryCode) {
 
 try {
 
- // Fetch the current academic year
-    $currentDate = date('Y-m-d H:i:s');
-    $stmtAcademicYear = $pdo->prepare("
-        SELECT Academic_year 
-        FROM AcademicYear_Table 
-        WHERE :currentDate BETWEEN Start_date_time AND End_date_time
-    ");
-    $stmtAcademicYear->execute(['currentDate' => $currentDate]);
-    $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
+    // Fetch academic year using getAcademicYear API
+    $academicYearResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php');
+    $academicYearData = json_decode($academicYearResponse, true);
 
-    if (!$academicYear) {
-        echo json_encode(['status' => 'error', 'message' => 'Current academic year not found']);
+    if (!$academicYearData || $academicYearData['status'] !== 'success') {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to retrieve academic year']);
         exit();
     }
 
-    $currentAcademicYear = $academicYear['Academic_year'] . '%'; 
+    $currentAcademicYear = $academicYearData['academicYear'] . '%';
+
         
     // Fetch StudentID of the logged-in user
     $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");

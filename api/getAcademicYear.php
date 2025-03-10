@@ -1,22 +1,28 @@
 <?php
-require_once __DIR__ . '/../database/dbConnection.php';
+session_start();
+require_once '../database/dbConnection.php';
 
 header('Content-Type: application/json');
 
 try {
-    $stmt = $pdo->query("SELECT YearID, academic_year, Start_date_time, End_date_time 
-                         FROM AcademicYear_Table 
-                         ORDER BY Start_date_time DESC 
-                         LIMIT 1");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmtAcademicYear = $pdo->prepare("
+        SELECT YearID, Academic_year, Start_date_time, End_date_time 
+        FROM AcademicYear_Table 
+        ORDER BY Start_date_time DESC
+        LIMIT 1
+    ");
+    $stmtAcademicYear->execute();
+    $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
 
-    if ($result) {
+    if ($academicYear) {
+        $_SESSION['academic_year'] = $academicYear['Academic_year'];  // Store in session
+        
         echo json_encode([
-            'status' => 'success',  
-            'academic_year' => $result['academic_year'], 
-            'yearID' => $result['YearID'],
-            'start_date' => $result['Start_date_time'],
-            'end_date' => $result['End_date_time']
+        'status' => 'success', 
+        'academicYear' => $academicYear['Academic_year'],
+        'yearID' => $academicYear['YearID'],
+        'start_date' => $academicYear['Start_date_time'],
+        'end_date' => $academicYear['End_date_time']
         ]);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'No academic year found']);
