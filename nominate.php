@@ -156,12 +156,12 @@ if (!isset($_SESSION['user'])) {
         }
         .btn-remove-all i,
         .btn-remove-file i {
-            color: red;
+            color: gray;
             font-size: 1.2rem;
         }
         .btn-remove-all:hover i,
         .btn-remove-file:hover i {
-            color: darkred;
+            color: darkgray;
         }
 
         .file-caption-name {
@@ -258,7 +258,7 @@ if (!isset($_SESSION['user'])) {
                                 <div class="file-preview">
                                     <!-- Button to clear all files -->
                                     <button type="button" class="btn-remove-all" aria-label="Close" onclick="clearAllFiles()">
-                                        <i class="fa fa-times"></i>
+                                        <i class="fa fa-trash"></i>
                                     </button>
                                     <div class="file-drop-zone clearfix" 
                                          id="fileDropZone"
@@ -370,7 +370,7 @@ if (!isset($_SESSION['user'])) {
             removeButton.type = "button";
             removeButton.className = "btn-remove-file";
             removeButton.ariaLabel = "Remove";
-            removeButton.innerHTML = '<i class="fa fa-times"></i>';
+            removeButton.innerHTML = '<i class="fa fa-trash"></i>';
             removeButton.onclick = function (event) {
                 event.stopPropagation();
                 removeFile(index);
