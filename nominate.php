@@ -359,12 +359,40 @@ if (!isset($_SESSION['user'])) {
             const frame = document.createElement("div");
             frame.className = "file-preview-frame";
 
+            const ext = file.name.split('.').pop().toLowerCase(); // Get file extension
             const img = document.createElement("img");
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+            let fileIcon = ""; // Placeholder for non-image files
+
+            if (["png", "jpg", "jpeg"].includes(ext)) {
+                // If the file is an image, display the preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                frame.appendChild(img);
+            } else {
+                // Set appropriate file icons for other file types
+                switch (ext) {
+                    case "pdf":
+                        fileIcon = '<i class="fas fa-file-pdf text-danger" style="font-size: 3rem;"></i>';
+                        break;
+                    case "doc":
+                    case "docx":
+                        fileIcon = '<i class="fas fa-file-word text-primary" style="font-size: 3rem;"></i>';
+                        break;
+                    case "ppt":
+                    case "pptx":
+                        fileIcon = '<i class="fas fa-file-powerpoint text-warning" style="font-size: 3rem;"></i>';
+                        break;
+                    case "txt":
+                        fileIcon = '<i class="fas fa-file-alt text-muted" style="font-size: 3rem;"></i>';
+                        break;
+                    default:
+                        fileIcon = '<i class="fas fa-file text-dark" style="font-size: 3rem;"></i>'; // Default file icon
+                }
+                frame.innerHTML = fileIcon; // Insert the icon into the frame
+            }
 
             const removeButton = document.createElement("button");
             removeButton.type = "button";
