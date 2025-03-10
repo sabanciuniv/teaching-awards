@@ -271,14 +271,13 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                             <input type="text" class="form-control" id="academic_year" name="academic_year" required>
                         </div>
 
-                        <!-- Start Date -->
+                        <!-- Start Date & Time -->
                         <div class="mb-3">
                             <label for="start_date" class="form-label">Start Date & Time</label>
-                            <!-- We pass "YYYY-MM-DDTHH:MM" to <input type="datetime-local"> -->
                             <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
                         </div>
 
-                        <!-- End Date -->
+                        <!-- End Date & Time -->
                         <div class="mb-3">
                             <label for="end_date" class="form-label">End Date & Time</label>
                             <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
@@ -328,18 +327,18 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
             initializeDatePicker('#start-date-picker');
             initializeDatePicker('#end-date-picker');
 
-           
+            // IMPORTANT: scope all form-field updates to #editModal
             $(".edit-btn").click(function () {
                 let id    = $(this).data("id");
                 let year  = $(this).data("year");
-                
                 let start = $(this).data("start");
                 let end   = $(this).data("end");
 
-                $("#academic_year_id").val(id);
-                $("#academic_year").val(year);
-                $("#start_date").val(start);
-                $("#end_date").val(end);
+                // Update fields inside the edit modal only
+                $("#editModal #academic_year_id").val(id);
+                $("#editModal #academic_year").val(year);
+                $("#editModal #start_date").val(start);
+                $("#editModal #end_date").val(end);
 
                 $("#editModal").modal("show");
             });
