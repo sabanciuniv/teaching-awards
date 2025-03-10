@@ -30,7 +30,7 @@ $username = $_SESSION['user'];
     <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-
+    
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
@@ -38,6 +38,7 @@ $username = $_SESSION['user'];
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
     <style>
