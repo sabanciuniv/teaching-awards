@@ -41,7 +41,8 @@ $username = $_SESSION['user'];
             background-color: #f5f5f5;
         }
         .container {
-            margin-top: 40px;
+            margin-top: 100px;
+        
         }
         .card-header {
             background-color: #45748a;
@@ -81,10 +82,10 @@ $username = $_SESSION['user'];
                     <thead class="table-dark">
                         <tr>
                             <th>Name</th>
-                            <th>Email</th>
+                            <th>SuID</th>
                             <th>Role</th>
-                            <th>Removed By</th>
-                            <th>Removed Date</th>
+                            <th>Excluded By</th>
+                            <th>Excluded At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
