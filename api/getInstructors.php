@@ -13,8 +13,6 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
 
 $suNetUsername = $_SESSION['user'];
 $categoryCode = isset($_GET['category']) ? $_GET['category'] : null;
-$term = isset($_GET['term']) ? $_GET['term'] : null;
-
 
 if (!$categoryCode) {
     echo json_encode(['status' => 'error', 'message' => 'Category code is required']);
@@ -22,7 +20,6 @@ if (!$categoryCode) {
 }
 
 try {
-
     // Fetch academic year using getAcademicYear API
     $academicYearResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php');
     $academicYearData = json_decode($academicYearResponse, true);
@@ -32,9 +29,12 @@ try {
         exit();
     }
 
-    $currentAcademicYear = $academicYearData['academicYear'] . '%';
+    // Allow only 'YYYY01' and 'YYYY02'
+    $currentAcademicYears = [
+        $academicYearData['academicYear'] . '01',
+        $academicYearData['academicYear'] . '02'
+    ];
 
-        
     // Fetch StudentID of the logged-in user
     $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");
     $stmtStudent->execute(['suNetUsername' => $suNetUsername]);
@@ -70,6 +70,8 @@ try {
     $categoryID = $category['CategoryID'];
 
     // Fetch Instructors for the student's courses
+    $placeholders = implode(',', array_fill(0, count($courses), '?'));
+
     $query = "
         SELECT 
             i.id AS InstructorID,
@@ -86,18 +88,17 @@ try {
         WHERE i.Role = 'Instructor' 
         AND i.Status = 'Etkin' 
         AND r.CategoryID = ?
-        AND r.Term LIKE ?
-        AND r.CourseID IN (" . implode(',', array_fill(0, count($courses), '?')) . ")
+        AND r.Term IN (?, ?)
+        AND r.CourseID IN ($placeholders)
     ";
 
     $stmt = $pdo->prepare($query);
 
     // Bind parameters dynamically
-    $params = array_merge([$categoryID, $currentAcademicYear], $courses);
+    $params = array_merge([$categoryID], $currentAcademicYears, $courses);
     $stmt->execute($params);
 
     $instructors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
     if ($instructors) {
         echo json_encode(['status' => 'success', 'data' => $instructors]);
@@ -108,5 +109,4 @@ try {
 } catch (PDOException $e) {
     echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
 }
-
 ?>
