@@ -21,22 +21,26 @@ if (!$categoryCode) {
 }
 
 try {
-    // Fetch the current academic year
-    $currentDate = date('Y-m-d H:i:s');
-    $stmtAcademicYear = $pdo->prepare("
-        SELECT Academic_year 
-        FROM AcademicYear_Table 
-        WHERE :currentDate BETWEEN Start_date_time AND End_date_time
-    ");
-    $stmtAcademicYear->execute(['currentDate' => $currentDate]);
-    $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
+
+    // Fetch academic year using getAcademicYear API
+    $academicYearResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php');
+    $academicYearData = json_decode($academicYearResponse, true);
+
+    if (!$academicYearData || $academicYearData['status'] !== 'success') {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to retrieve academic year']);
+        exit();
+    }
 
     if (!$academicYear) {
         echo json_encode(['status' => 'error', 'message' => 'Current academic year not found']);
         exit();
     }
 
-    $currentAcademicYear = $academicYear['Academic_year'] . '%'; 
+    // Allow only 'YYYY01' and 'YYYY02'
+    $currentAcademicYears = [
+        $academicYearData['academicYear'] . '01',
+        $academicYearData['academicYear'] . '02'
+    ];
 
     // Fetch Student ID of the logged-in user
     $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");
@@ -72,6 +76,9 @@ try {
 
     $categoryID = $category['CategoryID'];
 
+    $placeholders = implode(',', array_fill(0, count($courses), '?'));
+
+
     // Fetch TAs for the student's courses
     $query = "
         SELECT 
@@ -89,14 +96,17 @@ try {
         WHERE i.Role = 'TA' 
         AND i.Status = 'Etkin' 
         AND r.CategoryID = ?
-        AND r.Term LIKE ?
-        AND r.CourseID IN (" . implode(',', array_fill(0, count($courses), '?')) . ")
+        AND r.Term IN (?, ?)
+        AND r.CourseID IN ($placeholders)
+        AND NOT EXISTS (
+        SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
+        )
     ";
 
     $stmt = $pdo->prepare($query);
 
     // Bind parameters dynamically
-    $params = array_merge([$categoryID, $currentAcademicYear], $courses);
+    $params = array_merge([$categoryID], $currentAcademicYears, $courses);
     $stmt->execute($params);
 
     $TAs = $stmt->fetchAll(PDO::FETCH_ASSOC);

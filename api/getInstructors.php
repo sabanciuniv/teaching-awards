@@ -13,6 +13,9 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
 
 $suNetUsername = $_SESSION['user'];
 $categoryCode = isset($_GET['category']) ? $_GET['category'] : null;
+$term = isset($_GET['term']) ? $_GET['term'] : null;
+
+
 
 if (!$categoryCode) {
     echo json_encode(['status' => 'error', 'message' => 'Category code is required']);
@@ -90,6 +93,9 @@ try {
         AND r.CategoryID = ?
         AND r.Term IN (?, ?)
         AND r.CourseID IN ($placeholders)
+        AND NOT EXISTS (
+        SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
+        )
     ";
 
     $stmt = $pdo->prepare($query);
