@@ -1,13 +1,20 @@
 <?php
 session_start();
-require_once 'database/dbConnection.php';
+require_once '../database/dbConnection.php';  // Adjust path if needed
 
-// Fetch candidates excluding those in the Exception_Table
+// Return only excluded candidates, last excluded on top
 $sql = "
-    SELECT c.id, c.Name, c.Mail, c.Role
+    SELECT 
+        c.id,
+        c.Name,
+        c.SU_ID AS Mail,
+        c.Role,
+        e.excluded_by,
+        e.excluded_at
     FROM Candidate_Table c
-    LEFT JOIN Exception_Table e ON c.id = e.CandidateID
-    WHERE e.CandidateID IS NULL";
+    INNER JOIN Exception_Table e ON c.id = e.CandidateID
+    ORDER BY e.excluded_at DESC
+";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute();
