@@ -14,14 +14,18 @@ if (!isset($_SESSION['user'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'])) {
     $academicYearId = intval($_POST['academic_year_id']);
 
-    // === NEW LINES (checker) ===
-    $rawAcademicYear = $_POST['academic_year'];
-    if (!preg_match('/^\d{4}$/', $rawAcademicYear)) {
-        die("Error: Academic year must be a 4-digit integer (e.g. 2023).");
-    }
-    // ===========================
+    $rawAcademicYear = $_POST['academic_year'] ?? '';
 
-    $academicYear   = $_POST['academic_year']; // user-editable year in the edit form
+    // Ensure the year is exactly 4 digits and starts with "20"
+    if (!preg_match('/^20\d{2}$/', $rawAcademicYear)) {
+        echo "<script>
+            alert('Error: Academic year must be a 4-digit number starting with 20 (e.g., 2023, 2025).');
+            window.location.href='manageAcademicYear.php';
+        </script>";
+        exit();
+    }
+
+    $academicYear = intval($rawAcademicYear); 
 
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
     $endDate   = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
@@ -59,15 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['academic_year'])) {
     // === NEW LINES (checker) ===
     $rawAcademicYear = $_POST['academic_year'];
-    if (!preg_match('/^\d{4}$/', $rawAcademicYear)) {
-        echo "<script>alert('Error: Academic year must be a 4-digit integer (e.g. 2023).');
+    if (!preg_match('/^20\d{2}$/', $rawAcademicYear)) {
+        echo "<script>alert('Error: Academic year must be exactly 4 digits starting with 20 (e.g. 2023).');
               window.location.href='manageAcademicYear.php';</script>";
         exit();
     }
     
     // ===========================
 
-    $academicYear = intval($_POST['academic_year']);
+    $academicYear = intval($rawAcademicYear);
 
     // 2) Convert from "DD-MM-YYYY HH:mm" to "YYYY-MM-DD HH:mm:ss"
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
@@ -191,7 +195,15 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                         <label for="academic_year" class="form-label">Academic Year</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="ph-calendar"></i></span>
-                            <input type="number" id="academic_year" name="academic_year" class="form-control" placeholder="Enter academic year (e.g. 2023)" required>
+                            <input type="text" 
+                                id="academic_year" 
+                                name="academic_year" 
+                                class="form-control" 
+                                placeholder="Enter academic year (e.g. 2023)" 
+                                pattern="20\d{2}"
+                                maxlength="4"
+                                title="Academic year must be 4 digits starting with 20 (e.g. 2023)"
+                                required>
                         </div>
                     </div>
 
@@ -360,6 +372,23 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                 $("#editModal").modal("show");
             });
         });
+
+        document.getElementById("academic_year").addEventListener("input", function() {
+            const value = this.value;
+            // Only allow digits
+            this.value = value.replace(/[^\d]/g, '');
+            
+            // Enforce starting with "20"
+            if (value.length >= 2 && value.substring(0, 2) !== "20") {
+                this.value = "20" + value.substring(2);
+            }
+            
+            // Ensure max length of 4
+            if (value.length > 4) {
+                this.value = value.substring(0, 4);
+            }
+        });
+
     </script>
 
 </body>
