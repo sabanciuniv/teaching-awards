@@ -27,6 +27,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'
 
     $academicYear = intval($rawAcademicYear); 
 
+
+    $academicYearInt = (int) $rawAcademicYear;
+    $currentYearInt  = (int) date('Y');
+
+    // 3) Disallow if < current calendar year
+    if ($academicYearInt < $currentYearInt) {
+        echo "<script>
+            alert('Error: Academic year cannot be lower than the current calendar year.');
+            window.location.href='manageAcademicYear.php';
+        </script>";
+        exit();
+    }
+
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
     $endDate   = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
 
@@ -72,6 +85,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['academic_year'])) {
     // ===========================
 
     $academicYear = intval($rawAcademicYear);
+
+    $academicYearInt = (int) $rawAcademicYear;
+    $currentYearInt  = (int) date('Y');
+
+    // 3) Disallow if < current calendar year
+    if ($academicYearInt < $currentYearInt) {
+        echo "<script>
+            alert('Error: Academic year cannot be lower than the current calendar year.');
+            window.location.href='manageAcademicYear.php';
+        </script>";
+        exit();
+    }
 
     // 2) Convert from "DD-MM-YYYY HH:mm" to "YYYY-MM-DD HH:mm:ss"
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
@@ -199,7 +224,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                                 id="academic_year" 
                                 name="academic_year" 
                                 class="form-control" 
-                                placeholder="Enter academic year (e.g. 2023)" 
+                                placeholder="Enter academic year (e.g if the academic year is 2024-2025, type 2024)" 
                                 pattern="20\d{2}"
                                 maxlength="4"
                                 title="Academic year must be 4 digits starting with 20 (e.g. 2023)"
@@ -246,35 +271,37 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($academicYears as $year): ?>
+                            <?php foreach ($academicYears as $index => $year): ?>
                                 <?php 
-                                // +1 logic for each row
-                                $displayYear = $year['Academic_year'] . '-' . ($year['Academic_year'] + 1);
-
-                                // Convert DB "YYYY-MM-DD HH:mm:ss" to "d-m-Y H:i"
-                                $displayStart = date("d-m-Y H:i", strtotime($year['Start_date_time']));
-                                $displayEnd   = date("d-m-Y H:i", strtotime($year['End_date_time']));
-
-                                // For the edit modal, the <input type="datetime-local"> wants "YYYY-MM-DDTHH:MM"
-                                $editStart = date("Y-m-d\TH:i", strtotime($year['Start_date_time']));
-                                $editEnd   = date("Y-m-d\TH:i", strtotime($year['End_date_time']));
+                                    // +1 logic for each row
+                                    $displayYear = $year['Academic_year'] . '-' . ($year['Academic_year'] + 1);
+                                    $displayStart = date("d-m-Y H:i", strtotime($year['Start_date_time']));
+                                    $displayEnd   = date("d-m-Y H:i", strtotime($year['End_date_time']));
+                                    $editStart = date("Y-m-d\TH:i", strtotime($year['Start_date_time']));
+                                    $editEnd   = date("Y-m-d\TH:i", strtotime($year['End_date_time']));
                                 ?>
                                 <tr>
                                     <td><?= $displayYear; ?></td>
                                     <td><?= $displayStart; ?></td>
                                     <td><?= $displayEnd; ?></td>
                                     <td>
-                                        <button class="btn btn-primary btn-sm edit-btn" 
-                                            data-id="<?= htmlspecialchars($year['YearID']); ?>"  
-                                            data-year="<?= htmlspecialchars($year['Academic_year']); ?>"
-                                            data-start="<?= $editStart; ?>"
-                                            data-end="<?= $editEnd; ?>">
-                                            <i class="fa-solid fa-pen"></i> Edit
-                                        </button>
+                                        <?php if ($index === 0): ?>
+                                            <!-- Show the edit button only for the first (most recent) row -->
+                                            <button class="btn btn-primary btn-sm edit-btn" 
+                                                    data-id="<?= htmlspecialchars($year['YearID']); ?>"  
+                                                    data-year="<?= htmlspecialchars($year['Academic_year']); ?>"
+                                                    data-start="<?= $editStart; ?>"
+                                                    data-end="<?= $editEnd; ?>">
+                                                <i class="fa-solid fa-pen"></i> Edit
+                                            </button>
+                                        <?php else: ?>
+                                            <!-- No edit button for older academic years -->
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
+
                     </table>
                 </div>
 
