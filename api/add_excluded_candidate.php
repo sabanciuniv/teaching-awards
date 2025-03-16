@@ -29,6 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
 
+
+        // Check if candidate is already excluded
+        $alreadyExcluded = $pdo->prepare("SELECT id FROM Exception_Table WHERE CandidateID = :cid");
+        $alreadyExcluded->execute([':cid' => $candidateID]);
+
+        if ($alreadyExcluded->rowCount() > 0) {
+            echo json_encode(['success' => false, 'error' => 'Candidate is already excluded.']);
+            exit();
+        }
+
         // Insert into Exception_Table
         $insertStmt = $pdo->prepare("
             INSERT INTO Exception_Table (CandidateID, excluded_by)
