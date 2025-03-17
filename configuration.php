@@ -89,7 +89,7 @@ $username = $_SESSION['user'];  // Current user
     .sticky-sync-container {
       position: fixed;
       bottom: 40px; /* Adjusted to be clearly visible */
-      right: 80px; 
+      right: 30px; 
       z-index: 1050; 
       display: flex !important;
       align-items: center;
