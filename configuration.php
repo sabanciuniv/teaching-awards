@@ -180,9 +180,9 @@ $username = $_SESSION['user'];  // Current user
                   <th data-sort="Name" class="sortable">Name</th>
                   <th data-sort="Mail" class="sortable">Email</th>
                   <th data-sort="SU_ID" class="sortable">SuID</th>
-                  <th data-sort="Status" class="sortable">Status</th>
-                  <th data-sort="Sync_Date" class="sortable">Last Synced</th>
                   <th data-sort="Role" class="sortable">Role</th>
+                  <th data-sort="Sync_Date" class="sortable">Last Synced</th>
+                  <th data-sort="Status" class="sortable">Status</th>
                 </tr>
             </thead>
             <tbody id="candidatesTable">
