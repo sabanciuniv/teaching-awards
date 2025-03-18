@@ -324,7 +324,10 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                         <!-- Academic Year -->
                         <div class="mb-3">
                             <label for="academic_year" class="form-label">Academic Year</label>
-                            <input type="text" class="form-control" id="academic_year" name="academic_year" required>
+                            <input type="text" class="form-control" id="academic_year" name="academic_year" 
+                            pattern="20\d{2}" maxlength="4" 
+                            title="Academic year must be 4 digits starting with 20 (e.g. 2023)" required>
+
                         </div>
 
                         <!-- Start Date & Time -->
@@ -399,20 +402,19 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
                 $("#editModal").modal("show");
             });
         });
+        
 
-        document.getElementById("academic_year").addEventListener("input", function() {
-            const value = this.value;
-            // Only allow digits
-            this.value = value.replace(/[^\d]/g, '');
-            
-            // Enforce starting with "20"
-            if (value.length >= 2 && value.substring(0, 2) !== "20") {
-                this.value = "20" + value.substring(2);
-            }
-            
-            // Ensure max length of 4
-            if (value.length > 4) {
-                this.value = value.substring(0, 4);
+        document.getElementById("editModal").addEventListener("input", function(event) {
+            const input = event.target;
+            if (input.id === "academic_year") {
+                let value = input.value.replace(/\D/g, ""); // Remove non-digit characters
+                if (value.length >= 2 && value.substring(0, 2) !== "20") {
+                    value = "20" + value.substring(2); // Ensure it starts with "20"
+                }
+                if (value.length > 4) {
+                    value = value.substring(0, 4); // Limit to 4 digits
+                }
+                input.value = value;
             }
         });
 

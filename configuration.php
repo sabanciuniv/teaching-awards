@@ -10,6 +10,19 @@ if (!isset($_SESSION['user'])) {
 }
 
 $username = $_SESSION['user'];  // Current user
+
+// Fetch academic years
+$academicYears = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM AcademicYear_Table ORDER BY Academic_year DESC");
+    $academicYears = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("<strong style='color:red;'>SQL Error:</strong> " . $e->getMessage());
+}
+
+// Determine the current academic year (latest one)
+$currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -160,12 +173,31 @@ $username = $_SESSION['user'];  // Current user
     </button>
   </div>
 
+  
+
 
   <div class="container mt-4">
-    <div class="card shadow">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0"><i class="fa-solid fa-user-times"></i> Excluded Candidates</h4>
+    <div class="card-body">
+      <!-- Current Academic Year -->
+      <?php if ($currentAcademicYear): ?>
+          <?php 
+          // +1 logic for current academic year
+          $displayCurrentYear = $currentAcademicYear['Academic_year'] . '-' . ($currentAcademicYear['Academic_year'] + 1);
+          ?>
+          <div class="alert alert-success" style="margin-top: 15px;">
+              <h5>Current Academic Year: <strong><?= $displayCurrentYear; ?></strong></h5>
+          </div>
+          
+      <?php else: ?>
+          <div class="alert alert-danger">No Academic Year Found</div>
+      <?php endif; ?>
+
+
+      <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white">
+          <h5 class="mb-0"><i class="fa-solid fa-user-times"></i> Excluded Candidates Table</h5>
       </div>
+
+
 
       <div class="card-body">
         <!-- Search box -->
