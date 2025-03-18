@@ -26,16 +26,21 @@ try {
 
 // Determine the current academic year (latest one)
 $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
+$currentAcademicYearID = $currentAcademicYear ? $currentAcademicYear['Academic_year'] : null;
 
 $stmt = $pdo->prepare("
   SELECT c.id, c.SU_ID, c.Name, c.Mail, c.Role, c.Sync_Date, c.Status,
-        GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories
+        GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories,
+        GROUP_CONCAT(DISTINCT CONCAT(co.Subject_Code, ' ', co.Course_Number) SEPARATOR ', ') AS Courses
   FROM Candidate_Table c
   LEFT JOIN Candidate_Course_Relation cc ON c.id = cc.CandidateID
   LEFT JOIN Category_Table cat ON cc.CategoryID = cat.CategoryID
+  LEFT JOIN Courses_Table co ON cc.CourseID = co.CourseID
+  WHERE (cc.Academic_Year = :academicYear OR cc.Academic_Year IS NULL)
   GROUP BY c.id
   ORDER BY c.Name ASC;
 ");
+$stmt->bindParam(':academicYear', $currentAcademicYear['Academic_year'], PDO::PARAM_INT);
 $stmt->execute();
 $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -43,6 +48,7 @@ $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script>
 // Pass PHP data directly to JavaScript
 let allCandidates = <?php echo json_encode($candidates); ?>;
+let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
 </script>
 
 <!DOCTYPE html>
@@ -89,6 +95,7 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
     }
     .search-box {
       width: 100%;
+      padding: 10px;
       max-width: 400px;
       margin-bottom: 15px;
     }
@@ -178,7 +185,69 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
       }
     }
 
+    .container{
+      max-width: 95%;
+      width: 95%;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
+    /* Make table use full width */
+    .table {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    /* Enable horizontal scrolling for smaller screens */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Column width specifications */
+    .table th:nth-child(1) { width: 15%; } /* Name */
+    .table th:nth-child(2) { width: 25%; } /* Email */
+    .table th:nth-child(3) { width: 10%; }  /* SuID */
+    .table th:nth-child(4) { width: 8%; }  /* Role */
+    .table th:nth-child(5) { width: 12%; } /* Categories */
+    .table th:nth-child(6) { width: 22%; } /* Courses */
+    .table th:nth-child(7) { width: 10%; } /* Last Synced */
+    .table th:nth-child(8) { width: 8%; }  /* Status */
+
+    /* Prevent text overflow in table cells */
+    .table td {
+      word-break: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Set minimum widths for critical columns */
+    .table th:nth-child(1),
+    .table td:nth-child(1) {
+      min-width: 150px; /* Name */
+    }
+
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+      min-width: 180px; /* Email */
+    }
+
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+      min-width: 200px; /* Courses */
+    }
+
+    /* Format date column */
+    .table th:nth-child(7),
+    .table td:nth-child(7) {
+      white-space: nowrap;
+    }
 
 </style>
 </head>
@@ -195,8 +264,6 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
   </div>
 
   
-
-
   <div class="container mt-4">
     <div class="card-body">
       <!-- Current Academic Year -->
@@ -233,7 +300,8 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
         <th>Email</th>
         <th>SuID</th>
         <th>Role</th>
-        <th>Categories</th> <!-- ✅ Added Categories Column -->
+        <th>Categories</th> 
+        <th>Courses</th>
         <th>Last Synced</th>
         <th>Status</th>
     </tr>
@@ -245,7 +313,8 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
                   <td><?= htmlspecialchars($candidate['Mail']) ?></td>
                   <td><?= htmlspecialchars($candidate['SU_ID']) ?></td>
                   <td><?= htmlspecialchars($candidate['Role']) ?></td>
-                  <td><?= htmlspecialchars($candidate['Categories'] ?: '-') ?></td> <!-- ✅ Display Categories -->
+                  <td><?= htmlspecialchars($candidate['Categories'] ?: '-') ?></td>
+                  <td><?= htmlspecialchars($candidate['Courses'] ?: '-') ?></td>
                   <td><?= htmlspecialchars($candidate['Sync_Date']) ?></td>
                   <td>
                       <button class="btn <?= ($candidate['Status'] === 'Etkin') ? 'btn-success' : 'btn-danger'; ?>">
@@ -267,11 +336,7 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
     </div>
   </div>
 
-
-
-
   <script>
-    let candidates = [];
     let currentPage = 1;
     const rowsPerPage = 7;
 
@@ -283,6 +348,19 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
       // Use allCandidates directly instead of loading via AJAX
       renderTable(allCandidates, 1);
       renderPaginationControls(allCandidates);
+
+      // Search functionality
+      $("#searchBox").on("keyup", function() {
+        const searchTerm = $(this).val().toLowerCase();
+        const filteredCandidates = allCandidates.filter(candidate => 
+          candidate.Name.toLowerCase().includes(searchTerm) || 
+          candidate.Mail.toLowerCase().includes(searchTerm) || 
+          candidate.SU_ID.toLowerCase().includes(searchTerm) ||
+          (candidate.Courses && candidate.Courses.toLowerCase().includes(searchTerm))
+        );
+        renderTable(filteredCandidates, 1);
+        renderPaginationControls(filteredCandidates);
+      });
 
       $("#syncButton").on("click", function () {
         const syncButton = $(this);
@@ -346,6 +424,7 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
             const statusClass = candidate.Status === "Etkin" ? "btn-success" : "btn-danger";
             const statusText = candidate.Status === "Etkin" ? "On" : "Off";
             const categoryDisplay = candidate.Categories ||"-";
+            const coursesDisplay = candidate.Courses ||"-";
             
             $("#candidatesTable").append(`
               <tr>
@@ -354,6 +433,7 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
                 <td>${candidate.SU_ID}</td>
                 <td>${candidate.Role}</td>
                 <td>${categoryDisplay}</td>
+                <td>${coursesDisplay}</td>
                 <td>${candidate.Sync_Date || ""}</td>
                 <td>
                   <button class="btn ${statusClass} toggle-status" data-id="${candidate.id}" data-status="${candidate.Status}">
@@ -436,7 +516,6 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
         });
     }
 
-
     function sortData(column) {
       if (currentSortColumn === column) {
         currentSortDirection = (currentSortDirection === 'asc') ? 'desc' : 'asc';
@@ -457,9 +536,6 @@ let allCandidates = <?php echo json_encode($candidates); ?>;
 
 
     $(document).ready(function () {
-      // Load candidates when the page loads
-      loadCandidates();
-
       $("#syncButton").on("click", function () {
         const syncButton = $(this);
         syncButton.prop("disabled", true);
