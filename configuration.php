@@ -9,6 +9,10 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
 $username = $_SESSION['user'];  // Current user
 
 // Fetch academic years
@@ -23,7 +27,24 @@ try {
 // Determine the current academic year (latest one)
 $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
 
+$stmt = $pdo->prepare("
+  SELECT c.id, c.SU_ID, c.Name, c.Mail, c.Role, c.Sync_Date, c.Status,
+        GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories
+  FROM Candidate_Table c
+  LEFT JOIN Candidate_Course_Relation cc ON c.id = cc.CandidateID
+  LEFT JOIN Category_Table cat ON cc.CategoryID = cat.CategoryID
+  GROUP BY c.id
+  ORDER BY c.Name ASC;
+");
+$stmt->execute();
+$candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
+<script>
+// Pass PHP data directly to JavaScript
+let allCandidates = <?php echo json_encode($candidates); ?>;
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,7 +81,7 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
     body {
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
-      padding-top: 70px; /* Adjust if you have a fixed navbar */
+      padding-top: 20px; /* Adjust if you have a fixed navbar */
     }
     .card-header {
       background-color: #45748a;
@@ -206,20 +227,35 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
         <!-- Table: Shows ONLY excluded candidates -->
         <div class="table-responsive mt-3">
           <table class="table table-striped table-bordered">
-            <thead class="table-dark">
+          <thead class="table-dark">
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>SuID</th>
+        <th>Role</th>
+        <th>Categories</th> <!-- ✅ Added Categories Column -->
+        <th>Last Synced</th>
+        <th>Status</th>
+    </tr>
+      </thead>
+      <tbody id="candidatesTable">
+          <?php foreach ($candidates as $candidate): ?>
               <tr>
-                  <!-- Add data-sort attributes for sorting -->
-                  <th data-sort="Name" class="sortable">Name</th>
-                  <th data-sort="Mail" class="sortable">Email</th>
-                  <th data-sort="SU_ID" class="sortable">SuID</th>
-                  <th data-sort="Role" class="sortable">Role</th>
-                  <th data-sort="Sync_Date" class="sortable">Last Synced</th>
-                  <th data-sort="Status" class="sortable">Status</th>
-                </tr>
-            </thead>
-            <tbody id="candidatesTable">
-              <!-- Excluded candidates loaded via AJAX -->
-            </tbody>
+                  <td><?= htmlspecialchars($candidate['Name']) ?></td>
+                  <td><?= htmlspecialchars($candidate['Mail']) ?></td>
+                  <td><?= htmlspecialchars($candidate['SU_ID']) ?></td>
+                  <td><?= htmlspecialchars($candidate['Role']) ?></td>
+                  <td><?= htmlspecialchars($candidate['Categories'] ?: '-') ?></td> <!-- ✅ Display Categories -->
+                  <td><?= htmlspecialchars($candidate['Sync_Date']) ?></td>
+                  <td>
+                      <button class="btn <?= ($candidate['Status'] === 'Etkin') ? 'btn-success' : 'btn-danger'; ?>">
+                          <?= ($candidate['Status'] === 'Etkin') ? 'On' : 'Off'; ?>
+                      </button>
+                  </td>
+              </tr>
+          <?php endforeach; ?>
+      </tbody>
+
           </table>
         </div>
 
@@ -237,218 +273,168 @@ $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
   <script>
     let candidates = [];
     let currentPage = 1;
-    const rowsPerPage = 9;
+    const rowsPerPage = 7;
 
     // Sort tracking
     let currentSortColumn = null;
     let currentSortDirection = 'asc';
 
     $(document).ready(function () {
-      // 1) Load all candidates
-      loadCandidates();
+      // Use allCandidates directly instead of loading via AJAX
+      renderTable(allCandidates, 1);
+      renderPaginationControls(allCandidates);
 
-      // 2) Handle search
-      $("#searchBox").on("keyup", function () {
-        const searchTerm = $(this).val().toLowerCase();
-        const filtered = candidates.filter(item => JSON.stringify(item).toLowerCase().includes(searchTerm));
-        renderTable(filtered, 1);
-        renderPaginationControls(filtered);
-      });
+      $("#syncButton").on("click", function () {
+        const syncButton = $(this);
+        syncButton.prop("disabled", true);
 
-      // 3) Column sorting
-      $("th.sortable").on("click", function() {
-        const column = $(this).data("sort");
-        sortData(column);
+        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...');
+
+        $.ajax({
+            url: "api/synchronizeCandidates.php",
+            method: "POST",
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                    alert("Synchronization successful!");
+                    
+                    // After synchronization, fetch updated candidates
+                    $.ajax({
+                        url: "api/getCandidates.php",
+                        method: "GET",
+                        dataType: "json",
+                        success: function (response) {
+                            if (response.status === 'success') {
+                                allCandidates = response.candidates;
+                                renderTable(allCandidates, 1);
+                                renderPaginationControls(allCandidates);
+                            }
+                        }
+                    });
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Synchronization error:", error);
+                alert("An error occurred during synchronization.");
+            },
+            complete: function () {
+                syncButton.prop("disabled", false);
+                syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync');
+            }
+        });
       });
     });
 
-    function loadCandidates() {
-      $.ajax({
-        url: "api/getCandidates.php",
-        method: "GET",
-        dataType: "json",
-        success: function (response) {
-          if (response.status === 'success') {
-            candidates = response.candidates;
-            renderTable(candidates, 1);
-            renderPaginationControls(candidates);
-          } else {
-            console.error("Error:", response.message);
-          }
-        },
-        error: function (xhr, status, error) {
-          console.error("Error fetching candidates:", error);
-        }
-      });
-    }
-
+    // Update your renderTable function to work with the data structure from PHP
     function renderTable(dataArray, pageNum) {
-      $("#candidatesTable").empty();
-
-      if (!dataArray || dataArray.length === 0) {
-        $("#candidatesTable").append('<tr><td colspan="7" class="text-center">No candidates found</td></tr>');
-        return;
-      }
-
-      currentPage = pageNum;
-      const startIndex = (pageNum - 1) * rowsPerPage;
-      const endIndex = startIndex + rowsPerPage;
-      const pageData = dataArray.slice(startIndex, endIndex);
-
-      pageData.forEach(candidate => {
-
-        const statusClass = candidate.Status === "Etkin" ? "btn-success" : "btn-danger";
-        const statusText = candidate.Status === "Etkin" ? "On" : "Off";
-
-        $("#candidatesTable").append(`
-          <tr>
-            <td>${candidate.Name}</td>
-            <td>${candidate.Mail}</td>
-            <td>${candidate.SU_ID}</td>
-            <td>${candidate.Role}</td>
-            <td>${candidate.Sync_Date || ""}</td>
-            <td>
-              <button class="btn ${statusClass} toggle-status" data-id="${candidate.id}" data-status="${candidate.Status}">
-                ${statusText}
-              </button>
-            </td>
-          </tr>
-        `);
-      });
-
-        // Add click event to toggle buttons
-        $(".toggle-status").on("click", function () {
-              const button = $(this);
-              const candidateID = button.data("id");
-              const currentStatus = button.data("status");
-
-              const newStatus = currentStatus === "Etkin" ? "İşten ayrıldı" : "Etkin";
-              const newClass = newStatus === "Etkin" ? "btn-success" : "btn-danger";
-              const newText = newStatus === "Etkin" ? "On" : "Off";
-
-              // Update button UI immediately
-              button.removeClass("btn-success btn-danger").addClass(newClass).text(newText);
-              button.data("status", newStatus);
-
-              // Send update request to server
-              $.ajax({
-                  url: "api/updateCandidateStatus.php",
-                  method: "POST",
-                  data: { candidateID: candidateID, status: newStatus },
-                  dataType: "json",
-                  success: function (response) {
-                      if (!response.success) {
-                          alert("Error updating status: " + response.message);
-                          // Revert UI if error occurs
-                          button.removeClass(newClass).addClass(currentStatus === "Etkin" ? "btn-success" : "btn-danger");
-                          button.text(currentStatus === "Etkin" ? "On" : "Off");
-                          button.data("status", currentStatus);
-                      }
-                  },
-                  error: function (xhr, status, error) {
-                      console.error("Error updating status:", error);
-                      alert("An error occurred while updating the status.");
-                  }
-              });
-
-
-              // If status is changed to "Off", add to Exception_Table
-              if (newStatus === "İşten ayrıldı") {
-                $.ajax({
-                    url: "api/add_excluded_candidate.php",
-                    method: "POST",
-                    data: { candidateID: candidateID },
-                    dataType: "json",
-                    success: function (response) {
-                        if (!response.success) {
-                            alert("Error excluding candidate: " + response.error);
-                            // Revert UI if error occurs
-                            button.removeClass(newClass).addClass("btn-success").text("On");
-                            button.data("status", "Etkin");
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error excluding candidate:", error);
-                        alert("An error occurred while excluding the candidate.");
-                        // Revert UI
-                        button.removeClass(newClass).addClass("btn-success").text("On");
-                        button.data("status", "Etkin");
-                    }
-                });
-              } 
-          });                   
-
-        $("th.sortable").removeClass("asc desc");
-          if (currentSortColumn) {
-            $(`th[data-sort="${currentSortColumn}"]`).addClass(currentSortDirection);
+        $("#candidatesTable").empty();
+        
+        if (!dataArray || dataArray.length === 0) {
+            $("#candidatesTable").append('<tr><td colspan="7" class="text-center">No candidates found</td></tr>');
+            return;
         }
+        
+        currentPage = pageNum;
+        const startIndex = (pageNum - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const pageData = dataArray.slice(startIndex, endIndex);
+        
+        
+        pageData.forEach(candidate => {
+            const statusClass = candidate.Status === "Etkin" ? "btn-success" : "btn-danger";
+            const statusText = candidate.Status === "Etkin" ? "On" : "Off";
+            const categoryDisplay = candidate.Categories ||"-";
+            
+            $("#candidatesTable").append(`
+              <tr>
+                <td>${candidate.Name}</td>
+                <td>${candidate.Mail}</td>
+                <td>${candidate.SU_ID}</td>
+                <td>${candidate.Role}</td>
+                <td>${categoryDisplay}</td>
+                <td>${candidate.Sync_Date || ""}</td>
+                <td>
+                  <button class="btn ${statusClass} toggle-status" data-id="${candidate.id}" data-status="${candidate.Status}">
+                    ${statusText}
+                  </button>
+                </td>
+              </tr>
+            `);
+        });
+        
+        // Re-attach event handlers for toggle buttons
+        $(".toggle-status").on("click", function() {
+            // Your existing toggle button logic
+        });
     }
 
-  function renderPaginationControls(dataArray) {
-      const totalRows = dataArray.length;
-      const totalPages = Math.ceil(totalRows / rowsPerPage);
-      const paginationContainer = $("#paginationControls");
-      paginationContainer.empty();
+    function renderPaginationControls(dataArray) {
+        const totalRows = dataArray.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        const paginationContainer = $("#paginationControls");
+        paginationContainer.empty();
 
-      if (totalPages <= 1) return; // No pagination needed
+        if (totalPages <= 1) return; // No pagination needed
 
-      let pageItems = [];
+        let pageItems = [];
 
-      // "First" and "Prev" buttons
-      if (currentPage > 1) {
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="1">« First</a></li>`);
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${currentPage - 1}">‹ Prev</a></li>`);
-      }
+        // "First" and "Prev" buttons
+        if (currentPage > 1) {
+            pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="1">« First</a></li>`);
+            pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${currentPage - 1}">‹ Prev</a></li>`);
+        }
 
-      let maxVisiblePages = 5; // Adjust for better appearance
+        let maxVisiblePages = 5; // Adjust for better appearance
 
-      if (totalPages <= maxVisiblePages) {
-          // Show all pages if small number
-          for (let i = 1; i <= totalPages; i++) {
-              pageItems.push(`<li class="page-item ${i === currentPage ? 'active' : ''}">
-                                <a class="page-link" href="#" data-page="${i}">${i}</a>
-                              </li>`);
-          }
-      } else {
-          // Show first few pages, ellipsis, middle, ellipsis, last few pages
-          if (currentPage > 3) {
-              pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`);
-              if (currentPage > 4) pageItems.push(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
-          }
+        if (totalPages <= maxVisiblePages) {
+            // Show all pages if small number
+            for (let i = 1; i <= totalPages; i++) {
+                pageItems.push(`<li class="page-item ${i === currentPage ? 'active' : ''}">
+                                  <a class="page-link" href="#" data-page="${i}">${i}</a>
+                                </li>`);
+            }
+        } else {
+            // Show first few pages, ellipsis, middle, ellipsis, last few pages
+            if (currentPage > 3) {
+                pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`);
+                if (currentPage > 4) pageItems.push(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+            }
 
-          let startPage = Math.max(2, currentPage - 2);
-          let endPage = Math.min(totalPages - 1, currentPage + 2);
+            let startPage = Math.max(2, currentPage - 2);
+            let endPage = Math.min(totalPages - 1, currentPage + 2);
 
-          for (let i = startPage; i <= endPage; i++) {
-              pageItems.push(`<li class="page-item ${i === currentPage ? 'active' : ''}">
-                                <a class="page-link" href="#" data-page="${i}">${i}</a>
-                              </li>`);
-          }
+            for (let i = startPage; i <= endPage; i++) {
+                pageItems.push(`<li class="page-item ${i === currentPage ? 'active' : ''}">
+                                  <a class="page-link" href="#" data-page="${i}">${i}</a>
+                                </li>`);
+            }
 
-          if (currentPage < totalPages - 3) {
-              if (currentPage < totalPages - 4) pageItems.push(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
-              pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`);
-          }
-      }
+            if (currentPage < totalPages - 3) {
+                if (currentPage < totalPages - 4) pageItems.push(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`);
+            }
+        }
 
-      // "Next" and "Last" buttons
-      if (currentPage < totalPages) {
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${currentPage + 1}">Next ›</a></li>`);
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">Last »</a></li>`);
-      }
+        // "Next" and "Last" buttons
+        if (currentPage < totalPages) {
+            pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${currentPage + 1}">Next ›</a></li>`);
+            pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">Last »</a></li>`);
+        }
 
-      paginationContainer.html(pageItems.join(""));
+        paginationContainer.html(pageItems.join(""));
 
-      // Click event for pagination
-      $(".page-link").on("click", function (e) {
-          e.preventDefault();
-          const selectedPage = parseInt($(this).attr("data-page"));
-          if (!isNaN(selectedPage)) {
-              renderTable(dataArray, selectedPage);
-              renderPaginationControls(dataArray);
-          }
-      });
-  }
+        // Click event for pagination
+        $(".page-link").on("click", function (e) {
+            e.preventDefault();
+            const selectedPage = parseInt($(this).attr("data-page"));
+            if (!isNaN(selectedPage)) {
+                renderTable(dataArray, selectedPage);
+                renderPaginationControls(dataArray);
+            }
+        });
+    }
 
 
     function sortData(column) {
