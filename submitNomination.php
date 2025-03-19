@@ -1,6 +1,11 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+require_once 'config.php'; // Load config file
+
+$config = require 'config.php'; // Fetch configuration
+$uploadDir = $config['upload_directory']; // Get the upload directory path
+
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
     header("Location: login.php");
@@ -9,6 +14,28 @@ if (!isset($_SESSION['user'])) {
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+$apiUrl = 'http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php';
+$response = file_get_contents($apiUrl);
+$data = json_decode($response, true);
+
+if ($data['status'] !== 'success') {
+    die("Error: Could not fetch academic year.");
+}
+
+$academicYear = $data['academicYear']; 
+
+// Define the directory path for this academic year
+$yearlyUploadDir = $uploadDir . $academicYear . '/'; // Path in config + '2024/'
+
+// Ensure directory exists or create it
+if (!is_dir($yearlyUploadDir)) {
+    mkdir($yearlyUploadDir, 0777, true); // Create the directory with write permissions
+}
+
+if (!is_writable($yearlyUploadDir)) {
+    die("Error: Directory for the academic year is not writable.");
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 1) Verify that the user accepted the rules
@@ -28,13 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     require_once __DIR__ . '/database/dbConnection.php';
 
-    $uploadDir = "/var/www/html/odul/uploads/";
+
+
 
     // Ensure uploads folder exists and is writable
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
+    if (!is_dir($yearlyUploadDir)) {
+        mkdir($yearlyUploadDir, 0777, true);
     }
-    if (!is_writable($uploadDir)) {
+    if (!is_writable($yearlyUploadDir)) {
         die("Error: Uploads directory is not writable.");
     }
 
@@ -48,14 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Error: Missing form data.");
     }
 
-    // 3) Retrieve academic year from DB
-    $stmt = $pdo->prepare("SELECT Academic_year FROM AcademicYear_Table WHERE YearID = ?");
-    $stmt->execute([$yearID]);
-    $yearRow = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$yearRow) {
-        die("Error: Invalid academic year ID.");
-    }
-    $academicYear = $yearRow['Academic_year'];
 
     try {
         $pdo->beginTransaction();
@@ -94,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Generate a unique coded name
                 $codedName = 'Ref_' . $academicYear . "_" . uniqid() . "." . $fileExtension;
-                $uploadPath = $uploadDir . $codedName;
+                $uploadPath = $yearlyUploadDir . $codedName;
 
                 if (move_uploaded_file($tmp_name, $uploadPath)) {
                     chmod($uploadPath, 0775);

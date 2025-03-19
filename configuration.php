@@ -361,48 +361,6 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
         renderTable(filteredCandidates, 1);
         renderPaginationControls(filteredCandidates);
       });
-
-      $("#syncButton").on("click", function () {
-        const syncButton = $(this);
-        syncButton.prop("disabled", true);
-
-        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...');
-
-        $.ajax({
-            url: "api/synchronizeCandidates.php",
-            method: "POST",
-            dataType: "json",
-            success: function (response) {
-                if (response.success) {
-                    alert("Synchronization successful!");
-                    
-                    // After synchronization, fetch updated candidates
-                    $.ajax({
-                        url: "api/getCandidates.php",
-                        method: "GET",
-                        dataType: "json",
-                        success: function (response) {
-                            if (response.status === 'success') {
-                                allCandidates = response.candidates;
-                                renderTable(allCandidates, 1);
-                                renderPaginationControls(allCandidates);
-                            }
-                        }
-                    });
-                } else {
-                    alert("Error: " + response.message);
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error("Synchronization error:", error);
-                alert("An error occurred during synchronization.");
-            },
-            complete: function () {
-                syncButton.prop("disabled", false);
-                syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync');
-            }
-        });
-      });
     });
 
     // Update your renderTable function to work with the data structure from PHP
@@ -536,37 +494,37 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
 
 
     $(document).ready(function () {
-      $("#syncButton").on("click", function () {
+    $("#syncButton").on("click", function () {
         const syncButton = $(this);
-        syncButton.prop("disabled", true);
-
-        // Keep both icon and text visible during sync
-        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...');
+        syncButton.prop("disabled", true); // Disable button during sync
+        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...'); // Show loading animation
 
         $.ajax({
-            url: "api/synchronizeCandidates.php",
+            url: "api/synchronizeAll.php", // The PHP script that runs the sync
             method: "POST",
             dataType: "json",
             success: function (response) {
                 if (response.success) {
-                    alert("Synchronization successful!");
-                    loadCandidates();
+                    alert(`Synchronization successful! \nInserted: ${response.inserted} \nUpdated: ${response.updated} \nDeleted: ${response.deleted}`);
+                    
+                    // Instead of reloading, update table dynamically
+                    location.reload();
                 } else {
                     alert("Error: " + response.message);
                 }
             },
             error: function (xhr, status, error) {
                 console.error("Synchronization error:", error);
-                alert("An error occurred during synchronization.");
+                alert(`An error occurred during synchronization: ${xhr.responseText}`);
             },
             complete: function () {
-                // Restore original text after syncing
-                syncButton.prop("disabled", false);
-                syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync');
+                syncButton.prop("disabled", false); // Re-enable button
+                syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync'); // Restore original text
             }
         });
     });
   });
+
 
   </script>
 </body>

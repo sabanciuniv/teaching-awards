@@ -28,11 +28,6 @@ if (!isset($_SESSION['user'])) {
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <!-- Scripts -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/app.js"></script>
-
     <!-- Custom Styles -->
     <style>
         body {
