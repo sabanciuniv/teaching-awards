@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once 'api/authMiddleware.php';  // Adjust if needed
-require_once 'database/dbConnection.php'; // PDO connection
+require_once 'api/authMiddleware.php';  
+require_once 'database/dbConnection.php';
 
-// If not logged in, redirect (optional)
+// If not logged in, redirect 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
@@ -504,9 +504,7 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
             method: "POST",
             dataType: "json",
             success: function (response) {
-                if (response.success) {
-                    alert(`Synchronization successful! \nInserted: ${response.inserted} \nUpdated: ${response.updated} \nDeleted: ${response.deleted}`);
-                    
+                if (response.success) {                    
                     // Instead of reloading, update table dynamically
                     location.reload();
                 } else {
