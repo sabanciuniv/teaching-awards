@@ -14,47 +14,146 @@ function logChanges($section, $inserted, $updated, $deleted, $insertedRows, $upd
     global $response;
     $response["logs"][] = [
         "section" => $section,
-        "inserted" => $inserted,
-        "updated" => $updated,
-        "deleted" => $deleted,
-        "insertedRows" => $insertedRows,
-        "updatedRows" => $updatedRows,
-        "deletedRows" => $deletedRows,
+        "inserted" => $inserted ?? 0,  // Default to 0 if null
+        "updated" => $updated ?? 0,
+        "deleted" => $deleted ?? 0,
+        "insertedRows" => $insertedRows ?? [],  // Default to empty array if null
+        "updatedRows" => $updatedRows ?? [],
+        "deletedRows" => $deletedRows ?? [],
         "timestamp" => date("Y-m-d H:i:s")
     ];
 }
 
 try {
     // Synchronize Courses
-    $courseSyncResults = include 'synchronizeCourses.php';
-    if (!isset($courseSyncResults['error'])) {
-        logChanges(
-            "Courses",
-            $courseSyncResults['inserted'], 
-            $courseSyncResults['updated'], 
-            $courseSyncResults['deleted'],
-            $courseSyncResults['insertedRows'],
-            $courseSyncResults['updatedRows'],
-            $courseSyncResults['deletedRows']
-        );
-    } else {
+    $courseSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeCourses.php');
+    if (!$courseSyncResponse) {
+        throw new Exception("Failed to fetch course synchronization data.");
+    }
+    $courseSyncResults = json_decode($courseSyncResponse, true);
+    
+    if (isset($courseSyncResults['error'])) {
         throw new Exception($courseSyncResults['message']);
     }
 
-    $studentsSyncResults = include 'synchronizeStudents.php';
-    if (!isset($studentsSyncResults['error'])) {
-        logChanges(
-            "Students",
-            $studentsSyncResults['inserted'], 
-            $studentsSyncResults['updated'], 
-            $studentsSyncResults['deleted'],
-            $studentsSyncResults['insertedRows'],
-            $studentsSyncResults['updatedRows'],
-            $studentsSyncResults['deletedRows']
-        );
-    } else {
+    logChanges(
+        "Courses",
+        $courseSyncResults['inserted'] ?? 0, 
+        $courseSyncResults['updated'] ?? 0, 
+        $courseSyncResults['deleted'] ?? 0,
+        $courseSyncResults['insertedRows'] ?? [],
+        $courseSyncResults['updatedRows'] ?? [],
+        $courseSyncResults['deletedRows'] ?? []
+    );
+
+    // Synchronize Students
+    $studentsSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeStudents.php');
+    if (!$studentsSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $studentsSyncResults = json_decode($studentsSyncResponse, true);
+    
+    if (isset($studentsSyncResults['error'])) {
         throw new Exception($studentsSyncResults['message']);
     }
+
+    logChanges(
+        "Students",
+        $studentsSyncResults['inserted'] ?? 0, 
+        $studentsSyncResults['updated'] ?? 0, 
+        $studentsSyncResults['deleted'] ?? 0,
+        $studentsSyncResults['insertedRows'] ?? [],
+        $studentsSyncResults['updatedRows'] ?? [],
+        $studentsSyncResults['deletedRows'] ?? []
+    );
+
+    // Synchronize candidates
+    $candidateSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeCandidates.php');
+    if (!$candidateSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $candidateSyncResult = json_decode($candidateSyncResponse, true);
+    
+    if (isset($candidateSyncResult['error'])) {
+        throw new Exception($candidateSyncResult['message']);
+    }
+
+    logChanges(
+        "Candidates",
+        $candidateSyncResult['inserted'] ?? 0, 
+        $candidateSyncResult['updated'] ?? 0, 
+        $candidateSyncResult['deleted'] ?? 0,
+        $candidateSyncResult['insertedRows'] ?? [],
+        $candidateSyncResult['updatedRows'] ?? [],
+        $candidateSyncResult['deletedRows'] ?? []
+    );
+
+
+    // Synchronize Student courses
+    $studentCoursesSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeStudent_Courses.php');
+    if (!$studentCoursesSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $studentCoursesSyncResult = json_decode($studentCoursesSyncResponse, true);
+    
+    if (isset($studentCoursesSyncResult['error'])) {
+        throw new Exception($studentCoursesSyncResult['message']);
+    }
+
+    logChanges(
+        "Student Courses Relation",
+        $studentCoursesSyncResult['inserted'] ?? 0, 
+        $studentCoursesSyncResult['updated_to_enrolled'] ?? 0, 
+        $studentCoursesSyncResult['updated_to_dropped'] ?? 0,
+        $studentCoursesSyncResult['insertedRows'] ?? [],
+        $studentCoursesSyncResult['updatedToEnrolledRows'] ?? [],
+        $studentCoursesSyncResult['updatedToDroppedRows'] ?? []
+    );       
+
+
+    // Synchronize candidate courses
+    $candidateCoursesSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeCandidate_Courses.php');
+    if (!$candidateCoursesSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $candidateCoursesSyncResult = json_decode($candidateCoursesSyncResponse, true);
+    
+    if (isset($candidateCoursesSyncResult['error'])) {
+        throw new Exception($candidateCoursesSyncResult['message']);
+    }
+
+    logChanges(
+        "Candidate Courses Relation",
+        $candidateCoursesSyncResult['inserted'] ?? 0, 
+        $candidateCoursesSyncResult['updated_to_enrolled'] ?? 0, 
+        $candidateCoursesSyncResult['updated_to_dropped'] ?? 0,
+        $candidateCoursesSyncResult['insertedRows'] ?? [],
+        $candidateCoursesSyncResult['updatedToEnrolledRows'] ?? [],
+        $candidateCoursesSyncResult['updatedToDroppedRows'] ?? []
+    );       
+    
+
+    // Synchronize student category
+    $studentCategorySyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeStudent_Category.php');
+    if (!$studentCategorySyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $studentCategorySyncResult = json_decode($studentCategorySyncResponse, true);
+    
+    if (isset($studentCategorySyncResult['error'])) {
+        throw new Exception($studentCategorySyncResult['message']);
+    }
+
+    logChanges(
+        "Student Category Relation",
+        $studentCategorySyncResult['inserted'] ?? 0, 
+        $studentCategorySyncResult['updated_to_enrolled'] ?? 0, 
+        $studentCategorySyncResult['updated_to_dropped'] ?? 0,
+        $studentCategorySyncResult['insertedRows'] ?? [],
+        $studentCategorySyncResult['updatedToEnrolledRows'] ?? [],
+        $studentCategorySyncResult['updatedToDroppedRows'] ?? []
+    );       
+
 
     // Write the logs to a JSON file
     file_put_contents($logFile, json_encode($response["logs"], JSON_PRETTY_PRINT));
@@ -65,6 +164,7 @@ try {
     $response["message"] = "Error during synchronization: " . $e->getMessage();
 }
 
-// Return response as JSON
+
 echo json_encode($response);
+exit();
 ?>

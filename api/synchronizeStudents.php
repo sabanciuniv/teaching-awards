@@ -14,7 +14,7 @@ try {
 
     // Fetch data from API_STUDENTS (acting as API data)
     $stmt = $pdo->query("SELECT TERM_CODE, STU_ID, STU_FIRST_NAME, STU_MI_NAME, STU_LAST_NAME, 
-        STU_USERNAME, STU_EMAIL, STU_CUM_GPA_SU, STU_CLASS_CODE 
+        STU_USERNAME, STU_EMAIL, STU_CUM_GPA_SU, STU_CLASS_CODE, STU_FACULTY_CODE, STU_PROGRAM_CODE 
         FROM API_STUDENTS");
     
     $apiStudents = [];
@@ -25,13 +25,15 @@ try {
         $row['SuNET_Username'] = $row['STU_USERNAME'] ?: null;
         $row['Mail'] = $row['STU_EMAIL'] ?: null;
         $row['Class'] = $row['STU_CLASS_CODE'] ?: null;
+        $row['Faculty'] = $row['STU_FACULTY_CODE'] ?: null;  // NEW - Faculty
+        $row['Department'] = $row['STU_PROGRAM_CODE'] ?: null;  // NEW - Department
         $row['CGPA'] = $row['STU_CUM_GPA_SU'] !== null ? (float) $row['STU_CUM_GPA_SU'] : null;
 
         $apiStudents[$row['STU_ID']] = $row;
     }
 
     // Fetch existing students from Student_Table
-    $stmt = $pdo->query("SELECT StudentID, StudentFullName, SuNET_Username, Mail, Class, CGPA 
+    $stmt = $pdo->query("SELECT StudentID, StudentFullName, SuNET_Username, Mail, Class, Faculty, Department, CGPA 
         FROM Student_Table");
     
     $existingStudents = [];
@@ -42,14 +44,16 @@ try {
 
     // Prepare statements
     $insertStmt = $pdo->prepare("INSERT INTO Student_Table 
-        (StudentID, StudentFullName, SuNET_Username, Mail, Class, CGPA, Sync_Date) 
-        VALUES (:StudentID, :StudentFullName, :SuNET_Username, :Mail, :Class, :CGPA, NOW())");
+        (StudentID, StudentFullName, SuNET_Username, Mail, Class, Faculty, Department, CGPA, Sync_Date) 
+        VALUES (:StudentID, :StudentFullName, :SuNET_Username, :Mail, :Class, :Faculty, :Department, :CGPA, NOW())");
 
     $updateStmt = $pdo->prepare("UPDATE Student_Table SET 
         StudentFullName = :StudentFullName, 
         SuNET_Username = :SuNET_Username, 
         Mail = :Mail, 
         Class = :Class, 
+        Faculty = :Faculty, 
+        Department = :Department, 
         CGPA = :CGPA, 
         Sync_Date = NOW() 
         WHERE StudentID = :StudentID");
@@ -72,6 +76,8 @@ try {
                 $existingStudent['SuNET_Username'] != $student['SuNET_Username'] ||
                 $existingStudent['Mail'] != $student['Mail'] ||
                 $existingStudent['Class'] != $student['Class'] ||
+                $existingStudent['Faculty'] != $student['Faculty'] ||  
+                $existingStudent['Department'] != $student['Department'] ||  
                 (float)$existingStudent['CGPA'] != (float)$student['CGPA']) {
 
                 $updateStmt->execute([
@@ -80,6 +86,8 @@ try {
                     ':SuNET_Username' => $student['SuNET_Username'],
                     ':Mail' => $student['Mail'],
                     ':Class' => $student['Class'],
+                    ':Faculty' => $student['Faculty'],  
+                    ':Department' => $student['Department'],  
                     ':CGPA' => $student['CGPA']
                 ]);
 
@@ -95,6 +103,8 @@ try {
                 ':SuNET_Username' => $student['SuNET_Username'],
                 ':Mail' => $student['Mail'],
                 ':Class' => $student['Class'],
+                ':Faculty' => $student['Faculty'],  // NEW - Faculty insertion
+                ':Department' => $student['Department'],  // NEW - Department insertion
                 ':CGPA' => $student['CGPA']
             ]);
 
@@ -108,11 +118,15 @@ try {
     // Return detailed results
     echo json_encode([
         'status' => 'success',
-        'inserted' => $inserted,
-        'updated' => $updated,
-        'insertedRows' => $insertedRows,
-        'updatedRows' => $updatedRows
+        'inserted' => $inserted ?? 0,
+        'updated' => $updated ?? 0,
+        'deleted' => 0,  // No delete operation was performed
+        'insertedRows' => $insertedRows ?? [],
+        'updatedRows' => $updatedRows ?? [],
+        'deletedRows' => []
     ]);
+    exit(); // Ensure script execution stops after sending JSON
+    
 
 } catch (Exception $e) {
     echo json_encode([
