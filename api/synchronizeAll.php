@@ -1,5 +1,6 @@
 <?php
 require_once '../database/dbConnection.php';
+$config = require __DIR__ . '/../config.php';
 
 header('Content-Type: application/json');
 $response = [
@@ -7,7 +8,24 @@ $response = [
     "logs" => []
 ];
 
-$logFile = '/var/www/html/odul/logs/sync_log.json';
+$yearResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php');
+$yearData = json_decode($yearResponse, true);
+
+if (!isset($yearData['academicYear'])) {
+    echo json_encode(["success" => false, "message" => "Unable to fetch academic year."]);
+    exit();
+}
+
+$academicYear = $yearData['academicYear'];
+
+$timestamp = date("Ymd_His");
+$logDir = rtrim($config['log_dir'], '/') . '/' . $academicYear;
+
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0777, true);  // Create if missing
+}
+
+$logFile = $logDir . "/sync_log_$timestamp.json";
 
 // Function to append logs
 function logChanges($section, $inserted, $updated, $deleted, $insertedRows, $updatedRows, $deletedRows) {
@@ -157,8 +175,10 @@ try {
 
     // Write the logs to a JSON file
     file_put_contents($logFile, json_encode($response["logs"], JSON_PRETTY_PRINT));
-
+    $response["logFilePath"] = $logFile;
+    
     $response["message"] = "All synchronizations completed successfully!";
+
 } catch (Exception $e) {
     $response["success"] = false;
     $response["message"] = "Error during synchronization: " . $e->getMessage();

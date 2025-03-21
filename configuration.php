@@ -27,7 +27,6 @@ try {
   die("<strong style='color:red;'>SQL Error:</strong> " . $e->getMessage());
 }
 
-// ✅ Correct Academic Year Variables
 $currentYearID = $currentYear['YearID'];  // Use this in the query
 $currentAcademicYear = $currentYear['Academic_year'];  // Display this in UI
 
