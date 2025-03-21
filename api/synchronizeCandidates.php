@@ -9,7 +9,7 @@ try {
         'Active' => 'Etkin',
         'Inactive' => 'İşten ayrıldı',
         'Terminated' => 'İşten ayrıldı',
-        'İşten ayrıldı' => 'İşten ayrıldı' //in case of case sensitivity
+        'İşten ayrıldı' => 'İşten ayrıldı' // In case of case sensitivity
     ];
 
     $candidates = [];
@@ -71,7 +71,6 @@ try {
         Sync_Date = NOW() 
         WHERE SU_ID = :SU_ID");
 
-
     $updated = 0;
     $inserted = 0;
     $updatedRows = [];
@@ -82,27 +81,42 @@ try {
         if (isset($existingCandidates[$su_id])) {
             $existingCandidate = $existingCandidates[$su_id];
 
-            // Check if any changes exist before updating
-            if ($existingCandidate['Name'] != $candidate['Name'] ||
-            $existingCandidate['Mail'] != $candidate['Mail'] ||
-            $existingCandidate['Role'] != $candidate['Role'] ||
-            $existingCandidate['Status'] != $candidate['Status']) {
-            
-            $updateStmt->execute([
-                ':SU_ID' => $su_id,
-                ':Name' => $candidate['Name'],
-                ':Mail' => $candidate['Mail'],
-                ':Role' => $candidate['Role'],
-                ':Status' => $candidate['Status']
-            ]);
-        
+            // Track changes
+            $changes = [];
+
+            if ($existingCandidate['Name'] !== $candidate['Name']) {
+                $changes['Name'] = ['old' => $existingCandidate['Name'], 'new' => $candidate['Name']];
+            }
+            if ($existingCandidate['Mail'] !== $candidate['Mail']) {
+                $changes['Mail'] = ['old' => $existingCandidate['Mail'], 'new' => $candidate['Mail']];
+            }
+            if ($existingCandidate['Role'] !== $candidate['Role']) {
+                $changes['Role'] = ['old' => $existingCandidate['Role'], 'new' => $candidate['Role']];
+            }
+            if ($existingCandidate['Status'] !== $candidate['Status']) {
+                $changes['Status'] = ['old' => $existingCandidate['Status'], 'new' => $candidate['Status']];
+            }
+
+            // Update only if changes exist
+            if (!empty($changes)) {
+                $updateStmt->execute([
+                    ':SU_ID' => $su_id,
+                    ':Name' => $candidate['Name'],
+                    ':Mail' => $candidate['Mail'],
+                    ':Role' => $candidate['Role'],
+                    ':Status' => $candidate['Status']
+                ]);
 
                 if ($updateStmt->rowCount() > 0) {
                     $updated++;
-                    $updatedRows[] = $su_id;
+                    $updatedRows[] = [
+                        'SU_ID' => $su_id,
+                        'changes' => $changes
+                    ];
                 }
             }
         } else {
+            // Insert new candidate
             $insertStmt->execute([
                 ':SU_ID' => $su_id,
                 ':Name' => $candidate['Name'],
@@ -110,16 +124,21 @@ try {
                 ':Role' => $candidate['Role'],
                 ':Status' => $candidate['Status']
             ]);
-            
 
             if ($insertStmt->rowCount() > 0) {
                 $inserted++;
-                $insertedRows[] = $su_id;
+                $insertedRows[] = [
+                    'SU_ID' => $su_id,
+                    'Name' => $candidate['Name'],
+                    'Mail' => $candidate['Mail'],
+                    'Role' => $candidate['Role'],
+                    'Status' => $candidate['Status']
+                ];
             }
         }
     }
 
-    // Return response
+    // Return response with detailed changes
     echo json_encode([
         'status' => 'success',
         'inserted' => $inserted,
