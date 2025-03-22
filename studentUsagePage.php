@@ -43,7 +43,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
         }
 
         // 2) If related, check if there's a row in Votes_Table => "Voted" or "Not Voted"
-        //    We look for (AcademicYear = :yid, VoterID = :sid, CategoryID = :cid)
         $voteStmt = $pdo->prepare("
             SELECT 1
             FROM Votes_Table
@@ -94,7 +93,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
         }
 
         // 2) If categoryId > 0, filter out students NOT related to that category
-        //    This ensures we only list students who have that category in Student_Category_Relation
         $filteredRows = [];
         if ($categoryId > 0) {
             $relCheck = $pdo->prepare("
@@ -120,14 +118,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
         }
 
         if (!$filteredRows) {
-            // After filtering, if no students remain:
             echo json_encode(['message' => 'No students found for the selected year/category.']);
             exit;
         }
 
         // 3) Build final array with a SINGLE "VoteStatus" for each student
-        //    If a specific category was chosen, check that one.
-        //    If "All Categories" (categoryId=0), check categories 1..5.
         $final = [];
         foreach ($filteredRows as $r) {
             $studId = $r['student_primary'];
@@ -197,7 +192,7 @@ try {
     die("Error fetching academic years: " . $e->getMessage());
 }
 
-// Fetch categories for the dropdown (e.g. A1..D, or however many you have)
+// Fetch categories for the dropdown
 try {
     $stmtCats = $pdo->prepare("
         SELECT CategoryID, CategoryCode
@@ -234,6 +229,29 @@ try {
         }
         #error-message {
             display: none; /* hidden by default; shown if an error occurs */
+        }
+
+        /* Buttons for Download & Return */
+        .action-container {
+            position: fixed;
+            bottom: 20px;    
+            right: 20px;    
+        }
+        .action-button, .return-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+            width: 160px;
+            text-align: center;
+        }
+        .action-button:hover, .return-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -304,6 +322,9 @@ try {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
 
+<!-- FileSaver.js for CSV download -->
+<script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const filterForm = document.getElementById('filter-form');
@@ -315,7 +336,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const gridVotedDiv = document.getElementById('grid-voted');
 
     const notifyBtn = document.getElementById('notify-button');
-    const categorySelect = document.getElementById('category');
+    
+    // Attach these arrays to the window object
+    // so the "Download CSV" button can access them.
+    window.globalNotVotedData = [];
+    window.globalVotedData = [];
 
     // Show/hide error messages
     function showError(msg) {
@@ -380,9 +405,13 @@ document.addEventListener("DOMContentLoaded", () => {
             // Auto-switch to the "Not Voted" tab
             notVotedTab.click();
 
-            // Separate "Voted" vs "Not Voted" by the single "VoteStatus" field
+            // Separate "Voted" vs "Not Voted"
             const votedStudents = data.students.filter(s => s.VoteStatus === 'Voted');
             const notVotedStudents = data.students.filter(s => s.VoteStatus === 'Not Voted');
+
+            // Save them to window for CSV download
+            window.globalNotVotedData = notVotedStudents;
+            window.globalVotedData = votedStudents;
 
             destroyGrids();
 
@@ -432,14 +461,20 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             votedGridInstance.render(gridVotedDiv);
 
+            // Show the Download CSV button if we have any data
+            if (data.students.length > 0) {
+                document.getElementById('downloadBtn').style.display = 'block';
+            } else {
+                document.getElementById('downloadBtn').style.display = 'none';
+            }
+
         } catch (err) {
             console.error(err);
             showError('An error occurred while fetching data.');
         }
     });
 
-    // FIXED: Notify Students click listener — now has access to notVotedGridInstance
-    // Replace your existing notifyBtn click listener with this one
+    // Notify Students click listener
     notifyBtn.addEventListener("click", async () => {
         const yearSelect = document.getElementById('year');
         const categorySelect = document.getElementById('category');
@@ -532,7 +567,58 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+</script>
 
+<!-- Fixed Action Container for "Download CSV" & "Return" -->
+<div class="action-container">
+    <button class="action-button" id="downloadBtn" style="display:none;">
+        Download CSV
+    </button>
+    <button class="return-button" onclick="window.location.href='reportPage.php'">
+        Return to Category Page
+    </button>
+</div>
+
+<script>
+// The "Download CSV" button merges globalNotVotedData + globalVotedData
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    // Pull from window object
+    const notVoted = window.globalNotVotedData || [];
+    const voted = window.globalVotedData || [];
+    const combinedData = notVoted.concat(voted);
+
+    if (!combinedData.length) {
+        alert('No data to download.');
+        return;
+    }
+
+    // Create CSV headers
+    const headers = [
+        "StudentID",
+        "StudentFullName",
+        "CGPA",
+        "Mail",
+        "SuNET_Username",
+        "VoteStatus"
+    ];
+
+    // Convert each row to semicolon-separated strings
+    const rows = combinedData.map(item => [
+        item.StudentID,
+        item.StudentFullName,
+        item.CGPA,
+        item.Mail,
+        item.SuNET_Username,
+        item.VoteStatus
+    ].join(';'));
+
+    // Use UTF-8 BOM (\uFEFF) so Excel handles special characters
+    const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join("\n");
+    const blob = new Blob([csvContent], {type: "text/csv;charset=utf-8;"});
+
+    // Use FileSaver.js to save
+    saveAs(blob, "student_usage_data.csv");
+});
 </script>
 
 </body>
