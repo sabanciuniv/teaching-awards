@@ -192,7 +192,27 @@ try {
 
 <div class="container">
     <!-- Grid.js will render the table here -->
-    <div id="students-grid"></div>
+    <div class="card card-body" id="tab-section" style="display: none;">
+
+        <ul class="nav nav-tabs nav-justified" id="studentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="not-voted-tab" data-bs-toggle="tab" data-bs-target="#not-voted" type="button" role="tab">Not Voted</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="voted-tab" data-bs-toggle="tab" data-bs-target="#voted" type="button" role="tab">Voted</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-4" id="studentTabsContent">
+            <div class="tab-pane fade show active" id="not-voted" role="tabpanel">
+                <div id="grid-not-voted"></div>
+            </div>
+            <div class="tab-pane fade" id="voted" role="tabpanel">
+                <div id="grid-voted"></div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Error message container -->
     <div id="error-message" class="alert alert-danger mt-3"></div>
@@ -290,10 +310,79 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            document.getElementById("not-voted-tab").click();
+            document.getElementById("tab-section").style.display = "block";
+
+
+
             // If we have students, render them; otherwise show a "no data" message
             if (data.students && data.students.length > 0) {
-                renderGrid(data.students);
-            } else {
+                const votedStudents = data.students.filter(s =>
+                    s.A1 === 'Voted' || s.A2 === 'Voted' || s.B === 'Voted' || s.C === 'Voted' || s.D === 'Voted'
+                );
+
+                const notVotedStudents = data.students.filter(s =>
+                    (s.A1 === 'Not Voted' || s.A2 === 'Not Voted' || s.B === 'Not Voted' || s.C === 'Not Voted' || s.D === 'Not Voted') &&
+                    s.A1 !== 'Voted' && s.A2 !== 'Voted' && s.B !== 'Voted' && s.C !== 'Voted' && s.D !== 'Voted'
+                );
+
+                // Destroy old grids if any
+                if (gridInstance) gridInstance.destroy();
+
+                // Render Not Voted students
+                const notVotedGrid = new gridjs.Grid({
+                    columns: [
+                        { id: 'StudentID', name: 'Student ID' },
+                        { id: 'StudentFullName', name: 'Student Name' },
+                        { id: 'CGPA', name: 'GPA' },
+                        { id: 'Mail', name: 'Email' },
+                        { id: 'SuNET_Username', name: 'SUNET Username' },
+                        { id: 'A1', name: 'A1' },
+                        { id: 'A2', name: 'A2' },
+                        { id: 'B', name: 'B' },
+                        { id: 'C', name: 'C' },
+                        { id: 'D', name: 'D' }
+                    ],
+                    data: notVotedStudents,
+                    search: true,
+                    sort: true,
+                    pagination: {
+                        limit: 10,
+                        summary: true
+                    },
+                    className: {
+                        table: 'table table-bordered'
+                    }
+                });
+                notVotedGrid.render(document.getElementById("grid-not-voted"));
+
+                // Render Voted students
+                const votedGrid = new gridjs.Grid({
+                    columns: [
+                        { id: 'StudentID', name: 'Student ID' },
+                        { id: 'StudentFullName', name: 'Student Name' },
+                        { id: 'CGPA', name: 'GPA' },
+                        { id: 'Mail', name: 'Email' },
+                        { id: 'SuNET_Username', name: 'SUNET Username' },
+                        { id: 'A1', name: 'A1' },
+                        { id: 'A2', name: 'A2' },
+                        { id: 'B', name: 'B' },
+                        { id: 'C', name: 'C' },
+                        { id: 'D', name: 'D' }
+                    ],
+                    data: votedStudents,
+                    search: true,
+                    sort: true,
+                    pagination: {
+                        limit: 10,
+                        summary: true
+                    },
+                    className: {
+                        table: 'table table-bordered'
+                    }
+                });
+                votedGrid.render(document.getElementById("grid-voted"));
+            }else {
                 showError('No data found.');
             }
 
