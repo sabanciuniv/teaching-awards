@@ -287,6 +287,7 @@ try {
 
         <div class="tab-content mt-4" id="studentTabsContent">
             <div class="tab-pane fade show active" id="not-voted" role="tabpanel">
+                <button id="notify-button" class="btn btn-warning mb-3">Notify Students</button>
                 <div id="grid-not-voted"></div>
             </div>
             <div class="tab-pane fade" id="voted" role="tabpanel">
@@ -434,6 +435,57 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    // ADD this notify button listener after the existing form submission logic
+    document.getElementById("notify-button").addEventListener("click", async () => {
+        const categorySelect = document.getElementById("category");
+        const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+
+        // Grid.js keeps data in .config.data
+        const notVotedData = notVotedGridInstance?.config?.data || [];
+
+        if (notVotedData.length === 0) {
+            alert("No students to notify.");
+            return;
+        }
+
+        // Convert Grid.js data back to object structure expected by PHP
+        const students = notVotedData.map(row => ({
+            StudentID: row[0],
+            StudentFullName: row[1],
+            CGPA: row[2],
+            Mail: row[3],
+            SuNET_Username: row[4],
+            VoteStatus: row[5]
+        }));
+
+        try {
+            const res = await fetch("notifyStudents.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    category: categoryText,
+                    students: students
+                })
+            });
+
+            const result = await res.json();
+
+            if (result.error) {
+                alert("Error: " + result.error);
+            } else {
+                alert(`Emails sent: ${result.sent}\nFailed: ${result.failed.length}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to send emails.");
+        }
+    });
+});
+
 </script>
 
 </body>
