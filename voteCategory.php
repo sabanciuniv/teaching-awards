@@ -1,13 +1,3 @@
-<?php
-session_start();
-require_once 'api/authMiddleware.php';
-if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
-    header("Location: login.php");
-    exit();
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,6 +86,34 @@ if (!isset($_SESSION['user'])) {
       justify-content: center;
       text-align: center;
     }
+
+    /* --- Make the Bootstrap 5 Close Button a red 'X' with no background --- */
+    .btn-close {
+      background: none !important;
+      background-image: none !important; /* Remove default icon */
+      border: none !important;
+      box-shadow: none !important;
+      appearance: none;
+      width: 1em;
+      height: 1em;
+      padding: 0;
+      opacity: 1; /* Always fully visible */
+      position: relative;
+    }
+    .btn-close::before {
+      content: "×";         /* The 'X' character */
+      color: #ff0000;       /* Red color */
+      font-size: 1.4rem;    /* Adjust as needed */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    /* Optional hover/focus style */
+    .btn-close:hover::before,
+    .btn-close:focus::before {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -114,6 +132,7 @@ if (!isset($_SESSION['user'])) {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="voteModalLabel">Your Vote Details</h5>
+          <!-- The close button now shows as a red 'X' with no background -->
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="modalBody">
