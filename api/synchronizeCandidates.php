@@ -20,7 +20,13 @@ try {
         FROM API_TAS");
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $fullName = trim($row['TA_FIRST_NAME'] . ' ' . ($row['TA_MI_NAME'] ?? '') . ' ' . $row['TA_LAST_NAME']);
+        $fullName = $row['TA_FIRST_NAME'];
+        if (!empty($row['TA_MI_NAME'])) {
+            $fullName .= ' ' . $row['TA_MI_NAME'];
+        }
+        $fullName .= ' ' . $row['TA_LAST_NAME'];
+        $fullName = trim($fullName);
+        
         $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';  // Default to 'Etkin' if status not found
 
         $candidates[$row['TA_ID']] = [
@@ -38,7 +44,13 @@ try {
         FROM API_INSTRUCTORS");
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $fullName = trim($row['INST_FIRST_NAME'] . ' ' . ($row['INST_MI_NAME'] ?? '') . ' ' . $row['INST_LAST_NAME']);
+        $fullName = $row['INST_FIRST_NAME'];
+        if (!empty($row['INST_MI_NAME'])) {
+            $fullName .= ' ' . $row['INST_MI_NAME'];
+        }
+        $fullName .= ' ' . $row['INST_LAST_NAME'];
+        $fullName = trim($fullName);
+        
         $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
         $candidates[$row['INST_ID']] = [

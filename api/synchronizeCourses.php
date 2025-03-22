@@ -15,14 +15,16 @@ try {
     $stmt = $pdo->query("SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, SEQ_NUMB, CRSE_TITLE FROM API_COURSES");
     $apiCourses = [];
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $apiCourses[$row['CRN']] = $row;
+        $key = $row['CRN'] . '_' . $row['TERM_CODE'] . '_' . $row['SUBJ_CODE'] . '_' . $row['CRSE_NUMB'];
+        $apiCourses[$key] = $row;        
     }
-
     // 3. Fetch existing DB courses
     $stmt = $pdo->query("SELECT * FROM Courses_Table");
     $existingCourses = [];
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $existingCourses[$row['CRN']] = $row;
+        $key = $row['CRN'] . '_' . $row['Term'] . '_' . $row['Subject_Code'] . '_' . $row['Course_Number'];
+        $existingCourses[$key] = $row;
+        
     }
 
     // 4. Prepare statements
@@ -35,7 +37,7 @@ try {
         Section = :Section, Term = :Term, Sync_Date = NOW(), YearID = :YearID 
         WHERE CRN = :CRN");
 
-    $deleteStmt = $pdo->prepare("DELETE FROM Courses_Table WHERE CRN = :CRN");
+    $deleteStmt = $pdo->prepare("DELETE FROM Courses_Table WHERE CRN = :CRN AND Term = :Term");
 
     $updated = 0;
     $inserted = 0;
@@ -48,6 +50,10 @@ try {
     $apiCRNs = array_keys($apiCourses);
 
     foreach ($apiCourses as $crn => $course) {
+
+        $crn = $course['CRN'];
+        $term = $course['TERM_CODE'];
+        $compositeKey = $crn . '_' . $term . '_' . $course['SUBJ_CODE'] . '_' . $course['CRSE_NUMB'];
         // Default values
         $course['CRSE_TITLE'] = $course['CRSE_TITLE'] ?? 'Unknown Course';
         $course['SUBJ_CODE'] = $course['SUBJ_CODE'] ?? 'N/A';  
@@ -71,8 +77,8 @@ try {
             'YearID' => $yearID
         ];
 
-        if (isset($existingCourses[$crn])) {
-            $dbCourse = $existingCourses[$crn];
+        if (isset($existingCourses[$compositeKey])) {
+            $dbCourse = $existingCourses[$compositeKey];        
             if (
                 $dbCourse['CourseName'] !== $course['CRSE_TITLE'] ||
                 $dbCourse['Subject_Code'] !== $course['SUBJ_CODE'] ||
@@ -93,16 +99,16 @@ try {
     }
 
     // 5. Delete courses not in API
-    foreach ($existingCourses as $crn => $course) {
-        if (!in_array($crn, $apiCRNs)) {
-            $deleteStmt->execute([':CRN' => $crn]);
+    foreach ($existingCourses as $key => $course) {
+        if (!isset($apiCourses[$key])) {    
+            $deleteStmt->execute([':CRN' => $course['CRN'], ':Term' => $course['Term']]);
             $deleted++;
             $deletedRows[] = [
                 'CourseName' => $course['CourseName'],
                 'Subject_Code' => $course['Subject_Code'],
                 'Course_Number' => $course['Course_Number'],
                 'Section' => $course['Section'],
-                'CRN' => $crn,
+                'CRN' => $course['CRN'],
                 'Term' => $course['Term'],
                 'YearID' => $course['YearID']
             ];

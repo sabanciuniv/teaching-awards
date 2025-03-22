@@ -14,22 +14,10 @@ try {
         exit();
     }
 
-    $sunet_username = $_SESSION['user']; // SuNET_Username from session
+    $sunet_username = $_SESSION['user'];
 
-    // Load database configuration
-    $config = include(__DIR__ . '/../config.php'); 
-    $dbConfig = $config['database'];
-
-    // Database connection
-    $pdo = new PDO(
-        "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset=utf8mb4",
-        $dbConfig['username'],
-        $dbConfig['password']
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Step 1: Retrieve the student ID using SuNET_Username
-    $stmt = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :sunet_username");
+    // Get student ID and YearID from Student_Table
+    $stmt = $pdo->prepare("SELECT id, YearID FROM Student_Table WHERE SuNET_Username = :sunet_username");
     $stmt->execute(['sunet_username' => $sunet_username]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -39,23 +27,37 @@ try {
         exit();
     }
 
-    $student_id = $student['id']; 
+    $student_id = $student['id'];
+    $year_id = $student['YearID'];
 
-    // Step 2: Retrieve categories the student can vote in
+    // Get categories for that student in the same academic year
     $stmt = $pdo->prepare("
         SELECT c.CategoryID, c.CategoryCode, c.CategoryDescription
         FROM Student_Category_Relation scr
         JOIN Category_Table c ON scr.categoryID = c.CategoryID
-        WHERE scr.student_id = :student_id;
+        JOIN Student_Table s ON scr.student_id = s.id
+        WHERE scr.student_id = :student_id
+          AND s.YearID = :year_id
     ");
-    $stmt->execute(['student_id' => $student_id]); 
+    $stmt->execute([
+        'student_id' => $student_id,
+        'year_id' => $year_id
+    ]);
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Step 3: Return JSON response
     if (empty($categories)) {
-        echo json_encode(["status" => "success", "message" => "No voting categories found.", "student_id" => $student_id]);
+        echo json_encode([
+            "status" => "success",
+            "message" => "No voting categories found for this academic year.",
+            "student_id" => $student_id,
+            "year_id" => $year_id
+        ]);
     } else {
-        echo json_encode(["status" => "success", "categories" => $categories]);
+        echo json_encode([
+            "status" => "success",
+            "categories" => $categories,
+            "year_id" => $year_id
+        ]);
     }
 
 } catch (PDOException $e) {
@@ -63,4 +65,3 @@ try {
     http_response_code(500);
     echo json_encode(["status" => "error", "message" => "Database query failed."]);
 }
-?>
