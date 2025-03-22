@@ -19,12 +19,13 @@ try {
         $yearMap[$row['Academic_year']] = $row['YearID'];
     }
 
-    // Load Courses
-    $stmt = $pdo->query("SELECT CRN, CourseID, Subject_Code, Course_Number, CourseName, Term, YearID FROM Courses_Table");
+    // Load Courses into a composite key map: TERM_SUBJ_COURSE_CRN => course row
+    $stmt = $pdo->query("SELECT * FROM Courses_Table");
     $courses = [];
     $courseIds = [];
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $courses[$row['CRN']] = $row;
+        $key = "{$row['Term']}_{$row['Subject_Code']}_{$row['Course_Number']}_{$row['CRN']}";
+        $courses[$key] = $row;
         $courseIds[] = $row['CourseID'];
     }
 
@@ -48,9 +49,22 @@ try {
     $insertStmt = $pdo->prepare("INSERT INTO Candidate_Course_Relation (CourseID, CandidateID, Academic_Year, CategoryID, Term)
         VALUES (:CourseID, :CandidateID, :Academic_Year, :CategoryID, :Term)");
 
-    $updateStmt = $pdo->prepare("UPDATE Candidate_Course_Relation
-        SET Academic_Year = :Academic_Year, CategoryID = :CategoryID, Term = :Term
-        WHERE CandidateID = :CandidateID AND CourseID = :CourseID");
+    $updateStmt = $pdo->prepare("
+        UPDATE Candidate_Course_Relation
+        SET Academic_Year = :Academic_Year,
+            CategoryID = :CategoryID,
+            Term = :Term
+        WHERE CandidateID = :CandidateID
+          AND CourseID = :CourseID
+          AND (
+                Academic_Year != :Academic_Year OR
+                CategoryID != :CategoryID OR
+                Term != :Term OR
+                Academic_Year IS NULL OR
+                CategoryID IS NULL OR
+                Term IS NULL
+          )
+    ");
 
     $deleteStmt = $pdo->prepare("DELETE FROM Candidate_Course_Relation WHERE CandidateID = :CandidateID AND CourseID = :CourseID");
 
@@ -85,9 +99,11 @@ try {
             $yearCode = substr($term, 0, 4);
             $academicYear = $yearMap[$yearCode] ?? null;
 
-            if (!$academicYear || !isset($courses[$crn]) || !isset($candidates[$suId])) continue;
+            $courseKey = "{$term}_{$subject}_{$course}_{$crn}";
+            $courseData = $courses[$courseKey] ?? null;
 
-            $courseData = $courses[$crn];
+            if (!$academicYear || !$courseData || !isset($candidates[$suId])) continue;
+
             $candidateData = $candidates[$suId];
             $key = "{$candidateData['id']}_{$courseData['CourseID']}";
             $validKeys[$key] = true;
@@ -122,8 +138,10 @@ try {
                     ':CandidateID' => $candidateData['id'],
                     ':CourseID' => $courseData['CourseID']
                 ]);
-                $response['updated']++;
-                $response['updatedRows'][] = $logRow;
+                if ($updateStmt->rowCount() > 0) {
+                    $response['updated']++;
+                    $response['updatedRows'][] = $logRow;
+                }
             }
         }
     }
@@ -150,25 +168,35 @@ try {
         }
     }
 
-    // Delete relations if Course no longer exists
-    $stmt = $pdo->query("SELECT ccr.CandidateID, ccr.CourseID, ct.SU_ID FROM Candidate_Course_Relation ccr JOIN Candidate_Table ct ON ccr.CandidateID = ct.id");
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $deleteMissingCourseStmt = $pdo->prepare("DELETE FROM Candidate_Course_Relation WHERE CandidateID = :CandidateID AND CourseID = :CourseID");
+    // Delete Candidate_Course_Relation entries not found in the API sources (missing from validKeys)
+    $stmt = $pdo->query("
+        SELECT ccr.CandidateID, ccr.CourseID, ct.SU_ID, ct.Role, ct.Status, c.Subject_Code, c.Course_Number, c.CRN, c.Term
+        FROM Candidate_Course_Relation ccr
+        JOIN Candidate_Table ct ON ct.id = ccr.CandidateID
+        JOIN Courses_Table c ON c.CourseID = ccr.CourseID
+    ");
 
-    foreach ($rows as $row) {
-        if (!in_array($row['CourseID'], $courseIds)) {
-            $deleteMissingCourseStmt->execute([
+    $existing = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $deleteOrphanStmt = $pdo->prepare("DELETE FROM Candidate_Course_Relation WHERE CandidateID = :CandidateID AND CourseID = :CourseID");
+
+    foreach ($existing as $row) {
+        $key = "{$row['CandidateID']}_{$row['CourseID']}";
+        if (!isset($validKeys[$key])) {
+            $deleteOrphanStmt->execute([
                 ':CandidateID' => $row['CandidateID'],
                 ':CourseID' => $row['CourseID']
             ]);
+
             $response['deleted']++;
             $response['deletedRows'][] = [
                 'SU_ID' => $row['SU_ID'],
                 'CourseID' => $row['CourseID'],
-                'reason' => 'Course no longer exists'
+                'reason' => 'Not found in API_INSTRUCTORS or API_TAS'
             ];
         }
     }
+
 
     echo json_encode(array_merge(['status' => 'success'], $response));
 } catch (Exception $e) {

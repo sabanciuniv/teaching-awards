@@ -64,6 +64,9 @@ try {
         exit();
     }
 
+    // DEBUG: Output enrolled courses
+    $debugData['enrolledCourses'] = $courses;
+
     // Fetch CategoryID from Category Code 
     $stmtCategory = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :categoryCode");
     $stmtCategory->execute(['categoryCode' => $categoryCode]);
@@ -107,9 +110,14 @@ try {
 
     // Bind parameters dynamically
     $params = array_merge([$categoryID], $currentAcademicYears, $courses);
+    // DEBUG: Output parameters to be bound
+    $debugData['queryParams'] = $params;
+
     $stmt->execute($params);
 
+
     $TAs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $debugData['TAsResult'] = $TAs;
 
     if ($TAs) {
         echo json_encode(['status' => 'success', 'data' => $TAs]);

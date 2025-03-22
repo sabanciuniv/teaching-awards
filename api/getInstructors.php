@@ -15,8 +15,6 @@ $suNetUsername = $_SESSION['user'];
 $categoryCode = isset($_GET['category']) ? $_GET['category'] : null;
 $term = isset($_GET['term']) ? $_GET['term'] : null;
 
-
-
 if (!$categoryCode) {
     echo json_encode(['status' => 'error', 'message' => 'Category code is required']);
     exit();
@@ -36,6 +34,12 @@ try {
     $currentAcademicYears = [
         $academicYearData['academicYear'] . '01',
         $academicYearData['academicYear'] . '02'
+    ];
+
+    // DEBUG: Output academic year and term values
+    $debugData = [
+        'academicYearData' => $academicYearData,
+        'allowedTerms' => $currentAcademicYears
     ];
 
     // Fetch StudentID of the logged-in user
@@ -60,6 +64,9 @@ try {
         exit();
     }
 
+    // DEBUG: Output enrolled courses
+    $debugData['enrolledCourses'] = $courses;
+
     // Fetch CategoryID from Category Code 
     $stmtCategory = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :categoryCode");
     $stmtCategory->execute(['categoryCode' => $categoryCode]);
@@ -71,6 +78,9 @@ try {
     }
 
     $categoryID = $category['CategoryID'];
+
+    // DEBUG: Output CategoryID
+    $debugData['categoryID'] = $categoryID;
 
     // Fetch Instructors for the student's courses
     $placeholders = implode(',', array_fill(0, count($courses), '?'));
@@ -94,22 +104,29 @@ try {
         AND r.Term IN (?, ?)
         AND r.CourseID IN ($placeholders)
         AND NOT EXISTS (
-        SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
+            SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
         )
     ";
 
     $stmt = $pdo->prepare($query);
 
-    // Bind parameters dynamically
+    // Bind parameters dynamically: first CategoryID, then two term values, then the course IDs
     $params = array_merge([$categoryID], $currentAcademicYears, $courses);
+    // DEBUG: Output parameters to be bound
+    $debugData['queryParams'] = $params;
+
     $stmt->execute($params);
 
     $instructors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // DEBUG: Include instructor results in debug output
+    $debugData['instructorsResult'] = $instructors;
+
     if ($instructors) {
         echo json_encode(['status' => 'success', 'data' => $instructors]);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'No instructors found for the given courses and category']);
+        // Optionally include debug data in the error message for troubleshooting
+        echo json_encode(['status' => 'error', 'message' => 'No instructors found for the given courses and category', 'debugData' => $debugData]);
     }
 
 } catch (PDOException $e) {
