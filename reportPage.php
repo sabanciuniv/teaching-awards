@@ -158,7 +158,7 @@ if (!isset($_SESSION['user'])) {
             { id: 'VoteResults', name: 'Faculty Member Scores', url: 'facultyMemberScoreTable.php' },
             { id: 'VoterList', name: 'Voting Status Report', url: 'studentUsagePage.php' },
             { id: 'ParticipationRates', name: 'Voting Participation Report by Years', url: 'participationList.php' },
-            { id: 'PointDistributions', name: 'Candidate Point Distribution by Years', url: 'pointDistributionReport.php' }
+           
         ];
         // Retrieve completed categories from localStorage
         const completedCategories = JSON.parse(localStorage.getItem('completedCategories')) || [];
