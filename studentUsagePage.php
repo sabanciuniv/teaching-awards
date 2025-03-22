@@ -16,12 +16,12 @@ require_once __DIR__ . '/database/dbConnection.php';
 */
 
 // ---------------------------------------------------------------------
-// 1) AJAX MODE: Return JSON for the selected year
+// 1) AJAX MODE: Return JSON for the selected year & category
 // ---------------------------------------------------------------------
 if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
     header('Content-Type: application/json; charset=utf-8');
 
-    // A helper function that returns "Voted", "Not Voted", or "-" for a given student & category
+    // Helper: returns "Voted", "Not Voted", or "-" for a given student & category
     function getCategoryStatus($pdo, $studentId, $yearId, $catId) {
         // 1) Check if student is in Student_Category_Relation for that category
         $relStmt = $pdo->prepare("
@@ -62,15 +62,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
         return $hasVote ? "Voted" : "Not Voted";
     }
 
-    // Get the year ID
+    // Get the year and category from the query string
     $yearId = isset($_GET['year']) ? intval($_GET['year']) : 0;
+    $categoryId = isset($_GET['category']) ? intval($_GET['category']) : 0;
+
     if ($yearId <= 0) {
         echo json_encode(['error' => 'Invalid year selected.']);
         exit;
     }
 
     try {
-        // Fetch all students for this YearID
+        // 1) Fetch all students for this YearID
         $stmt = $pdo->prepare("
             SELECT 
                 s.id AS student_primary,
@@ -91,17 +93,73 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
             exit;
         }
 
-        // Build final array
+        // 2) If categoryId > 0, filter out students NOT related to that category
+        //    This ensures we only list students who have that category in Student_Category_Relation
+        $filteredRows = [];
+        if ($categoryId > 0) {
+            $relCheck = $pdo->prepare("
+                SELECT 1
+                FROM Student_Category_Relation
+                WHERE student_id = :sid
+                  AND categoryID = :cid
+                LIMIT 1
+            ");
+            foreach ($rows as $r) {
+                $relCheck->execute([
+                    ':sid' => $r['student_primary'],
+                    ':cid' => $categoryId
+                ]);
+                if ($relCheck->fetchColumn()) {
+                    // This student is in the chosen category
+                    $filteredRows[] = $r;
+                }
+            }
+        } else {
+            // categoryId=0 => no category filter (All Categories)
+            $filteredRows = $rows;
+        }
+
+        if (!$filteredRows) {
+            // After filtering, if no students remain:
+            echo json_encode(['message' => 'No students found for the selected year/category.']);
+            exit;
+        }
+
+        // 3) Build final array with a SINGLE "VoteStatus" for each student
+        //    If a specific category was chosen, check that one.
+        //    If "All Categories" (categoryId=0), check categories 1..5.
         $final = [];
-        foreach ($rows as $r) {
+        foreach ($filteredRows as $r) {
             $studId = $r['student_primary'];
 
-            // Check categories 1..5 => A1, A2, B, C, D
-            $voteA1 = getCategoryStatus($pdo, $studId, $yearId, 1); // CategoryID=1 => A1
-            $voteA2 = getCategoryStatus($pdo, $studId, $yearId, 2); // CategoryID=2 => A2
-            $voteB  = getCategoryStatus($pdo, $studId, $yearId, 3); // CategoryID=3 => B
-            $voteC  = getCategoryStatus($pdo, $studId, $yearId, 4); // CategoryID=4 => C
-            $voteD  = getCategoryStatus($pdo, $studId, $yearId, 5); // CategoryID=5 => D
+            if ($categoryId > 0) {
+                // Check only the chosen category
+                $voteStatus = getCategoryStatus($pdo, $studId, $yearId, $categoryId);
+            } else {
+                // "All Categories" => if ANY category=Voted => "Voted"
+                // otherwise if ANY category=Not Voted => "Not Voted"
+                // else "-"
+                $catList = [1,2,3,4,5];
+                $foundVoted = false;
+                $foundNotVoted = false;
+
+                foreach ($catList as $c) {
+                    $status = getCategoryStatus($pdo, $studId, $yearId, $c);
+                    if ($status === 'Voted') {
+                        $foundVoted = true;
+                    } elseif ($status === 'Not Voted') {
+                        $foundNotVoted = true;
+                    }
+                }
+
+                if ($foundVoted) {
+                    $voteStatus = 'Voted';
+                } elseif ($foundNotVoted) {
+                    $voteStatus = 'Not Voted';
+                } else {
+                    $voteStatus = '-';
+                }
+            }
 
             $final[] = [
                 'StudentID'       => $r['StudentID'],
@@ -109,12 +167,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
                 'Mail'            => $r['Mail'],
                 'SuNET_Username'  => $r['SuNET_Username'],
                 'CGPA'            => $r['CGPA'],
-
-                'A1' => $voteA1,
-                'A2' => $voteA2,
-                'B'  => $voteB,
-                'C'  => $voteC,
-                'D'  => $voteD
+                'VoteStatus'      => $voteStatus
             ];
         }
 
@@ -143,12 +196,25 @@ try {
 } catch (Exception $e) {
     die("Error fetching academic years: " . $e->getMessage());
 }
+
+// Fetch categories for the dropdown (e.g. A1..D, or however many you have)
+try {
+    $stmtCats = $pdo->prepare("
+        SELECT CategoryID, CategoryCode
+        FROM Category_Table
+        ORDER BY CategoryID
+    ");
+    $stmtCats->execute();
+    $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    die("Error fetching categories: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Table by Year (Voted / Not Voted)</title>
+    <title>Student Table by Year & Category (Voted / Not Voted)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Bootstrap CSS (CDN for demo; adjust as needed) -->
@@ -173,11 +239,12 @@ try {
 </head>
 <body>
 
-<h1 class="title">Student Table by Year (Voted / Not Voted)</h1>
+<h1 class="title">Student Table by Year & Category (Voted / Not Voted)</h1>
 
-<!-- Dropdown form to select the academic year -->
+<!-- Dropdown form to select the academic year & category -->
 <div class="mb-4 d-flex justify-content-center">
     <form id="filter-form" class="d-flex">
+        <!-- Year Dropdown -->
         <select id="year" class="form-select me-2" required>
             <option value="" disabled selected>Select Academic Year</option>
             <?php foreach($academicYears as $y): ?>
@@ -186,20 +253,35 @@ try {
                 </option>
             <?php endforeach; ?>
         </select>
+
+        <!-- Category Dropdown -->
+        <select id="category" class="form-select me-2" required>
+            <option value="0" selected>All Categories</option>
+            <?php foreach($categories as $cat): ?>
+                <option value="<?= htmlspecialchars($cat['CategoryID']) ?>">
+                    <?= htmlspecialchars($cat['CategoryCode']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
         <button type="submit" class="btn btn-primary">View Students</button>
     </form>
 </div>
 
 <div class="container">
-    <!-- Grid.js will render the table here -->
+    <!-- Card with two tabs: Not Voted / Voted -->
     <div class="card card-body" id="tab-section" style="display: none;">
 
         <ul class="nav nav-tabs nav-justified" id="studentTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="not-voted-tab" data-bs-toggle="tab" data-bs-target="#not-voted" type="button" role="tab">Not Voted</button>
+                <button class="nav-link active" id="not-voted-tab" data-bs-toggle="tab" data-bs-target="#not-voted" type="button" role="tab">
+                    Not Voted
+                </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="voted-tab" data-bs-toggle="tab" data-bs-target="#voted" type="button" role="tab">Voted</button>
+                <button class="nav-link" id="voted-tab" data-bs-toggle="tab" data-bs-target="#voted" type="button" role="tab">
+                    Voted
+                </button>
             </li>
         </ul>
 
@@ -213,7 +295,6 @@ try {
         </div>
     </div>
 
-
     <!-- Error message container -->
     <div id="error-message" class="alert alert-danger mt-3"></div>
 </div>
@@ -224,12 +305,15 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    let gridInstance;
     const filterForm = document.getElementById('filter-form');
     const errorMessage = document.getElementById('error-message');
-    const studentsGrid = document.getElementById('students-grid');
 
-    // Helper to show/hide error messages
+    const tabSection = document.getElementById('tab-section');
+    const notVotedTab = document.getElementById('not-voted-tab');
+    const gridNotVotedDiv = document.getElementById('grid-not-voted');
+    const gridVotedDiv = document.getElementById('grid-voted');
+
+    // Show/hide error messages
     function showError(msg) {
         errorMessage.textContent = msg;
         errorMessage.style.display = 'block';
@@ -239,56 +323,30 @@ document.addEventListener("DOMContentLoaded", () => {
         errorMessage.textContent = '';
     }
 
-    // Render the data table using Grid.js
-    function renderGrid(dataArray) {
-        // Destroy existing grid if present
-        if (gridInstance) {
-            gridInstance.destroy();
-        }
+    // Grids for each tab
+    let notVotedGridInstance, votedGridInstance;
 
-        gridInstance = new gridjs.Grid({
-            columns: [
-                { id: 'StudentID',       name: 'Student ID' },
-                { id: 'StudentFullName', name: 'Student Name' },
-                { id: 'CGPA',            name: 'GPA' },
-                { id: 'Mail',            name: 'Email' },
-                { id: 'SuNET_Username',  name: 'SUNET Username' },
-
-                // 5 columns for categories (A1, A2, B, C, D)
-                { id: 'A1', name: 'A1' },
-                { id: 'A2', name: 'A2' },
-                { id: 'B',  name: 'B' },
-                { id: 'C',  name: 'C' },
-                { id: 'D',  name: 'D' }
-            ],
-            data: dataArray,
-            search: true,
-            sort: true,
-            pagination: {
-                limit: 10,
-                summary: true
-            },
-            className: {
-                table: 'table table-bordered'
-            }
-        });
-
-        gridInstance.render(studentsGrid);
+    // Destroy old grids if they exist
+    function destroyGrids() {
+        if (notVotedGridInstance) notVotedGridInstance.destroy();
+        if (votedGridInstance) votedGridInstance.destroy();
     }
 
-    // On form submit, fetch student data for the selected year
+    // Handle form submission -> fetch data
     filterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        hideError(); // Hide any old errors
+        hideError();
 
         const yearId = document.getElementById('year').value;
+        const categoryId = document.getElementById('category').value;
+
         if (!yearId) {
             showError('Please select an academic year.');
             return;
         }
 
-        // We call the same page with ?ajax=1 to return JSON
-        const url = `studentUsagePage.php?ajax=1&year=${yearId}`;
+        // Construct the AJAX URL
+        const url = `studentUsagePage.php?ajax=1&year=${yearId}&category=${categoryId}`;
 
         try {
             const response = await fetch(url);
@@ -298,93 +356,77 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const data = await response.json();
 
-            // Handle errors/messages from server
+            // Check for errors / messages
             if (data.error) {
                 showError(data.error);
-                if (gridInstance) gridInstance.destroy();
+                destroyGrids();
+                tabSection.style.display = "none";
                 return;
             }
             if (data.message) {
                 showError(data.message);
-                if (gridInstance) gridInstance.destroy();
+                destroyGrids();
+                tabSection.style.display = "none";
                 return;
             }
 
-            document.getElementById("not-voted-tab").click();
-            document.getElementById("tab-section").style.display = "block";
+            // We have valid data; show the tab section
+            tabSection.style.display = "block";
 
+            // Auto-switch to the "Not Voted" tab
+            notVotedTab.click();
 
+            // Separate "Voted" vs "Not Voted" by the single "VoteStatus" field
+            const votedStudents = data.students.filter(s => s.VoteStatus === 'Voted');
+            const notVotedStudents = data.students.filter(s => s.VoteStatus === 'Not Voted');
 
-            // If we have students, render them; otherwise show a "no data" message
-            if (data.students && data.students.length > 0) {
-                const votedStudents = data.students.filter(s =>
-                    s.A1 === 'Voted' || s.A2 === 'Voted' || s.B === 'Voted' || s.C === 'Voted' || s.D === 'Voted'
-                );
+            destroyGrids();
 
-                const notVotedStudents = data.students.filter(s =>
-                    (s.A1 === 'Not Voted' || s.A2 === 'Not Voted' || s.B === 'Not Voted' || s.C === 'Not Voted' || s.D === 'Not Voted') &&
-                    s.A1 !== 'Voted' && s.A2 !== 'Voted' && s.B !== 'Voted' && s.C !== 'Voted' && s.D !== 'Voted'
-                );
+            // Render Not Voted students
+            notVotedGridInstance = new gridjs.Grid({
+                columns: [
+                    { id: 'StudentID',       name: 'Student ID' },
+                    { id: 'StudentFullName', name: 'Student Name' },
+                    { id: 'CGPA',            name: 'GPA' },
+                    { id: 'Mail',            name: 'Email' },
+                    { id: 'SuNET_Username',  name: 'SUNET Username' },
+                    { id: 'VoteStatus',      name: 'Vote Status' }
+                ],
+                data: notVotedStudents,
+                search: true,
+                sort: true,
+                pagination: {
+                    limit: 10,
+                    summary: true
+                },
+                className: {
+                    table: 'table table-bordered'
+                }
+            });
+            notVotedGridInstance.render(gridNotVotedDiv);
 
-                // Destroy old grids if any
-                if (gridInstance) gridInstance.destroy();
-
-                // Render Not Voted students
-                const notVotedGrid = new gridjs.Grid({
-                    columns: [
-                        { id: 'StudentID', name: 'Student ID' },
-                        { id: 'StudentFullName', name: 'Student Name' },
-                        { id: 'CGPA', name: 'GPA' },
-                        { id: 'Mail', name: 'Email' },
-                        { id: 'SuNET_Username', name: 'SUNET Username' },
-                        { id: 'A1', name: 'A1' },
-                        { id: 'A2', name: 'A2' },
-                        { id: 'B', name: 'B' },
-                        { id: 'C', name: 'C' },
-                        { id: 'D', name: 'D' }
-                    ],
-                    data: notVotedStudents,
-                    search: true,
-                    sort: true,
-                    pagination: {
-                        limit: 10,
-                        summary: true
-                    },
-                    className: {
-                        table: 'table table-bordered'
-                    }
-                });
-                notVotedGrid.render(document.getElementById("grid-not-voted"));
-
-                // Render Voted students
-                const votedGrid = new gridjs.Grid({
-                    columns: [
-                        { id: 'StudentID', name: 'Student ID' },
-                        { id: 'StudentFullName', name: 'Student Name' },
-                        { id: 'CGPA', name: 'GPA' },
-                        { id: 'Mail', name: 'Email' },
-                        { id: 'SuNET_Username', name: 'SUNET Username' },
-                        { id: 'A1', name: 'A1' },
-                        { id: 'A2', name: 'A2' },
-                        { id: 'B', name: 'B' },
-                        { id: 'C', name: 'C' },
-                        { id: 'D', name: 'D' }
-                    ],
-                    data: votedStudents,
-                    search: true,
-                    sort: true,
-                    pagination: {
-                        limit: 10,
-                        summary: true
-                    },
-                    className: {
-                        table: 'table table-bordered'
-                    }
-                });
-                votedGrid.render(document.getElementById("grid-voted"));
-            }else {
-                showError('No data found.');
-            }
+            // Render Voted students
+            votedGridInstance = new gridjs.Grid({
+                columns: [
+                    { id: 'StudentID',       name: 'Student ID' },
+                    { id: 'StudentFullName', name: 'Student Name' },
+                    { id: 'CGPA',            name: 'GPA' },
+                    { id: 'Mail',            name: 'Email' },
+                    { id: 'SuNET_Username',  name: 'SUNET Username' },
+                    { id: 'VoteStatus',      name: 'Vote Status' }
+                ],
+                data: votedStudents,
+                search: true,
+                sort: true,
+                pagination: {
+                    limit: 10,
+                    summary: true
+                },
+                className: {
+                    table: 'table table-bordered'
+                }
+            });
+            votedGridInstance.render(gridVotedDiv);
 
         } catch (err) {
             console.error(err);
