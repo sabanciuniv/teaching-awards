@@ -314,6 +314,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const gridNotVotedDiv = document.getElementById('grid-not-voted');
     const gridVotedDiv = document.getElementById('grid-voted');
 
+    const notifyBtn = document.getElementById('notify-button');
+    const categorySelect = document.getElementById('category');
+
     // Show/hide error messages
     function showError(msg) {
         errorMessage.textContent = msg;
@@ -434,54 +437,98 @@ document.addEventListener("DOMContentLoaded", () => {
             showError('An error occurred while fetching data.');
         }
     });
-});
 
-document.addEventListener("DOMContentLoaded", () => {
-    // ADD this notify button listener after the existing form submission logic
-    document.getElementById("notify-button").addEventListener("click", async () => {
-        const categorySelect = document.getElementById("category");
+    // FIXED: Notify Students click listener — now has access to notVotedGridInstance
+    // Replace your existing notifyBtn click listener with this one
+    notifyBtn.addEventListener("click", async () => {
+        const yearSelect = document.getElementById('year');
+        const categorySelect = document.getElementById('category');
+        const yearText = yearSelect.options[yearSelect.selectedIndex].text;
         const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
-
-        // Grid.js keeps data in .config.data
-        const notVotedData = notVotedGridInstance?.config?.data || [];
-
-        if (notVotedData.length === 0) {
-            alert("No students to notify.");
+        
+        if (!notVotedGridInstance) {
+            alert("No data available. Please select an academic year and category first.");
             return;
         }
-
-        // Convert Grid.js data back to object structure expected by PHP
-        const students = notVotedData.map(row => ({
-            StudentID: row[0],
-            StudentFullName: row[1],
-            CGPA: row[2],
-            Mail: row[3],
-            SuNET_Username: row[4],
-            VoteStatus: row[5]
+        
+        // Get data from the grid
+        const notVotedData = notVotedGridInstance.config?.data || [];
+        
+        if (notVotedData.length === 0) {
+            alert("Great news! All students have already voted.");
+            return;
+        }
+        
+        // Confirm before sending emails
+        if (!confirm(`You are about to send notification emails to ${notVotedData.length} students who haven't voted in ${categoryText === "All Categories" ? "any category" : `the ${categoryText} category`}. Continue?`)) {
+            return;
+        }
+        
+        // Show loading indicator
+        const originalBtnText = notifyBtn.textContent;
+        notifyBtn.disabled = true;
+        notifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending emails...';
+        
+        // Format the data for the server
+        const students = notVotedData.map(student => ({
+            StudentID: student.StudentID,
+            StudentFullName: student.StudentFullName,
+            CGPA: student.CGPA,
+            Mail: student.Mail,
+            SuNET_Username: student.SuNET_Username,
+            VoteStatus: student.VoteStatus
         }));
-
+        
         try {
-            const res = await fetch("notifyStudents.php", {
+            const response = await fetch("notifyStudents.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
+                    year: yearText,
                     category: categoryText,
                     students: students
                 })
             });
-
-            const result = await res.json();
-
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
             if (result.error) {
-                alert("Error: " + result.error);
+                alert(`Error: ${result.error}`);
             } else {
-                alert(`Emails sent: ${result.sent}\nFailed: ${result.failed.length}`);
+                // Show detailed results
+                let message = `📧 Email Notification Results:\n\n`;
+                message += `✅ Successfully sent: ${result.sent} of ${result.total} emails\n`;
+                
+                if (result.failed && result.failed.length > 0) {
+                    message += `Failed: ${result.failed.length} emails\n\n`;
+                    
+                    if (result.failed.length <= 5) {
+                        message += "Failed emails:\n";
+                        result.failed.forEach(fail => {
+                            message += `- ${fail.email}: ${fail.reason || 'Unknown error'}\n`;
+                        });
+                    } else {
+                        message += "Too many failures to display. Check server logs for details.";
+                    }
+                } else {
+                    message += `\nAll emails were sent successfully!`;
+                }
+                
+                alert(message);
             }
         } catch (err) {
-            console.error(err);
-            alert("Failed to send emails.");
+            console.error("Error sending notifications:", err);
+            alert(`Failed to send emails: ${err.message}`);
+        } finally {
+            // Restore button state
+            notifyBtn.disabled = false;
+            notifyBtn.textContent = originalBtnText;
         }
     });
 });
