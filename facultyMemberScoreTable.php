@@ -6,16 +6,97 @@ if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
 }
-require_once __DIR__ . '/database/dbConnection.php'; // Adjust if needed
+require_once __DIR__ . '/database/dbConnection.php';
 
-// Fetch available academic years from DB
+// Initialize variables to store results
+$facultyScores = [];
+$errorMessage = null;
+$successMessage = null;
+
+// Process the form submission if year and category are provided
+if (isset($_GET['year']) && isset($_GET['category'])) {
+    $yearId = intval($_GET['year']);
+    $categoryId = intval($_GET['category']);
+    
+    try {
+        // Validate the academic year
+        $stmtYear = $pdo->prepare("
+            SELECT YearID, Academic_year
+            FROM AcademicYear_Table
+            WHERE YearID = ?
+        ");
+        $stmtYear->execute([$yearId]);
+        $yearRow = $stmtYear->fetch(PDO::FETCH_ASSOC);
+
+        if (!$yearRow) {
+            $errorMessage = 'Selected academic year does not exist.';
+        } else {
+            $academicYearName = $yearRow['Academic_year'];
+
+            // Fetch candidates' scores and vote breakdown
+            $stmt = $pdo->prepare("
+                SELECT
+                    v.CandidateID,
+                    c.Name AS candidate_name,
+                    c.Mail AS candidate_email,
+                    c.Role AS candidate_role,
+                    COALESCE(SUM(v.Points), 0) AS total_points,
+                    COALESCE(SUM(CASE WHEN v.Points = 1 THEN 1 ELSE 0 END), 0) AS points_1_count,
+                    COALESCE(SUM(CASE WHEN v.Points = 2 THEN 1 ELSE 0 END), 0) AS points_2_count,
+                    COALESCE(SUM(CASE WHEN v.Points = 3 THEN 1 ELSE 0 END), 0) AS points_3_count,
+                    COALESCE(SUM(CASE WHEN v.Points = 4 THEN 1 ELSE 0 END), 0) AS points_4_count,
+                    COALESCE(SUM(CASE WHEN v.Points = 5 THEN 1 ELSE 0 END), 0) AS points_5_count,
+                    COALESCE(SUM(CASE WHEN v.Points = 6 THEN 1 ELSE 0 END), 0) AS points_6_count
+                FROM Votes_Table v
+                INNER JOIN Candidate_Table c ON v.CandidateID = c.id
+                WHERE v.CategoryID = ?
+                  AND v.AcademicYear = ?
+                GROUP BY v.CandidateID, c.Name, c.Mail, c.Role
+                ORDER BY total_points DESC
+            ");
+
+            $stmt->execute([$categoryId, $yearId]);
+            $facultyScores = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($facultyScores)) {
+                $errorMessage = 'No votes found for the selected category and year.';
+            } else {
+                // Ensure all vote count fields are included and add academic year
+                foreach ($facultyScores as &$row) {
+                    $row['points_1_count'] = isset($row['points_1_count']) ? (int)$row['points_1_count'] : 0;
+                    $row['points_2_count'] = isset($row['points_2_count']) ? (int)$row['points_2_count'] : 0;
+                    $row['points_3_count'] = isset($row['points_3_count']) ? (int)$row['points_3_count'] : 0;
+                    $row['points_4_count'] = isset($row['points_4_count']) ? (int)$row['points_4_count'] : 0;
+                    $row['points_5_count'] = isset($row['points_5_count']) ? (int)$row['points_5_count'] : 0;
+                    $row['points_6_count'] = isset($row['points_6_count']) ? (int)$row['points_6_count'] : 0;
+                    $row['total_points'] = isset($row['total_points']) ? (int)$row['total_points'] : 0;
+                    $row['Academic_year'] = $academicYearName;
+                }
+                $successMessage = 'Data loaded successfully.';
+            }
+        }
+    } catch (Exception $e) {
+        $errorMessage = 'Database error: ' . $e->getMessage();
+    }
+}
+
+// Fetch available academic years & categories from the database
 try {
+    // 1) Academic Years
     $stmtYears = $pdo->prepare("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
     $stmtYears->execute();
     $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2) Categories
+    $stmtCats = $pdo->prepare("SELECT CategoryID, CategoryCode FROM Category_Table ORDER BY CategoryID ASC");
+    $stmtCats->execute();
+    $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-    die("Error fetching academic years: " . $e->getMessage());
+    die("Error fetching data: " . $e->getMessage());
 }
+
+// Convert faculty scores to JSON for JavaScript
+$facultyScoresJson = json_encode(['facultyScores' => $facultyScores]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,21 +113,19 @@ try {
     <link href="assets/css/all.min.css" rel="stylesheet">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
 
-    <!-- JavaScript -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/global_assets/js/main/jquery.min.js"></script>
-    <script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript - Use CDN versions to avoid 404 errors -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/app.js"></script>
     <script src="assets/js/custom.js"></script>
 
     <!-- Grid.js CSS/JS -->
     <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
-    
+   
     <!-- For CSV file saving -->
     <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
-    
+   
     <style>
         body {
             overflow: auto;
@@ -57,14 +136,11 @@ try {
             font-size: 24px;
             font-weight: bold;
         }
-
         .action-container {
-            position: fixed; 
+            position: fixed;
             bottom: 20px;    
-            right: 20px;     
+            right: 20px;    
         }
-
-        /* Shared styles for both buttons */
         .action-button, .return-button {
             background-color: #007bff;
             color: white;
@@ -78,13 +154,9 @@ try {
             width: 160px;
             text-align: center;
         }
-
-
-        
         .action-button:hover, .return-button:hover {
             background-color: #0056b3;
         }
-
         .container .form-select {
             width: 200px;
         }
@@ -93,6 +165,18 @@ try {
         }
         .table-container {
             margin: 20px;
+        }
+        /* Add styles for point distribution cells */
+        .point-cell {
+            text-align: center;
+            font-weight: bold;
+        }
+        /* Visualization for point distribution */
+        .point-bar {
+            height: 20px;
+            background-color: #4a90e2;
+            margin: 2px 0;
+            border-radius: 2px;
         }
     </style>
 </head>
@@ -103,48 +187,47 @@ try {
 
     <!-- Filter Form -->
     <div class="mb-4 d-flex justify-content-center">
-        <form id="filter-form" class="d-flex">
-            <!-- Year Dropdown -->
-            <select id="year" class="form-select me-3" required>
-                <option value="" disabled selected>Select Year</option>
+        <form id="filter-form" class="d-flex" method="get">
+            <!-- Year Dropdown (label: e.g. 2024, value: e.g. 1) -->
+            <select id="year" name="year" class="form-select me-3" required>
+                <option value="" disabled <?php echo !isset($_GET['year']) ? 'selected' : ''; ?>>Select Year</option>
                 <?php foreach($academicYears as $y): ?>
-                    <option value="<?= $y['YearID'] ?>">
+                    <option value="<?= $y['YearID'] ?>" <?php echo (isset($_GET['year']) && $_GET['year'] == $y['YearID']) ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($y['Academic_year']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
 
-            <!-- Category Dropdown -->
-            <select id="category" class="form-select me-3" required>
-                <option value="" disabled selected>Select Category</option>
-                <option value="1">A1</option>
-                <option value="2">A2</option>
-                <option value="3">B</option>
-                <option value="4">C</option>
-                <option value="5">D</option>
+            <!-- Category Dropdown (label: e.g. B, value: e.g. 3) -->
+            <select id="category" name="category" class="form-select me-3" required>
+                <option value="" disabled <?php echo !isset($_GET['category']) ? 'selected' : ''; ?>>Select Category</option>
+                <?php foreach($categories as $c): ?>
+                    <option value="<?= $c['CategoryID'] ?>" <?php echo (isset($_GET['category']) && $_GET['category'] == $c['CategoryID']) ? 'selected' : ''; ?>>
+                        <?= htmlspecialchars($c['CategoryCode']) ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
 
             <button type="submit" class="btn btn-primary">View Scores</button>
         </form>
     </div>
 
+    <!-- Error Message Display -->
+    <?php if ($errorMessage): ?>
+    <div class="alert alert-danger"><?= htmlspecialchars($errorMessage) ?></div>
+    <?php endif; ?>
+
     <!-- Grid.js Table Container -->
     <div class="table-container">
         <div id="scores-grid" class="gridjs-example"></div>
     </div>
-
-    <!-- Error Message Display -->
-    <div id="error-message" class="alert alert-danger d-none"></div>
 </div>
 
 <!-- Fixed Action Container (Download CSV, then Return Buttons) -->
 <div class="action-container">
-    <!-- Hide the Download CSV button by default -->
-    <button class="action-button" id="downloadBtn" style="display:none;">
+    <button class="action-button" id="downloadBtn" style="<?= empty($facultyScores) ? 'display:none;' : '' ?>">
         Download CSV
     </button>
-
-    <!-- Return to Category Page Button -->
     <button class="return-button" onclick="window.location.href='reportPage.php'">
         Return to Category Page
     </button>
@@ -152,37 +235,59 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    let currentData = [];  // Store fetched results for CSV export
+    // Load the scores data from PHP
+    const facultyScoresData = <?= !empty($facultyScores) ? $facultyScoresJson : '{"facultyScores":[]}' ?>;
+    let currentData = facultyScoresData.facultyScores || [];
     const downloadButton = document.getElementById('downloadBtn');
-    const filterForm = document.getElementById('filter-form');
-    const errorMessage = document.getElementById('error-message');
-    let gridInstance; // We'll keep a reference to the Grid.js instance
+    
+    // Render Grid.js table if we have data
+    if (currentData.length > 0) {
+        renderGrid(currentData);
+        downloadButton.style.display = 'block';
+    }
 
-    // Helper function: Create or re-render the Grid.js table
+    // Render Grid.js table with additional columns for vote counts
     function renderGrid(dataArray) {
-        // If grid already created, destroy it first
-        if (gridInstance) {
-            gridInstance.destroy();
-        }
-
-        // Initialize a new Grid.js instance
-        gridInstance = new gridjs.Grid({
+        new gridjs.Grid({
             columns: [
-                "CandidateID",
-                "Name",
-                "Email",
-                "Role",
-                "Total Points",
-                "Academic Year"
+                { name: "ID", id: "CandidateID" },
+                { name: "Name", id: "candidate_name" },
+                { name: "Email", id: "candidate_email" },
+                { name: "Role", id: "candidate_role" },
+                { name: "Total Points", id: "total_points" },
+                {
+                    name: "6-Point Votes",
+                    id: "points_6_count",
+                    formatter: (cell) => gridjs.html(`<div class="point-cell">${cell || 0}</div>`)
+                },
+                {
+                    name: "5-Point Votes",
+                    id: "points_5_count",
+                    formatter: (cell) => gridjs.html(`<div class="point-cell">${cell || 0}</div>`)
+                },
+                {
+                    name: "4-Point Votes",
+                    id: "points_4_count",
+                    formatter: (cell) => gridjs.html(`<div class="point-cell">${cell || 0}</div>`)
+                },
+                {
+                    name: "3-Point Votes",
+                    id: "points_3_count",
+                    formatter: (cell) => gridjs.html(`<div class="point-cell">${cell || 0}</div>`)
+                },
+                {
+                    name: "2-Point Votes",
+                    id: "points_2_count",
+                    formatter: (cell) => gridjs.html(`<div class="point-cell">${cell || 0}</div>`)
+                },
+                {
+                    name: "1-Point Votes",
+                    id: "points_1_count",
+                    formatter: (cell) => gridjs.html(`<div class="point-cell">${cell || 0}</div>`)
+                },
+                { name: "Academic Year", id: "Academic_year" }
             ],
-            data: dataArray.map(item => [
-                item.CandidateID,
-                item.candidate_name,
-                item.candidate_email,
-                item.candidate_role,
-                item.total_points,
-                item.Academic_year
-            ]),
+            data: dataArray,
             search: true,
             sort: true,
             pagination: {
@@ -190,115 +295,57 @@ document.addEventListener("DOMContentLoaded", () => {
                 summary: true
             },
             className: {
-                table: 'table table-bordered'
+                table: 'table table-bordered table-striped'
             },
             style: {
                 table: {
                     'margin': '0 auto'
                 }
             }
-        });
-
-        gridInstance.render(document.getElementById('scores-grid'));
+        }).render(document.getElementById('scores-grid'));
     }
 
-    // Handle filter form submission
-    filterForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Hide the download button each time we fetch new data
-        downloadButton.style.display = 'none';
-
-        // Clear any old error
-        errorMessage.classList.add('d-none');
-        errorMessage.textContent = '';
-
-        const year = document.getElementById('year').value;
-        const category = document.getElementById('category').value;
-
-        // Validate dropdowns
-        if (!year || !category) {
-            alert('Please select a year and a category.');
-            return;
-        }
-
-        // Attempt to fetch data from the backend
-        try {
-            const url = `getFacultyMemberScores.php?year=${year}&category=${category}`;
-            const response = await fetch(url, { method: 'GET' });
-            const data = await response.json();
-
-            // Check for server-side errors
-            if (data.error) {
-                errorMessage.textContent = data.error;
-                errorMessage.classList.remove('d-none');
-                if (gridInstance) gridInstance.destroy();
-                return;
-            }
-            if (data.message) {
-                errorMessage.textContent = data.message;
-                errorMessage.classList.remove('d-none');
-                if (gridInstance) gridInstance.destroy();
-                return;
-            }
-
-            // If we have scores, render them in the table
-            if (data.facultyScores && data.facultyScores.length > 0) {
-                currentData = data.facultyScores;
-                renderGrid(currentData);
-
-                // Show download button now that we have valid data
-                downloadButton.style.display = 'block';
-            } else {
-                // No data
-                if (gridInstance) gridInstance.destroy();
-            }
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            errorMessage.textContent = 'An error occurred while fetching data. Please try again.';
-            errorMessage.classList.remove('d-none');
-        }
-    });
-
-    // Handle CSV Download
+    // CSV download functionality with all columns included
     downloadButton.addEventListener('click', () => {
-        // If no data, do nothing
         if (!currentData.length) {
-            alert('No data to download. Please fetch scores first.');
+            alert('No data to download.');
             return;
         }
 
-        // Build CSV
         const headers = [
             "CandidateID",
             "Name",
-            "Email",
+            "Email", 
             "Role",
             "Total Points",
+            "6-Point Votes",
+            "5-Point Votes", 
+            "4-Point Votes",
+            "3-Point Votes",
+            "2-Point Votes",
+            "1-Point Votes",
             "Academic Year"
         ];
 
-        // Convert each row to semicolon-delimited CSV (use ',' if you prefer)
         const rows = currentData.map(item => [
             item.CandidateID,
             item.candidate_name,
             item.candidate_email,
             item.candidate_role,
             item.total_points,
+            item.points_6_count,
+            item.points_5_count,
+            item.points_4_count,
+            item.points_3_count,
+            item.points_2_count,
+            item.points_1_count,
             item.Academic_year
         ].join(';'));
 
-        // Add BOM (\uFEFF) for correct encoding in Excel, etc.
+        // Use UTF-8 BOM (\uFEFF) so Excel handles special characters
         const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join("\n");
-        const encodedUri = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
-
-        // Create a hidden link and auto-click to download
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "faculty_scores.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const blob = new Blob([csvContent], {type: "text/csv;charset=utf-8;"});
+        saveAs(blob, "faculty_scores.csv");
     });
 });
 </script>

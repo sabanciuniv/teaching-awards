@@ -11,23 +11,23 @@ if (!$selectedYear || !is_numeric($selectedYear)) {
 }
 
 try {
-    error_log("🔍 Debug: Selected Year from Frontend: " . json_encode($selectedYear));
+    error_log("Debug: Selected Year from Frontend: " . json_encode($selectedYear));
 
-    // ✅ Ensure correct YearID
+    // Ensure correct YearID
     $stmtYearID = $pdo->prepare("SELECT YearID FROM AcademicYear_Table WHERE YearID = :selectedYear LIMIT 1");
     $stmtYearID->execute([':selectedYear' => $selectedYear]);
     $result = $stmtYearID->fetch(PDO::FETCH_ASSOC);
 
     if (!$result) {
-        error_log("❌ No matching Year ID found for YearID: " . json_encode($selectedYear));
+        error_log("No matching Year ID found for YearID: " . json_encode($selectedYear));
         echo json_encode(["error" => "No matching Year ID found for YearID: $selectedYear"]);
         exit();
     }
 
     $actualYearID = $result['YearID'];
-    error_log("✅ Found Year ID: $actualYearID");
+    error_log("Found Year ID: $actualYearID");
 
-    // ✅ Check if any votes exist for this year
+    // Check if any votes exist for this year
     $stmtVoteCheck = $pdo->prepare("SELECT COUNT(*) AS VoteCount FROM Votes_Table WHERE AcademicYear = :actualYearID");
     $stmtVoteCheck->execute([':actualYearID' => $actualYearID]);
     $voteCheck = $stmtVoteCheck->fetch(PDO::FETCH_ASSOC);
@@ -38,7 +38,7 @@ try {
         exit();
     }
 
-    // ✅ Fetch category-wise participation (Optimized Query)
+    // Fetch category-wise participation (Optimized Query)
     $stmt = $pdo->prepare("
         SELECT 
             c.CategoryCode AS CategoryName, 
@@ -62,7 +62,7 @@ try {
     ");
 
     if (!$stmt->execute([':actualYearID' => $actualYearID])) {
-        error_log("❌ SQL Execution Failed: " . json_encode($stmt->errorInfo()));
+        error_log("SQL Execution Failed: " . json_encode($stmt->errorInfo()));
         echo json_encode(["error" => "Database error: Failed to execute query"]);
         exit();
     }
@@ -70,14 +70,14 @@ try {
     $report = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (!$report) {
-        error_log("⚠️ No participation data found for Year ID: $actualYearID");
+        error_log("No participation data found for Year ID: $actualYearID");
         echo json_encode(["error" => "No participation data found for the selected year"]);
     } else {
-        error_log("✅ Data fetched successfully");
+        error_log("Data fetched successfully");
         echo json_encode($report);
     }
 } catch (PDOException $e) {
-    error_log("❌ Database Error: " . $e->getMessage());
+    error_log("Database Error: " . $e->getMessage());
     echo json_encode(["error" => "Database error: " . $e->getMessage()]);
 }
 ?>
