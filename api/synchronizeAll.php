@@ -1,103 +1,190 @@
 <?php
-session_start();
 require_once '../database/dbConnection.php';
+$config = require __DIR__ . '/../config.php';
 
 header('Content-Type: application/json');
+$response = [
+    "success" => true,
+    "logs" => []
+];
+
+$yearResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php');
+$yearData = json_decode($yearResponse, true);
+
+if (!isset($yearData['academicYear'])) {
+    echo json_encode(["success" => false, "message" => "Unable to fetch academic year."]);
+    exit();
+}
+
+$academicYear = $yearData['academicYear'];
+
+$timestamp = date("Ymd_His");
+$logDir = rtrim($config['log_dir'], '/') . '/' . $academicYear;
+
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0777, true);  // Create if missing
+}
+
+$logFile = $logDir . "/sync_log_$timestamp.json";
+
+// Function to append logs
+function logChanges($section, $inserted, $updated, $deleted, $insertedRows, $updatedRows, $deletedRows) {
+    global $response;
+    $response["logs"][] = [
+        "section" => $section,
+        "inserted" => $inserted ?? 0,  // Default to 0 if null
+        "updated" => $updated ?? 0,
+        "deleted" => $deleted ?? 0,
+        "insertedRows" => $insertedRows ?? [],  // Default to empty array if null
+        "updatedRows" => $updatedRows ?? [],
+        "deletedRows" => $deletedRows ?? [],
+        "timestamp" => date("Y-m-d H:i:s")
+    ];
+}
 
 try {
-    // Fetch data from API_COURSES (acting as API data)
-    $stmt = $pdo->query("SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, SEQ_NUMB, CRSE_TITLE FROM API_COURSES");
-    $apiCourses = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $apiCourses[$row['CRN']] = $row;
+    // Synchronize Courses
+    $courseSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeCourses.php');
+    if (!$courseSyncResponse) {
+        throw new Exception("Failed to fetch course synchronization data.");
+    }
+    $courseSyncResults = json_decode($courseSyncResponse, true);
+    
+    if (isset($courseSyncResults['error'])) {
+        throw new Exception($courseSyncResults['message']);
     }
 
-    // Fetch existing courses from Courses_Table
-    $stmt = $pdo->query("SELECT * FROM Courses_Table");
-    $existingCourses = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $existingCourses[$row['CRN']] = $row;
+    logChanges(
+        "Courses",
+        $courseSyncResults['inserted'] ?? 0, 
+        $courseSyncResults['updated'] ?? 0, 
+        $courseSyncResults['deleted'] ?? 0,
+        $courseSyncResults['insertedRows'] ?? [],
+        $courseSyncResults['updatedRows'] ?? [],
+        $courseSyncResults['deletedRows'] ?? []
+    );
+
+    // Synchronize Students
+    $studentsSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeStudents.php');
+    if (!$studentsSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $studentsSyncResults = json_decode($studentsSyncResponse, true);
+    
+    if (isset($studentsSyncResults['error'])) {
+        throw new Exception($studentsSyncResults['message']);
     }
 
-    // Prepare statements for insert, update, and delete
-    $insertStmt = $pdo->prepare("INSERT INTO Courses_Table (CourseName, Subject_Code, Course_Number, Section, CRN, Term, Sync_Date) 
-        VALUES (:CourseName, :Subject_Code, :Course_Number, :Section, :CRN, :Term, NOW())");
+    logChanges(
+        "Students",
+        $studentsSyncResults['inserted'] ?? 0, 
+        $studentsSyncResults['updated'] ?? 0, 
+        $studentsSyncResults['deleted'] ?? 0,
+        $studentsSyncResults['insertedRows'] ?? [],
+        $studentsSyncResults['updatedRows'] ?? [],
+        $studentsSyncResults['deletedRows'] ?? []
+    );
 
-    $updateStmt = $pdo->prepare("UPDATE Courses_Table SET CourseName = :CourseName, Subject_Code = :Subject_Code, Course_Number = :Course_Number, 
-        Section = :Section, Term = :Term, Sync_Date = NOW() WHERE CRN = :CRN");
-
-    $deleteStmt = $pdo->prepare("DELETE FROM Courses_Table WHERE CRN = :CRN");
-
-    $updated = 0;
-    $inserted = 0;
-    $deleted = 0;
-
-    // Track CRNs that exist in API_COURSES table
-    $apiCRNs = array_keys($apiCourses);
-
-    // Compare API_COURSES with existing Courses_Table
-    foreach ($apiCourses as $crn => $course) {
-        // Ensure no NULL values for NOT NULL columns
-        $course['CRSE_TITLE'] = $course['CRSE_TITLE'] ?? 'Unknown Course';
-        $course['SUBJ_CODE'] = $course['SUBJ_CODE'] ?? 'N/A';  
-        $course['CRSE_NUMB'] = $course['CRSE_NUMB'] ?? '000';
-        $course['SEQ_NUMB'] = $course['SEQ_NUMB'] ?? '';
-        $course['TERM_CODE'] = $course['TERM_CODE'] ?? '';
-
-        if (isset($existingCourses[$crn])) {
-            // Check if an update is needed
-            $dbCourse = $existingCourses[$crn];
-            if ($dbCourse['CourseName'] !== $course['CRSE_TITLE'] ||
-                $dbCourse['Subject_Code'] !== $course['SUBJ_CODE'] ||
-                $dbCourse['Course_Number'] !== $course['CRSE_NUMB'] ||
-                $dbCourse['Section'] !== $course['SEQ_NUMB'] ||
-                $dbCourse['Term'] !== $course['TERM_CODE']) {
-                
-                // Update existing course
-                $updateStmt->execute([
-                    ':CourseName' => $course['CRSE_TITLE'],
-                    ':Subject_Code' => $course['SUBJ_CODE'],
-                    ':Course_Number' => $course['CRSE_NUMB'],
-                    ':Section' => $course['SEQ_NUMB'],
-                    ':CRN' => $crn,
-                    ':Term' => $course['TERM_CODE']
-                ]);
-                $updated++;
-            }
-        } else {
-            // Insert new course
-            $insertStmt->execute([
-                ':CourseName' => $course['CRSE_TITLE'],
-                ':Subject_Code' => $course['SUBJ_CODE'],
-                ':Course_Number' => $course['CRSE_NUMB'],
-                ':Section' => $course['SEQ_NUMB'],
-                ':CRN' => $crn,
-                ':Term' => $course['TERM_CODE']
-            ]);
-            $inserted++;
-        }
+    // Synchronize candidates
+    $candidateSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeCandidates.php');
+    if (!$candidateSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $candidateSyncResult = json_decode($candidateSyncResponse, true);
+    
+    if (isset($candidateSyncResult['error'])) {
+        throw new Exception($candidateSyncResult['message']);
     }
 
-    // Delete courses that are in Courses_Table but NOT in API_COURSES
-    foreach ($existingCourses as $crn => $course) {
-        if (!in_array($crn, $apiCRNs)) {
-            $deleteStmt->execute([':CRN' => $crn]);
-            $deleted++;
-        }
+    logChanges(
+        "Candidates",
+        $candidateSyncResult['inserted'] ?? 0, 
+        $candidateSyncResult['updated'] ?? 0, 
+        $candidateSyncResult['deleted'] ?? 0,
+        $candidateSyncResult['insertedRows'] ?? [],
+        $candidateSyncResult['updatedRows'] ?? [],
+        $candidateSyncResult['deletedRows'] ?? []
+    );
+
+
+    // Synchronize Student courses
+    $studentCoursesSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeStudent_Courses.php');
+    if (!$studentCoursesSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $studentCoursesSyncResult = json_decode($studentCoursesSyncResponse, true);
+    
+    if (isset($studentCoursesSyncResult['error'])) {
+        throw new Exception($studentCoursesSyncResult['message']);
     }
 
-    echo json_encode([
-        'success' => true,
-        'message' => "Synchronization completed.",
-        'inserted' => $inserted,
-        'updated' => $updated,
-        'deleted' => $deleted
-    ]);
+    logChanges(
+        "Student Courses Relation",
+        $studentCoursesSyncResult['inserted'] ?? 0, 
+        $studentCoursesSyncResult['updated_to_enrolled'] ?? 0, 
+        $studentCoursesSyncResult['updated_to_dropped'] ?? 0,
+        $studentCoursesSyncResult['insertedRows'] ?? [],
+        $studentCoursesSyncResult['updatedToEnrolledRows'] ?? [],
+        $studentCoursesSyncResult['updatedToDroppedRows'] ?? []
+    );       
+
+
+    // Synchronize candidate courses
+    $candidateCoursesSyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeCandidate_Courses.php');
+    if (!$candidateCoursesSyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $candidateCoursesSyncResult = json_decode($candidateCoursesSyncResponse, true);
+    
+    if (isset($candidateCoursesSyncResult['error'])) {
+        throw new Exception($candidateCoursesSyncResult['message']);
+    }
+
+    logChanges(
+        "Candidate Courses Relation",
+        $candidateCoursesSyncResult['inserted'] ?? 0, 
+        $candidateCoursesSyncResult['updated_to_enrolled'] ?? 0, 
+        $candidateCoursesSyncResult['updated_to_dropped'] ?? 0,
+        $candidateCoursesSyncResult['insertedRows'] ?? [],
+        $candidateCoursesSyncResult['updatedToEnrolledRows'] ?? [],
+        $candidateCoursesSyncResult['updatedToDroppedRows'] ?? []
+    );       
+    
+
+    // Synchronize student category
+    $studentCategorySyncResponse = file_get_contents('http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/synchronizeStudent_Category.php');
+    if (!$studentCategorySyncResponse) {
+        throw new Exception("Failed to fetch student synchronization data.");
+    }
+    $studentCategorySyncResult = json_decode($studentCategorySyncResponse, true);
+    
+    if (isset($studentCategorySyncResult['error'])) {
+        throw new Exception($studentCategorySyncResult['message']);
+    }
+
+    logChanges(
+        "Student Category Relation",
+        $studentCategorySyncResult['inserted'] ?? 0, 
+        $studentCategorySyncResult['updated_to_enrolled'] ?? 0, 
+        $studentCategorySyncResult['updated_to_dropped'] ?? 0,
+        $studentCategorySyncResult['insertedRows'] ?? [],
+        $studentCategorySyncResult['updatedToEnrolledRows'] ?? [],
+        $studentCategorySyncResult['updatedToDroppedRows'] ?? []
+    );       
+
+
+    // Write the logs to a JSON file
+    file_put_contents($logFile, json_encode($response["logs"], JSON_PRETTY_PRINT));
+    $response["logFilePath"] = $logFile;
+    
+    $response["message"] = "All synchronizations completed successfully!";
 
 } catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => "Error: " . $e->getMessage()
-    ]);
+    $response["success"] = false;
+    $response["message"] = "Error during synchronization: " . $e->getMessage();
 }
+
+
+echo json_encode($response);
+exit();
 ?>

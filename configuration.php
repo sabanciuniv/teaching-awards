@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once 'api/authMiddleware.php';  // Adjust if needed
-require_once 'database/dbConnection.php'; // PDO connection
+require_once 'api/authMiddleware.php';  
+require_once 'database/dbConnection.php';
 
-// If not logged in, redirect (optional)
+// If not logged in, redirect 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
@@ -16,34 +16,38 @@ ini_set('display_errors', 1);
 $username = $_SESSION['user'];  // Current user
 
 // Fetch academic years
-$academicYears = [];
 try {
-    $stmt = $pdo->query("SELECT * FROM AcademicYear_Table ORDER BY Academic_year DESC");
-    $academicYears = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $stmt = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY Academic_year DESC LIMIT 1");
+  $currentYear = $stmt->fetch(PDO::FETCH_ASSOC);
+
+  if (!$currentYear) {
+      throw new Exception("No academic year found.");
+  }
 } catch (PDOException $e) {
-    die("<strong style='color:red;'>SQL Error:</strong> " . $e->getMessage());
+  die("<strong style='color:red;'>SQL Error:</strong> " . $e->getMessage());
 }
 
-// Determine the current academic year (latest one)
-$currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
-$currentAcademicYearID = $currentAcademicYear ? $currentAcademicYear['Academic_year'] : null;
+$currentYearID = $currentYear['YearID'];  // Use this in the query
+$currentAcademicYear = $currentYear['Academic_year'];  // Display this in UI
 
+// Prepare SQL query using YearID (not Academic_year)
 $stmt = $pdo->prepare("
-  SELECT c.id, c.SU_ID, c.Name, c.Mail, c.Role, c.Sync_Date, c.Status,
-        GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories,
-        GROUP_CONCAT(DISTINCT CONCAT(co.Subject_Code, ' ', co.Course_Number) SEPARATOR ', ') AS Courses
-  FROM Candidate_Table c
-  LEFT JOIN Candidate_Course_Relation cc ON c.id = cc.CandidateID
-  LEFT JOIN Category_Table cat ON cc.CategoryID = cat.CategoryID
-  LEFT JOIN Courses_Table co ON cc.CourseID = co.CourseID
-  WHERE (cc.Academic_Year = :academicYear OR cc.Academic_Year IS NULL)
-  GROUP BY c.id
-  ORDER BY c.Name ASC;
+SELECT c.id, c.SU_ID, c.Name, c.Mail, c.Role, c.Sync_Date, c.Status,
+      GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories,
+      GROUP_CONCAT(DISTINCT CONCAT(co.Subject_Code, ' ', co.Course_Number) SEPARATOR ', ') AS Courses
+FROM Candidate_Table c
+LEFT JOIN Candidate_Course_Relation cc ON c.id = cc.CandidateID
+LEFT JOIN Category_Table cat ON cc.CategoryID = cat.CategoryID
+LEFT JOIN Courses_Table co ON cc.CourseID = co.CourseID
+WHERE (cc.Academic_Year = :academicYear OR cc.Academic_Year IS NULL)
+GROUP BY c.id
+ORDER BY c.Name ASC;
 ");
-$stmt->bindParam(':academicYear', $currentAcademicYear['Academic_year'], PDO::PARAM_INT);
+
+
+$stmt->bindParam(':academicYear', $currentYearID, PDO::PARAM_INT);
 $stmt->execute();
 $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
 <script>
 // Pass PHP data directly to JavaScript
@@ -270,7 +274,7 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
       <?php if ($currentAcademicYear): ?>
           <?php 
           // +1 logic for current academic year
-          $displayCurrentYear = $currentAcademicYear['Academic_year'] . '-' . ($currentAcademicYear['Academic_year'] + 1);
+          $displayCurrentYear = $currentAcademicYear . '-' . ($currentAcademicYear + 1);
           ?>
           <div class="alert alert-success" style="margin-top: 15px;">
               <h5>Current Academic Year: <strong><?= $displayCurrentYear; ?></strong></h5>
@@ -504,9 +508,7 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
             method: "POST",
             dataType: "json",
             success: function (response) {
-                if (response.success) {
-                    alert(`Synchronization successful! \nInserted: ${response.inserted} \nUpdated: ${response.updated} \nDeleted: ${response.deleted}`);
-                    
+                if (response.success) {                    
                     // Instead of reloading, update table dynamically
                     location.reload();
                 } else {
