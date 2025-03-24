@@ -9,15 +9,6 @@ error_reporting(E_ALL);
 // Include DB connection
 require_once __DIR__ . '/database/dbConnection.php';
 
-/*
-  This file handles two modes:
-  1) ?ajax=1 => Returns JSON (the student data)
-  2) Normal => Renders the HTML page
-*/
-
-// ---------------------------------------------------------------------
-// 1) AJAX MODE: Return JSON for the selected year & category
-// ---------------------------------------------------------------------
 if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
     header('Content-Type: application/json; charset=utf-8');
 
