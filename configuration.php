@@ -131,6 +131,29 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
       right: 8px;
       color: #ccc;
     }
+
+    th.sortable::after {
+      content: ' \25B2'; /* Default to up arrow */
+      position: absolute;
+      right: 8px;
+      color: #ccc;
+      opacity: 0.3; /* Make it light when not active */
+    }
+
+    /* When active (ascending) */
+    th.sortable.asc::after {
+      content: ' \25B2'; /* Up arrow */
+      color: #000;
+      opacity: 1;
+    }
+
+    /* When active (descending) */
+    th.sortable.desc::after {
+      content: ' \25BC'; /* Down arrow */
+      color: #000;
+      opacity: 1;
+    }
+
     .sticky-sync-container {
       position: fixed;
       bottom: 40px; /* Adjusted to be clearly visible */
@@ -299,16 +322,16 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
         <div class="table-responsive mt-3">
           <table class="table table-striped table-bordered">
           <thead class="table-dark">
-    <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>SuID</th>
-        <th>Role</th>
-        <th>Categories</th> 
-        <th>Courses</th>
-        <th>Last Synced</th>
-        <th>Status</th>
-    </tr>
+          <tr>
+            <th class="sortable" data-column="Name">Name</th>
+            <th class="sortable" data-column="Mail">Email</th>
+            <th class="sortable" data-column="SU_ID">SuID</th>
+            <th class="sortable" data-column="Role">Role</th>
+            <th class="sortable" data-column="Categories">Categories</th> 
+            <th class="sortable" data-column="Courses">Courses</th>
+            <th class="sortable" data-column="Sync_Date">Last Synced</th>
+            <th class="sortable" data-column="Status">Status</th>
+          </tr>
       </thead>
       <tbody id="candidatesTable">
           <?php foreach ($candidates as $candidate): ?>
@@ -349,6 +372,28 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
     let currentSortDirection = 'asc';
 
     $(document).ready(function () {
+
+
+          $("th.sortable").on("click", function () {
+        const column = $(this).data("column");
+
+        // Remove previous sort indicators
+        $("th.sortable").removeClass("asc desc");
+
+        // Toggle sort direction
+        if (currentSortColumn === column) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortDirection = 'asc';
+        }
+
+        currentSortColumn = column;
+
+        // Add the appropriate sort indicator
+        $(this).addClass(currentSortDirection);
+
+        sortData(column);
+    });
       // Use allCandidates directly instead of loading via AJAX
       renderTable(allCandidates, 1);
       renderPaginationControls(allCandidates);
@@ -479,22 +524,31 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
     }
 
     function sortData(column) {
-      if (currentSortColumn === column) {
-        currentSortDirection = (currentSortDirection === 'asc') ? 'desc' : 'asc';
-      } else {
-        currentSortColumn = column;
-        currentSortDirection = 'asc';
-      }
+      allCandidates.sort((a, b) => {
+          const valA = a[column] ?? "";
+          const valB = b[column] ?? "";
 
-      candidates.sort((a, b) => {
-        const valA = (a[column] || "").toString().toLowerCase();
-        const valB = (b[column] || "").toString().toLowerCase();
-        return valA.localeCompare(valB) * (currentSortDirection === 'asc' ? 1 : -1);
+          const numA = parseFloat(valA);
+          const numB = parseFloat(valB);
+
+          if (!isNaN(numA) && !isNaN(numB)) {
+              return (numA - numB) * (currentSortDirection === 'asc' ? 1 : -1);
+          }
+
+          const dateA = new Date(valA);
+          const dateB = new Date(valB);
+          if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+              return (dateA - dateB) * (currentSortDirection === 'asc' ? 1 : -1);
+          }
+
+          return valA.toString().localeCompare(valB.toString()) * (currentSortDirection === 'asc' ? 1 : -1);
       });
 
-      renderTable(candidates, 1);
-      renderPaginationControls(candidates);
+      renderTable(allCandidates, 1);
+      renderPaginationControls(allCandidates);
     }
+
+
 
 
     $(document).ready(function () {
