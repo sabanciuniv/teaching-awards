@@ -249,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 sort: true
             }).render(participationGrid);
         } catch (error) {
-            console.error("❌ Fetch Error:", error);
+            console.error("Fetch Error:", error);
         }
     });
 
