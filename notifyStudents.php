@@ -1,54 +1,93 @@
 <?php
-require_once __DIR__ . '/database/dbConnection.php';
+// Start output buffering IMMEDIATELY
+ob_start();
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
-
-// Include the required files
-// Include the required files - update these paths
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/PHPMailer/src/SMTP.php';
 require_once __DIR__ . '/PHPMailer/src/Exception.php';
 
-// Then create a new instance
-$mail = new PHPMailer(true); // true enables exceptions
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-// Set headers for JSON response
-header('Content-Type: application/json');
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Strict error handling
 error_reporting(E_ALL);
+ini_set('display_errors', 0);  // Prevent displaying errors to browser
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/notifyStudents_error.log');
 
-// Get posted JSON data
-$data = json_decode(file_get_contents("php://input"), true);
+// Ensure no output before headers
+header('Content-Type: application/json');
+header('X-Content-Type-Options: nosniff');
 
-if (!$data || !isset($data['students']) || !isset($data['category'])) {
-    echo json_encode(['error' => 'Missing student data or category']);
+function sendErrorResponse($message, $code = 400) {
+    // Clear any previous output
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    http_response_code($code);
+    
+    // Log detailed error
+    error_log("Notification Error [{$code}]: {$message}");
+    
+    // Ensure clean JSON output
+    echo json_encode([
+        'error' => $message,
+        'code' => $code
+    ]);
+    
     exit;
 }
 
-$category = htmlspecialchars($data['category']);
-$students = $data['students'];
-
-// Log for debugging
-error_log("Attempting to notify " . count($students) . " students for category: " . $category);
-
-$sentCount = 0;
-$failed = [];
-
-// Email configuration - MODIFY THESE WITH YOUR ACTUAL SMTP SETTINGS
-$smtpHost = 'smtp.your-university.edu';  // Your SMTP server
-$smtpPort = 587;                        // Common ports: 587 (TLS), 465 (SSL)
-$smtpUsername = 'your-email@your-university.edu';
-$smtpPassword = 'your-smtp-password';
-$fromEmail = 'voting-system@your-university.edu';
-$fromName = 'University Voting System';
+// Catch any fatal errors
+function handleFatalError() {
+    $error = error_get_last();
+    if ($error !== null) {
+        $errno = $error['type'];
+        $errfile = $error['file'];
+        $errline = $error['line'];
+        $errstr = $error['message'];
+        
+        sendErrorResponse("Fatal Error: [{$errno}] {$errstr} in {$errfile} on line {$errline}", 500);
+    }
+}
+register_shutdown_function('handleFatalError');
 
 try {
-    // For each student in the list
+    // Validate input early
+    $rawInput = file_get_contents("php://input");
+    if ($rawInput === false) {
+        sendErrorResponse('Unable to read input stream');
+    }
+
+    $data = json_decode($rawInput, true);
+    if ($data === null) {
+        sendErrorResponse('Invalid JSON input: ' . json_last_error_msg());
+    }
+
+    // Validate required input
+    if (!isset($data['students']) || !isset($data['category'])) {
+        sendErrorResponse('Missing student data or category');
+    }
+
+    $category = htmlspecialchars($data['category']);
+    $students = $data['students'];
+    $sentCount = 0;
+    $failed = [];
+
+    // SMTP Configuration (consider moving to a config file)
+    $smtpConfig = [
+        'host'     => 'smtp.gmail.com',
+        'port'     => 587,
+        'username' => 'ens492odul@gmail.com',
+        'password' => 'aycmatyxmxhphsvh',
+        'from'     => 'ens492odul@gmail.com',
+        'fromName' => 'Sabanci Teaching Awards System'
+    ];
+
+    // Process each student
     foreach ($students as $student) {
-        // Skip if email is missing or invalid
+        // Strict email validation
         if (empty($student['Mail']) || !filter_var($student['Mail'], FILTER_VALIDATE_EMAIL)) {
             $failed[] = [
                 'email' => $student['Mail'] ?? 'unknown',
@@ -57,106 +96,88 @@ try {
             continue;
         }
 
-        $mail = new PHPMailer(true);
-        
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+
         try {
-            // Server settings
+            // SMTP configuration
             $mail->isSMTP();
-            $mail->Host = $smtpHost;
-            $mail->SMTPAuth = true;
-            $mail->Username = $smtpUsername;
-            $mail->Password = $smtpPassword;
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = $smtpPort;
-            
-            // Uncomment for debugging SMTP issues
-            // $mail->SMTPDebug = SMTP::DEBUG_SERVER;
-            
-            // Recipients
-            $mail->setFrom($fromEmail, $fromName);
+            $mail->Host       = $smtpConfig['host'];
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $smtpConfig['username'];
+            $mail->Password   = $smtpConfig['password'];
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = $smtpConfig['port'];
+
+            // Email details
+            $mail->setFrom($smtpConfig['from'], $smtpConfig['fromName']);
             $mail->addAddress($student['Mail'], $student['StudentFullName']);
-            
-            // Content
+            $mail->addReplyTo('teaching-awards@sabanciuniv.edu', 'Teaching Awards Support');
+
             $mail->isHTML(true);
             $mail->Subject = 'Reminder: Your Vote is Important!';
-            
-            // Create a more engaging email body
-            $emailBody = "
+
+            // Sanitize student name
+            $studentName = htmlspecialchars($student['StudentFullName']);
+
+            $mail->Body = "
             <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; }
-                    .container { padding: 20px; }
-                    .header { color: #003366; font-size: 20px; font-weight: bold; }
-                    .content { margin: 15px 0; line-height: 1.5; }
-                    .footer { font-size: 12px; color: #666; margin-top: 20px; }
-                </style>
-            </head>
-            <body>
-                <div class='container'>
-                    <div class='header'>Dear {$student['StudentFullName']},</div>
-                    <div class='content'>
-                        <p>We notice that you haven't yet cast your vote in the <strong>{$category}</strong> category.</p>
-                        <p>Your vote is important and helps ensure that the election results accurately represent the student body's preferences.</p>
-                        <p>Please log in to the voting system and cast your vote as soon as possible. The voting period will end soon.</p>
-                    </div>
-                    <div class='footer'>
-                        <p>This is an automated message from the University Voting System. Please do not reply to this email.</p>
-                        <p>If you have already voted, please disregard this message.</p>
-                    </div>
-                </div>
+            <body style='font-family: Arial, sans-serif;'>
+                <p>Dear {$studentName},</p>
+                <p>We noticed that you haven't yet cast your vote in the <strong>" . htmlspecialchars($category) . "</strong> category.</p>
+                <p>Your vote is important to help ensure fair results.</p>
+                <p>Please log in to the voting system and vote before the deadline.</p>
+                <p style='font-size: 12px; color: #888;'>This is an automated message. If you already voted, please disregard this.</p>
             </body>
-            </html>
-            ";
-            
-            // Plain text alternative for email clients that don't support HTML
-            $textBody = "Dear {$student['StudentFullName']},\n\n";
-            $textBody .= "We notice that you haven't yet cast your vote in the '{$category}' category.\n\n";
-            $textBody .= "Your vote is important and helps ensure that the election results accurately represent the student body's preferences.\n\n";
-            $textBody .= "Please log in to the voting system and cast your vote as soon as possible. The voting period will end soon.\n\n";
-            $textBody .= "This is an automated message from the University Voting System. Please do not reply to this email.\n";
-            $textBody .= "If you have already voted, please disregard this message.";
-            
-            $mail->Body = $emailBody;
-            $mail->AltBody = $textBody;
-            
-            // Log attempt
-            error_log("Attempting to send email to: " . $student['Mail']);
-            
-            // Send the email
-            $mail->send();
+            </html>";
+
+            $mail->AltBody = "Dear {$studentName},\n\n"
+                . "We noticed that you haven't yet cast your vote in the '{$category}' category.\n"
+                . "Your vote is important. Please log in and vote before the deadline.\n\n"
+                . "If you have already voted, please disregard this message.";
+
+            // Send email
+            if (!$mail->send()) {
+                throw new \PHPMailer\PHPMailer\Exception($mail->ErrorInfo);
+            }
             $sentCount++;
-            
-            // Optional: Log success
-            error_log("Email sent successfully to: " . $student['Mail']);
-            
-            // Optional: Add a small delay to prevent overwhelming the SMTP server
-            usleep(100000); // 100ms
-            
-        } catch (Exception $e) {
-            // Log the error and continue with the next student
-            error_log("Failed to send to {$student['Mail']}: " . $mail->ErrorInfo);
+
+        } catch (\PHPMailer\PHPMailer\Exception $e) {
+            // Log specific email sending errors
+            error_log("Email send failed for {$student['Mail']}: " . $e->getMessage());
             $failed[] = [
                 'email' => $student['Mail'],
-                'reason' => $mail->ErrorInfo
+                'reason' => $e->getMessage()
             ];
         }
+
+        // Prevent overwhelming the SMTP server
+        usleep(100000);
     }
-    
-    // Return results
-    echo json_encode([
+
+    // Prepare and send JSON response
+    $response = [
         'sent' => $sentCount,
         'total' => count($students),
         'failed' => $failed
-    ]);
-    
+    ];
+
+    // Clear output buffer just in case
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+
+
+
 } catch (Exception $e) {
-    // Handle any other exceptions
-    error_log("General error in notification process: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Server error: ' . $e->getMessage(),
-        'sent' => $sentCount,
-        'failed' => $failed
-    ]);
+    sendErrorResponse('Unexpected error: ' . $e->getMessage(), 500);
+} finally {
+    // Ensure all buffers are cleared
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
 }
+?>

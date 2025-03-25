@@ -478,7 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         // Get data from the grid
-        const notVotedData = notVotedGridInstance.config?.data || [];
+        const notVotedData = window.globalNotVotedData || [];
         
         if (notVotedData.length === 0) {
             alert("Great news! All students have already voted.");
@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
             SuNET_Username: student.SuNET_Username,
             VoteStatus: student.VoteStatus
         }));
-        
+        console.log(students);
         try {
             const response = await fetch("notifyStudents.php", {
                 method: "POST",
@@ -522,14 +522,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             
-            const result = await response.json();
+            let result;
+            try {
+                result = await response.json();
+            } catch (err) {
+                const text = await response.text();
+                console.error("Failed to parse JSON:", text);
+                alert("Response was not valid JSON:\n" + text);
+                return;
+            }
+
             
             if (result.error) {
                 alert(`Error: ${result.error}`);
             } else {
                 // Show detailed results
-                let message = `📧 Email Notification Results:\n\n`;
-                message += `✅ Successfully sent: ${result.sent} of ${result.total} emails\n`;
+                let message = `Email Notification Results:\n\n`;
+                message += `Successfully sent: ${result.sent} of ${result.total} emails\n`;
                 
                 if (result.failed && result.failed.length > 0) {
                     message += `Failed: ${result.failed.length} emails\n\n`;
