@@ -1,7 +1,7 @@
 <!-- Navbar -->
 <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
     <style>
-        /* Navbar */
+       
         .navbar-brand img {
             height: 40px;
         }
@@ -15,12 +15,12 @@
 
         /* Adjust spacing */
         .back-arrow {
-            margin-right: 15px !important; /* Reduce space between arrow and logo */
+            margin-right: 15px !important; 
             font-size: 1.2rem;
         }
 
         .navbar-brand {
-            margin-left: 0 !important; /* Remove extra left margin on logo */
+            margin-left: 0 !important; 
         }
 
         /* Title styling */
@@ -33,29 +33,26 @@
             color: white;
         }
 
-        /* At smaller breakpoints, remove absolute positioning 
-           so the title flows below or beside the logo. */
+
         @media (max-width: 576px) {
             .navbar-title {
                 position: static;
                 transform: none;
                 text-align: center;
-                margin-top: 0.5rem; /* add spacing above the title */
-                font-size: 1.25rem; /* slightly smaller text on very narrow screens */
+                margin-top: 0.5rem; 
+                font-size: 1.25rem; 
             }
-            /* Optionally shrink the logo for iPhone SE width */
+          
             .navbar-brand img {
                 height: 30px;
             }
             .back-arrow {
-                font-size: 1rem; /* shrink arrow icon a bit */
-                margin-right: 8px !important; /* tighten spacing further if needed */
+                font-size: 1rem; 
+                margin-right: 8px !important; 
             }
         }
 
-        /* Slightly broader breakpoint to remove absolute positioning
-           for tablets or smaller laptops if desired (optional). 
-           Adjust or remove if you only want changes at 576px. */
+
         @media (max-width: 992px) {
             .navbar-title {
                 position: static;
@@ -95,11 +92,12 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle text-white" 
-                       id="welcomeDropdown" role="button" data-bs-toggle="dropdown" 
-                       aria-expanded="false">
-                        Welcome, <strong><?php echo htmlspecialchars($_SESSION['user']); ?></strong>
+                <a href="#" class="nav-link dropdown-toggle text-white" 
+                    id="welcomeDropdown" role="button" data-bs-toggle="dropdown" 
+                    aria-expanded="false">
+                        Welcome, <strong><?php echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']); ?></strong>
                     </a>
+
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
                         <li>
                             <a class="dropdown-item" href="index.php">

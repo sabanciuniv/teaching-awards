@@ -151,7 +151,7 @@ try {
         }
 
         // Prevent overwhelming the SMTP server
-        usleep(100000);
+        //usleep(100000);
     }
 
     // Prepare and send JSON response

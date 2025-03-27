@@ -49,12 +49,12 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <!-- FontAwesome -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 
 
-    <!-- Custom CSS for page -->
+
     <style>
         
         body {
@@ -66,26 +66,26 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
             font-family: Arial, sans-serif;
         }
         .navbar .nav-item .nav-link {
-            margin-right: -30px; /* Adjust the value to move it further left */
+            margin-right: -30px; 
         }
-        /* Dropdown menu background color */
+       
         .dropdown-menu {
             transform: translateX(-70px);
-            background-color: #45748A; /* Same color as navbar */
-            border: none; /* Remove border */
+            background-color: #45748A; 
+            border: none; 
         }
 
-        /* Dropdown item default text and background color */
+    
         .dropdown-menu .dropdown-item {
-            color: white; /* Default text color */
-            background-color: #45748A; /* Same as menu background */
+            color: white;
+            background-color: #45748A; 
         }
 
-        /* Dropdown item hover state */
+       
         .dropdown-menu .dropdown-item:hover,
         .dropdown-menu .dropdown-item:focus {
-            background-color: #45748A; /* Slightly darker shade on hover */
-            color: white; /* Text remains white */
+            background-color: #45748A; 
+            color: white; 
         }
 
 
@@ -110,7 +110,7 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.75); /* Adjust opacity as needed */
+            background: rgba(255, 255, 255, 0.75); 
             z-index: 1;
         }
 
@@ -122,15 +122,15 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
             color: #333;
         }
         .login-title {
-            font-size: 4.5rem; /* Extremely large font size */
-            font-weight: 800; /* Super thick and bold */
-            color: #004f9e; /* Dark blue color */
-            text-transform: uppercase; /* Uppercase for emphasis */
-            line-height: 1; /* Tight spacing between lines */
-            text-align: left; /* Left-aligned */
-            margin-top: 5px; /* Increased margin for spacing */
-            word-spacing: 40px; /* Wider spacing between words */
-            letter-spacing: 5px; /* Slight spacing between letters for better clarity */
+            font-size: 4.5rem; 
+            font-weight: 800; 
+            color: #004f9e; 
+            text-transform: uppercase; 
+            line-height: 1; 
+            text-align: left; 
+            margin-top: 5px; 
+            word-spacing: 40px; 
+            letter-spacing: 5px; 
         }
 
         .login-container {
