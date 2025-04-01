@@ -91,9 +91,8 @@ try {
         exit();
     }
 
-    // 7) Build an HTML snippet listing each vote
-    //    If you only allow one vote per category, you'll have just one row
-    $html = "<h5>Your Vote Details</h5><ul>";
+    // 7) Build an HTML snippet listing each vote (Removed the duplicate "Your Vote Details" heading)
+    $html = "<ul>";
     foreach ($votes as $vote) {
         $candidateName = htmlspecialchars($vote['CandidateName']);
         $candidateMail = htmlspecialchars($vote['CandidateMail']);
