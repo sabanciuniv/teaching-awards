@@ -95,10 +95,10 @@
                 <a href="#" class="nav-link dropdown-toggle text-white" 
                     id="welcomeDropdown" role="button" data-bs-toggle="dropdown" 
                     aria-expanded="false">
-                    Welcome,
-                       <strong>
+                        Welcome 
+                        <strong>
                             <?php
-                               // print_r($_SESSION);
+                                // print_r($_SESSION);
                                 if (!empty($_SESSION['firstname']) || !empty($_SESSION['lastname'])) {
                                     echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']);
                                 } else {
@@ -106,6 +106,7 @@
                                 }
                             ?>
                         </strong>
+                    </a>
 
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
                         <li>
