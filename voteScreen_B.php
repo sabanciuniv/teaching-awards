@@ -24,7 +24,6 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
   <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
   <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
   <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-  
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
   <style>
@@ -123,6 +122,33 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       pointer-events: none;
       opacity: 0.5;
     }
+
+    /* Custom close button style for the confirmation modal */
+    #confirmModal .btn-close {
+      background: none !important;
+      background-image: none !important; /* Remove default icon */
+      border: none !important;
+      box-shadow: none !important;
+      appearance: none;
+      width: 1em;
+      height: 1em;
+      padding: 0;
+      opacity: 1; /* Always fully visible */
+      position: relative;
+    }
+    #confirmModal .btn-close::before {
+      content: "×";         /* The 'X' character */
+      color: #ff0000;       /* Red color */
+      font-size: 1.4rem;    /* Adjust as needed */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #confirmModal .btn-close:hover::before,
+    #confirmModal .btn-close:focus::before {
+      opacity: 0.8;
+    }
   </style>
 </head>
 
@@ -146,17 +172,38 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
   <!-- Submit Button -->
   <button class="submit-btn btn-secondary" onclick="submitVote()">Submit</button>
 
+  <!-- Confirmation Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Voting</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <!-- The modal body now includes a summary area -->
+        <div class="modal-body" id="confirmModalBody">
+          <div id="confirmSummary"></div>
+          <p>Are you sure about your voting? There is no going back.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmSubmit">I Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- JavaScript (Bootstrap) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Custom JavaScript for Dropdown Ranking -->
+  <!-- Custom JavaScript for Dropdown Ranking and Vote Submission -->
   <script>
     // Object to track selected ranks (mapping instructor index to rank number as a string)
     let selectedRanks = {};
 
     document.addEventListener("DOMContentLoaded", function () {
       const category = "<?= $category ?>";
-      const term = "<?= isset($term) ? $term : '' ?>";  // Adjust if $term is defined elsewhere
+      const term = "<?= isset($term) ? $term : '' ?>";
       const apiUrl = `http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getInstructors.php?category=${category}&term=${term}`;
 
       fetch(apiUrl, { credentials: "include" })
@@ -169,6 +216,13 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
           }
         })
         .catch(error => console.error("Error fetching instructors:", error));
+
+      // Attach the confirm button's click event listener only once
+      document.getElementById('confirmSubmit').addEventListener('click', function () {
+        var confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+        confirmModal.hide();
+        doSubmitVote();
+      });
     });
 
     function displayInstructors(instructors) {
@@ -230,7 +284,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       });
     }
 
-    // Update the UI elements for rank buttons and the selected rank display
+    // Update the UI for rank buttons and selected rank display
     function updateUI() {
       document.querySelectorAll('.rank-btn').forEach((btn, index) => {
         let selectedDiv = document.getElementById(`selected-rank-${index}`);
@@ -257,7 +311,6 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
         if (assignedCount >= 3) {
           option.classList.add('disabled');
         } else {
-          // Only enable the option if it matches the next required rank
           if (rank === nextRank) {
             option.classList.remove('disabled');
           } else {
@@ -267,8 +320,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       });
     }
 
-    // Removal logic for ranks:
-    // Removing a rank causes removal of that rank and any higher assigned ranks
+    // Removal logic: removing a rank removes that rank and any higher assigned ranks
     function removeRank(index) {
       const rankRemovedStr = selectedRanks[index];
       if (!rankRemovedStr) return;
@@ -300,8 +352,36 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       }
     }
 
-    // Submit the vote data to the backend
-    async function submitVote() {
+    // Function to build a summary of the selected votes
+    function updateConfirmModalSummary() {
+      // Get all candidate name elements from the displayed cards.
+      // We assume the candidate name is in the h6 element within each card.
+      const candidateElements = document.querySelectorAll('#instructors-list .card h6');
+      let summaryHTML = '<ul>';
+      // Loop through possible ranks 1 to 3 in order
+      for (let r = 1; r <= 3; r++) {
+        // Look for an entry in selectedRanks with this rank
+        for (const [index, rank] of Object.entries(selectedRanks)) {
+          if (parseInt(rank) === r) {
+            const candidateName = candidateElements[index] ? candidateElements[index].textContent : 'Unknown';
+            summaryHTML += `<li>Rank ${r}: ${candidateName}</li>`;
+          }
+        }
+      }
+      summaryHTML += '</ul>';
+      return summaryHTML;
+    }
+
+    // When the user clicks submit, update the modal summary then show the confirmation modal.
+    function submitVote() {
+      const summaryHTML = updateConfirmModalSummary();
+      document.getElementById("confirmSummary").innerHTML = summaryHTML;
+      var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+      confirmModal.show();
+    }
+
+    // This function handles the actual vote submission.
+    async function doSubmitVote() {
       console.log("Selected Ranks:", selectedRanks);
 
       const categoryId = 'B';
