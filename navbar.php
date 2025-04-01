@@ -95,8 +95,17 @@
                 <a href="#" class="nav-link dropdown-toggle text-white" 
                     id="welcomeDropdown" role="button" data-bs-toggle="dropdown" 
                     aria-expanded="false">
-                        Welcome, <strong><?php echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']); ?></strong>
-                    </a>
+                    Welcome,
+                       <strong>
+                            <?php
+                               // print_r($_SESSION);
+                                if (!empty($_SESSION['firstname']) || !empty($_SESSION['lastname'])) {
+                                    echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']);
+                                } else {
+                                    echo htmlspecialchars($_SESSION['user']);
+                                }
+                            ?>
+                        </strong>
 
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="welcomeDropdown">
                         <li>

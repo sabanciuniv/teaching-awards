@@ -62,6 +62,30 @@ try {
         ];
     }
 
+    //Fetch CandidateIDs from Exception_Table
+    $exceptionStmt = $pdo->query("SELECT CandidateID FROM Exception_Table");
+    $exceptionList = $exceptionStmt->fetchAll(PDO::FETCH_COLUMN);
+    $exceptionSUIds = [];
+
+    if ($exceptionList) {
+        // Map CandidateID to SU_ID from Candidate_Table
+        $stmt = $pdo->prepare("SELECT id, SU_ID FROM Candidate_Table WHERE id IN (" . implode(",", array_map('intval', $exceptionList)) . ")");
+        $stmt->execute();
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $exceptionSUIds[$row['SU_ID']] = true;
+        }
+    }
+
+    // Step 2: Force status to 'İşten ayrıldı' for exception entries
+    foreach ($candidates as $su_id => &$candidate) {
+        if (isset($exceptionSUIds[$su_id])) {
+            $candidate['Status'] = 'İşten ayrıldı';
+        }
+    }
+    unset($candidate); // Break reference
+    
+    
+
     // Fetch existing candidates from Candidate_Table
     $stmt = $pdo->query("SELECT SU_ID, Name, Mail, Role, Status FROM Candidate_Table");
     $existingCandidates = [];

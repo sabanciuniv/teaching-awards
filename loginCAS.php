@@ -11,7 +11,7 @@ $cas_context   = $config['cas_context'];
 $cas_port      = $config['cas_port'];
 $app_base_url  = $config['app_base_url'];
 
-phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
+phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 
 // Disable server validation (for testing only)
 phpCAS::setNoCasServerValidation();
@@ -19,12 +19,23 @@ phpCAS::setNoCasServerValidation();
 // Force CAS authentication
 phpCAS::forceAuthentication();
 
+
 // Retrieve the authenticated user's ID
 $user = phpCAS::getUser();
+$attributes = phpCAS::getAttributes(); // Get all attributes
+
+$firstname = $attributes['firstname'] ?? '';
+$lastname  = $attributes['lastname'] ?? '';
+$email     = $attributes['email'] ?? '';
+
 
 // Start the session and store the username
 session_start();
 $_SESSION['user'] = $user;
+$_SESSION['firstname'] = $firstname;
+$_SESSION['lastname']  = $lastname;
+$_SESSION['email']     = $email;
+
 
 // -------------------------
 // BEGIN: Cookie & DB Logic

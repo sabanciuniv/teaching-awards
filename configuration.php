@@ -374,7 +374,7 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
     $(document).ready(function () {
 
 
-          $("th.sortable").on("click", function () {
+      $("th.sortable").on("click", function () {
         const column = $(this).data("column");
 
         // Remove previous sort indicators
@@ -451,9 +451,80 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
             `);
         });
         
-        // Re-attach event handlers for toggle buttons
-        $(".toggle-status").on("click", function() {
-            // Your existing toggle button logic
+        $(".toggle-status").on("click", function () {
+          const button = $(this);
+          const candidateID = button.data("id");           // Get candidate ID
+          const currentStatus = button.data("status");     // Get current status 
+
+          const newStatus = currentStatus === "Etkin" ? "İşten ayrıldı" : "Etkin";  // Toggle status
+          const newClass = newStatus === "Etkin" ? "btn-success" : "btn-danger";   // Change button color
+          const newText = newStatus === "Etkin" ? "On" : "Off";                    // Change button text
+
+          // Immediately update button UI
+          button.removeClass("btn-success btn-danger").addClass(newClass).text(newText);
+          button.data("status", newStatus);  // Update data-status
+
+          // Send updated status to server
+          $.ajax({
+              url: "api/updateCandidateStatus.php",  // Your backend script
+              method: "POST",
+              data: { candidateID: candidateID, status: newStatus },
+              dataType: "json",
+              success: function (response) {
+                  if (!response.success) {
+                      alert("Error updating status: " + response.message);
+
+                      // Revert UI if update fails
+                      button.removeClass(newClass).addClass(currentStatus === "Etkin" ? "btn-success" : "btn-danger");
+                      button.text(currentStatus === "Etkin" ? "On" : "Off");
+                      button.data("status", currentStatus);
+                  }
+              },
+              error: function (xhr, status, error) {
+                  console.error("Error updating status:", error);
+                  alert("An error occurred while updating the status.");
+              }
+          });
+
+          // If new status is "İşten ayrıldı", add candidate to Exception_Table
+            if (newStatus === "İşten ayrıldı") {
+              $.ajax({
+                  url: "api/add_excluded_candidate.php",
+                  method: "POST",
+                  data: { candidateID: candidateID },
+                  dataType: "json",
+                  success: function (response) {
+                      if (!response.success) {
+                          alert("Error excluding candidate: " + response.error);
+                          // Revert UI if error occurs
+                          button.removeClass(newClass).addClass("btn-success").text("On");
+                          button.data("status", "Etkin");
+                      }
+                  },
+                  error: function (xhr, status, error) {
+                      console.error("Error excluding candidate:", error);
+                      alert("An error occurred while excluding the candidate.");
+                      // Revert UI
+                      button.removeClass(newClass).addClass("btn-success").text("On");
+                      button.data("status", "Etkin");
+                  }
+              });
+            }else{
+              $.ajax({
+                url: "api/delete_excluded_candidate.php",
+                method: "POST",
+                data: { candidateID: candidateID },
+                dataType: "json",
+                success: function (response) {
+                    if (!response.success) {
+                        alert("Error removing from exception: " + response.error);
+                    }
+                },
+                error: function () {
+                    alert("An error occurred while removing the candidate from exclusion list.");
+                }
+              });
+            }
         });
     }
 
