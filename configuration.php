@@ -156,20 +156,24 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
 
     .sticky-sync-container {
       position: fixed;
-      bottom: 40px; /* Adjusted to be clearly visible */
-      right: 30px; 
-      z-index: 1050; 
+      bottom: 40px;
+      right: 30px;
+      z-index: 1050;
       display: flex !important;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
     }
 
     /* Make the sync button visible and properly sized */
     #syncButton {
-      width: 170px;  /* Adjust width */
-      height: 60px;  /* Adjust height */
-      font-size: 16px;  /* Ensure text remains readable */
-      padding: 10px;  /* Adjust padding */
+      height: 60px;
+      font-size: 16px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       border-radius: 8px;  /* Rounded corners */
       background-color: #ff9800;  /* Orange color */
       color: white;  /* Text color */
@@ -179,7 +183,6 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;  /* Space between icon and text */
     }
 
     /* Hover effect for better visibility */
@@ -284,6 +287,10 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
 
 
   <div class="sticky-sync-container">
+
+    <button id="viewLogsBtn" class="btn btn-secondary ms-2">
+      <i class="fa-solid fa-file-alt"></i> View Logs
+    </button>
     <button id="syncButton" class="btn">
       <i class="fa-solid fa-sync fa-lg"></i>
       <span> Data Sync </span>
@@ -653,6 +660,74 @@ let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
   });
 
 
+  $("#viewLogsBtn").on("click", function () {
+    $("#syncLogsContent").html("<p>Loading logs...</p>");
+
+    fetch("api/listSyncLogs.php")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.logs.length > 0) {
+          let logList = '<ul class="list-group">';
+          data.logs.forEach(log => {
+            logList += `
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${log.filename}</strong> <small class="text-muted">(${log.academicYear}, ${log.sync_date})</small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="showLogDetails('${log.academicYear}', '${log.filename}')">
+                  View
+                </button>
+              </li>
+            `;
+          });
+          logList += '</ul>';
+          $("#syncLogsContent").html(logList);
+        } else {
+          $("#syncLogsContent").html("<p>No logs found.</p>");
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching logs:", error);
+        $("#syncLogsContent").html("<p>Error loading logs.</p>");
+      });
+
+    new bootstrap.Modal(document.getElementById("syncLogsModal")).show();
+  });
+
+  const appBaseUrl = <?php echo json_encode($config['app_base_url']); ?>; //get the base url pro2-dev ... from config
+
+  function showLogDetails(academicYear, filename) {
+    const path = `${appBaseUrl}odul/logs/${academicYear}/${filename}`;
+    fetch(path)
+      .then(res => res.json())
+      .then(json => {
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(json, null, 2);
+        $("#syncLogsContent").html(pre);
+      })
+      .catch(err => {
+        console.error("Failed to load log:", err);
+        $("#syncLogsContent").html("<p>Unable to load log file.</p>");
+      });
+  }
+
+
+
   </script>
+
+
+  <div class="modal fade" id="syncLogsModal" tabindex="-1" aria-labelledby="syncLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="syncLogsModalLabel">Sync Logs</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="syncLogsContent">
+          <p>Loading logs...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

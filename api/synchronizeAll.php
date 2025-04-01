@@ -1,4 +1,10 @@
 <?php
+session_start();
+
+if (!isset($_SESSION['user'])) {
+    header("Location: loginCAS.php");
+    exit;
+  }
 require_once '../database/dbConnection.php';
 $config = require __DIR__ . '/../config.php';
 
@@ -175,6 +181,21 @@ try {
 
     // Write the logs to a JSON file
     file_put_contents($logFile, json_encode($response["logs"], JSON_PRETTY_PRINT));
+    chmod($logFile, 0777);
+
+    // Log into Sync_Logs table
+    if (isset($_SESSION['user'])) {
+        $username = $_SESSION['user'];
+        $filename = basename($logFile); 
+
+        $logInsertStmt = $pdo->prepare("INSERT INTO Sync_Logs (user, filename, academicYear) VALUES (:user, :filename, :year)");
+        $logInsertStmt->execute([
+            ':user' => $username,
+            ':filename' => $filename,
+            ':year' => $academicYear
+        ]);
+    }
+
     $response["logFilePath"] = $logFile;
     
     $response["message"] = "All synchronizations completed successfully!";
