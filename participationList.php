@@ -33,8 +33,9 @@ try {
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <!-- Grid.js -->
-    <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <!-- DataTables & Buttons CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 
     <style>
         body {
@@ -103,33 +104,6 @@ try {
             background-color: #365a6b !important;
         }
 
-        /* Custom Download Button */
-        .download-button {
-            border: 2px solid #dc3545;
-            color: #dc3545;
-            background: transparent;
-            padding: 15px 10px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 200px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: 0.3s ease;
-        }
-
-        .download-button i {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .download-button:hover {
-            background-color: #dc3545;
-            color: white;
-        }
-
         /* Custom Year Dropdown */
         .year-dropdown .btn {
             width: 200px;
@@ -169,27 +143,41 @@ try {
     <div id="error-message" class="error-message"></div>
 
     <!-- Table -->
-    <div class="table-container">
-        <div class="gridjs-example" id="participation-grid"></div>
+    <!-- Table (initially hidden) -->
+    <div class="table-container" id="table-section" style="display: none;">
+        <table id="participationTable" class="table datatable-excel-background table-bordered table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Students Voted</th>
+                    <th>Total Students</th>
+                    <th>Participation Percentage</th>
+                </tr>
+            </thead>
+            <tbody id="participation-body">
+                <!-- Rows will be inserted dynamically -->
+            </tbody>
+        </table>
     </div>
+
 </div>
 
 <!-- Action Container -->
 <div class="action-container">
     <button class="return-button" onclick="window.location.href='reportPage.php'">
-        <i class="fa fa-arrow-left"></i> Return to Category Page
-    </button>
-
-    <button id="downloadBtn" class="download-button d-none">
-        <i class="fa fa-download"></i>
-        Download
+        <i class="fa fa-arrow-left"></i> Return to Reports Page
     </button>
 </div>
 
-<!-- Load JS Libraries -->
+<!-- JS Libraries -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- DataTables + Buttons -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -200,7 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const yearSelectBtn = document.getElementById("yearSelectBtn");
     const yearOptions = document.querySelectorAll(".year-option");
     const viewReportBtn = document.getElementById("viewReportBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
     const participationGrid = document.getElementById("participation-grid");
     const errorMessage = document.getElementById("error-message");
 
@@ -212,13 +199,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (gridInstance) gridInstance.destroy();
             errorMessage.style.display = "none";
-            downloadBtn.classList.add("d-none");
+            document.getElementById("table-section").style.display = "block";
         });
     });
 
     viewReportBtn.addEventListener("click", async () => {
         if (!selectedYear) {
-            alert("⚠️ Please select a year.");
+            alert("Please select a year.");
             return;
         }
 
@@ -234,37 +221,43 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             errorMessage.style.display = "none";
-            currentData = data;
-            downloadBtn.classList.remove("d-none");
 
-            if (gridInstance) gridInstance.destroy();
+            // Clear existing table body
+            const tbody = document.getElementById("participation-body");
+            tbody.innerHTML = "";
 
-            new gridjs.Grid({
-                columns: ["Category", "Students Voted", "Total Students", "Participation Percentage"],
-                data: data.map(row => [
-                    row.CategoryName, row.Students_Voted, row.Total_Students, `${row.Participation_Percentage}%`
-                ]),
-                pagination: { limit: 8, summary: true },
-                search: true,
-                sort: true
-            }).render(participationGrid);
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.CategoryName}</td>
+                    <td>${row.Students_Voted}</td>
+                    <td>${row.Total_Students}</td>
+                    <td>${row.Participation_Percentage}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Re-initialize DataTable
+            if ($.fn.DataTable.isDataTable('#participationTable')) {
+                $('#participationTable').DataTable().clear().destroy();
+            }
+
+            $('#participationTable').DataTable({
+                dom: '<"datatable-header d-flex justify-content-between align-items-center mb-2"fB>t<"datatable-footer"ip>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        title: 'Voting Participation Report',
+                        text: 'Export to Excel',
+                        className: 'btn btn-custom'
+                    }
+                ],
+                pageLength: 8
+            });
+
         } catch (error) {
             console.error("Fetch Error:", error);
         }
-    });
-
-    downloadBtn.addEventListener("click", () => {
-        const csvContent = ["Category,Students Voted,Total Students,Participation Percentage"]
-            .concat(currentData.map(row => 
-                `${row.CategoryName};${row.Students_Voted};${row.Total_Students};${row.Participation_Percentage}%`
-            ))
-            .join("\n");
-
-        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "Voting_Participation_Report.csv";
-        link.click();
     });
 });
 </script>

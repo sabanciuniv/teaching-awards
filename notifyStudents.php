@@ -54,17 +54,14 @@ function handleFatalError() {
 register_shutdown_function('handleFatalError');
 
 try {
-    // Validate input early
-    $rawInput = file_get_contents("php://input");
-    if ($rawInput === false) {
-        sendErrorResponse('Unable to read input stream');
+    if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+    } else {
+        $data = $_POST;
+        $data['students'] = json_decode($data['students'] ?? '[]', true);
     }
-
-    $data = json_decode($rawInput, true);
-    if ($data === null) {
-        sendErrorResponse('Invalid JSON input: ' . json_last_error_msg());
-    }
-
+    
     // Validate required input
     if (!isset($data['students']) || !isset($data['category'])) {
         sendErrorResponse('Missing student data or category');
