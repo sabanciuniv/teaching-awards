@@ -2,6 +2,7 @@
 session_start();
 require_once 'api/authMiddleware.php';  
 require_once 'database/dbConnection.php';
+require_once 'config.php';
 
 // If not logged in, redirect 
 if (!isset($_SESSION['user'])) {
@@ -833,8 +834,9 @@ let allStudents = <?php echo json_encode($students); ?>;
   });
 
 
-  $("#viewLogsBtn").on("click", function () {
+  function loadLogList() {
     $("#syncLogsContent").html("<p>Loading logs...</p>");
+    $("#backToLogListBtn").hide(); // Hide back button
 
     fetch("api/listSyncLogs.php")
       .then(res => res.json())
@@ -863,9 +865,18 @@ let allStudents = <?php echo json_encode($students); ?>;
         console.error("Error fetching logs:", error);
         $("#syncLogsContent").html("<p>Error loading logs.</p>");
       });
+  }
 
+  $("#viewLogsBtn").on("click", function () {
+    loadLogList();
     new bootstrap.Modal(document.getElementById("syncLogsModal")).show();
+
+    // Back button click
+    $("#backToLogListBtn").off("click").on("click", function () {
+          loadLogList();
+    });
   });
+
 
   const appBaseUrl = <?php echo json_encode($config['app_base_url']); ?>; //get the base url pro2-dev ... from config
 
@@ -877,10 +888,14 @@ let allStudents = <?php echo json_encode($students); ?>;
         const pre = document.createElement("pre");
         pre.textContent = JSON.stringify(json, null, 2);
         $("#syncLogsContent").html(pre);
+
+        // Show back button
+        $("#backToLogListBtn").show();
       })
       .catch(err => {
         console.error("Failed to load log:", err);
         $("#syncLogsContent").html("<p>Unable to load log file.</p>");
+        $("#backToLogListBtn").show();
       });
   }
 
@@ -896,8 +911,16 @@ let allStudents = <?php echo json_encode($students); ?>;
           <h5 class="modal-title" id="syncLogsModalLabel">Sync Logs</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body" id="syncLogsContent">
-          <p>Loading logs...</p>
+        <div class="modal-body">
+          <!-- Back button -->
+          <button id="backToLogListBtn" class="btn btn-sm btn-secondary mb-3" style="display:none;">
+            ← Back to Log List
+          </button>
+
+          <!-- Log content container -->
+          <div id="syncLogsContent">
+            <p>Loading logs...</p>
+          </div>
         </div>
       </div>
     </div>
