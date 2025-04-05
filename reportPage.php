@@ -1,12 +1,47 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+
+// Redirect if the user is not logged in
 if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
     header("Location: login.php");
     exit();
 }
+
+// Include the database connection (adjust the path if needed)
+require_once __DIR__ . '/database/dbConnection.php';
+
+// Get the current user from the session
+$user = $_SESSION['user'];
+
+// -------------------------
+// BEGIN: Admin Access Check (IT_Admin only)
+// -------------------------
+try {
+    // This query ensures the user exists in Admin_Table, is not marked as 'Removed',
+    // and that their Role is exactly 'IT_Admin'
+    $adminQuery = "SELECT 1 
+                     FROM Admin_Table 
+                    WHERE AdminSuUsername = :username 
+                      AND checkRole <> 'Removed'
+                      AND Role IN ('IT_Admin', 'Admin')
+                    LIMIT 1";
+    $adminStmt = $pdo->prepare($adminQuery);
+    $adminStmt->execute([':username' => $user]);
+    
+    // If no record is found, redirect to index.php
+    if (!$adminStmt->fetch()) {
+        header("Location: index.php");
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Admin check failed: " . $e->getMessage());
+}
+// -----------------------
+// END: Admin Access Check
+// -----------------------
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

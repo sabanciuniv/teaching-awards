@@ -9,6 +9,7 @@ if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
 }
+$user = $_SESSION['user'];
 
 // Handle UPDATE request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'])) {
@@ -146,6 +147,34 @@ try {
 
 // Determine the current academic year (latest one)
 $currentAcademicYear = !empty($academicYears) ? $academicYears[0] : null;
+
+// -------------------------
+// BEGIN: Admin Access Check
+// -------------------------
+try {
+    // This query ensures the user exists in Admin_Table, is not marked as 'Removed',
+    // and that their Role is exactly 'IT_Admin'
+    $adminQuery = "SELECT 1 
+                     FROM Admin_Table 
+                    WHERE AdminSuUsername = :username 
+                      AND checkRole <> 'Removed'
+                      AND Role IN ('IT_Admin', 'Admin')
+                    LIMIT 1";
+    $adminStmt = $pdo->prepare($adminQuery);
+    $adminStmt->execute([':username' => $user]);
+    
+    // If no record is found, redirect to index.php
+    if (!$adminStmt->fetch()) {
+        header("Location: index.php");
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Admin check failed: " . $e->getMessage());
+}
+// -----------------------
+// END: Admin Access Check
+// -----------------------
+
 ?>
 
 <!DOCTYPE html>

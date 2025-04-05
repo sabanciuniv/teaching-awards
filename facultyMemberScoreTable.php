@@ -13,6 +13,8 @@ $facultyScores = [];
 $errorMessage = null;
 $successMessage = null;
 
+$user = $_SESSION['user'];
+
 // Process the form submission if year and category are provided
 /*if (isset($_GET['year']) && isset($_GET['category'])) {
     $yearId = intval($_GET['year']);
@@ -94,6 +96,31 @@ try {
 } catch (Exception $e) {
     die("Error fetching data: " . $e->getMessage());
 }
+
+// -------------------------
+// BEGIN: Admin Access Check
+// -------------------------
+try {
+    // Check if the username exists in Admin_Table and is not marked as 'Removed'
+    $adminQuery = "SELECT 1 
+                     FROM Admin_Table 
+                    WHERE AdminSuUsername = :username 
+                      AND checkRole <> 'Removed'
+                    LIMIT 1";
+    $adminStmt = $pdo->prepare($adminQuery);
+    $adminStmt->execute([':username' => $user]);
+    
+    // If no active record is found, redirect to index.php
+    if (!$adminStmt->fetch()) {
+        header("Location: index.php");
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Admin check failed: " . $e->getMessage());
+}
+// -----------------------
+// END: Admin Access Check
+// -----------------------
 ?>
 
 <!DOCTYPE html>

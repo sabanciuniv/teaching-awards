@@ -13,6 +13,7 @@ require_once 'database/dbConnection.php';
 
 // Fetch the username from session
 $username = $_SESSION['user'];
+$user = $_SESSION['user'];
 
 // Default role 
 $role = null;
@@ -35,16 +36,36 @@ try {
     if ($row) {
         // If found, set $role to the user's current role
         $role = $row['Role']; 
-    } else {
-        // No active row found => user is not an admin
-        // Optionally handle as unauthorized or allow limited access
-        // e.g. $role = null; or redirect somewhere
-        // header("Location: index.php");
-        // exit();
     }
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
 }
+
+
+// -------------------------
+// BEGIN: Admin Access Check
+// -------------------------
+try {
+    // Check if the username exists in Admin_Table and is not marked as 'Removed'
+    $adminQuery = "SELECT 1 
+                     FROM Admin_Table 
+                    WHERE AdminSuUsername = :username 
+                      AND checkRole <> 'Removed'
+                    LIMIT 1";
+    $adminStmt = $pdo->prepare($adminQuery);
+    $adminStmt->execute([':username' => $user]);
+    
+    // If no active record is found, redirect to index.php
+    if (!$adminStmt->fetch()) {
+        header("Location: index.php");
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Admin check failed: " . $e->getMessage());
+}
+// -----------------------
+// END: Admin Access Check
+// -----------------------
 ?>
 
 <!DOCTYPE html>

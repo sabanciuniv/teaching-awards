@@ -51,6 +51,42 @@ if (isset($_GET['year']) && isset($_GET['category'])) {
         }
     }
 }
+
+// -------------------------
+// BEGIN: Admin Access Check
+// -------------------------
+
+// Make sure to assign the session user to a variable
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit();
+}
+$user = $_SESSION['user'];
+
+try {
+    // This query ensures the user exists in Admin_Table, is not marked as 'Removed',
+    // and that their Role is either 'IT_Admin' or 'Admin'
+    $adminQuery = "SELECT 1 
+                     FROM Admin_Table 
+                    WHERE AdminSuUsername = :username 
+                      AND checkRole <> 'Removed'
+                      AND Role IN ('IT_Admin', 'Admin')
+                    LIMIT 1";
+    $adminStmt = $pdo->prepare($adminQuery);
+    $adminStmt->execute([':username' => $user]);
+    
+    // If no record is found, redirect to index.php
+    if (!$adminStmt->fetch()) {
+        header("Location: index.php");
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Admin check failed: " . $e->getMessage());
+}
+
+// -----------------------
+// END: Admin Access Check
+// -----------------------
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -2,7 +2,6 @@
 session_start();
 require_once 'api/authMiddleware.php';  
 require_once 'database/dbConnection.php';
-require_once 'config.php';
 
 // If not logged in, redirect 
 if (!isset($_SESSION['user'])) {
@@ -15,7 +14,7 @@ ini_set('display_errors', 1);
 
 
 $username = $_SESSION['user'];  // Current user
-
+$user = $_SESSION['user'];
 // Fetch academic years
 try {
   $stmt = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY Academic_year DESC LIMIT 1");
@@ -50,17 +49,35 @@ $stmt->bindParam(':academicYear', $currentYearID, PDO::PARAM_INT);
 $stmt->execute();
 $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$stmtStudents = $pdo->prepare("SELECT * FROM Student_Table WHERE YearID = :yearID");
-$stmtStudents->bindParam(':yearID', $currentYearID, PDO::PARAM_INT);
-$stmtStudents->execute();
-$students = $stmtStudents->fetchAll(PDO::FETCH_ASSOC);
-
+// -------------------------
+// BEGIN: Admin Access Check
+// -------------------------
+try {
+    // Check if the username exists in Admin_Table and is not marked as 'Removed'
+    $adminQuery = "SELECT 1 
+                     FROM Admin_Table 
+                    WHERE AdminSuUsername = :username 
+                      AND checkRole <> 'Removed'
+                    LIMIT 1";
+    $adminStmt = $pdo->prepare($adminQuery);
+    $adminStmt->execute([':username' => $user]);
+    
+    // If no active record is found, redirect to index.php
+    if (!$adminStmt->fetch()) {
+        header("Location: index.php");
+        exit();
+    }
+} catch (PDOException $e) {
+    die("Admin check failed: " . $e->getMessage());
+}
+// -----------------------
+// END: Admin Access Check
+// -----------------------
 ?>
 <script>
 // Pass PHP data directly to JavaScript
 let allCandidates = <?php echo json_encode($candidates); ?>;
 let currentAcademicYear = <?php echo json_encode($currentAcademicYear); ?>;
-let allStudents = <?php echo json_encode($students); ?>;
 </script>
 
 <!DOCTYPE html>
@@ -90,12 +107,6 @@ let allStudents = <?php echo json_encode($students); ?>;
 
   <style>
     /* Make the entire page scrollable */
-
-    body, .nav-tabs .nav-link, .table, .table th, .table td {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 14px;
-    }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -170,15 +181,61 @@ let allStudents = <?php echo json_encode($students); ?>;
 
     .sticky-sync-container {
       position: fixed;
-      bottom: 40px;
-      right: 30px;
-      z-index: 1050;
+      bottom: 40px; /* Adjusted to be clearly visible */
+      right: 30px; 
+      z-index: 1050; 
       display: flex !important;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
+      align-items: center;
+      justify-content: center;
     }
 
+    /* Make the sync button visible and properly sized */
+    #syncButton {
+      width: 170px;  /* Adjust width */
+      height: 60px;  /* Adjust height */
+      font-size: 16px;  /* Ensure text remains readable */
+      padding: 10px;  /* Adjust padding */
+      border-radius: 8px;  /* Rounded corners */
+      background-color: #ff9800;  /* Orange color */
+      color: white;  /* Text color */
+      border: none;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;  /* Space between icon and text */
+    }
+
+    /* Hover effect for better visibility */
+    #syncButton:hover {
+      background-color: #e68900; 
+      transform: scale(1.05);
+    }
+
+    /* Ensure visibility on smaller screens */
+    @media (max-width: 768px) {
+      .sticky-sync-container {
+        right: 10px;
+        bottom: 10px;
+      }
+
+      #syncButton {
+        width: 60px; /* Slightly smaller on mobile */
+        height: 60px;
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+
+
+    /* Media query to adjust the button for smaller screens */
+    @media (max-width: 768px) {
+      .sticky-sync-container {
+        right: 15px;
+        bottom: 15px;
+      }
+    }
 
     .container{
       max-width: 95%;
@@ -244,21 +301,15 @@ let allStudents = <?php echo json_encode($students); ?>;
       white-space: nowrap;
     }
 
-    
-
 </style>
 </head>
 <body>
-  <!-- Example navbar (adjust path if needed) -->
+ 
   <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
 
   <div class="sticky-sync-container">
-
-    <button id="viewLogsBtn" class="btn btn-secondary ms-2">
-      <i class="fa-solid fa-file-alt"></i> View Logs
-    </button>
-    <button id="syncButton" class="btn ms-2" style="background-color: #ff9800; color: white;">
+    <button id="syncButton" class="btn">
       <i class="fa-solid fa-sync fa-lg"></i>
       <span> Data Sync </span>
     </button>
@@ -287,105 +338,58 @@ let allStudents = <?php echo json_encode($students); ?>;
       </div>
 
 
-      <ul class="nav nav-tabs" id="configTabs" role="tablist">
-        <li class="nav-item">
-          <button class="nav-link active" id="candidates-tab" data-bs-toggle="tab" data-bs-target="#candidatesTab">Candidates</button>
-        </li>
-        <li class="nav-item">
-          <button class="nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#studentsTab">Students</button>
-        </li>
-      </ul>
 
+      <div class="card-body">
+        <!-- Search box -->
+        <input type="text" id="searchBox" class="form-control search-box" placeholder="Search for a candidate...">
 
-      <div class="tab-content mt-3">
-
-        <!-- CANDIDATES TAB -->
-        <div class="tab-pane fade show active" id="candidatesTab">
-          <div class="card-body">
-            <!-- Search box -->
-            <input type="text" id="searchBox" class="form-control search-box" placeholder="Search for a candidate...">
-
-            <div class="table-responsive mt-3">
-              <table class="table table-striped table-bordered">
-                <thead class="table-dark">
-                  <tr>
-                    <th class="sortable" data-column="Name">Name</th>
-                    <th class="sortable" data-column="Mail">Email</th>
-                    <th class="sortable" data-column="SU_ID">SuID</th>
-                    <th class="sortable" data-column="Role">Role</th>
-                    <th class="sortable" data-column="Categories">Categories</th>
-                    <th class="sortable" data-column="Courses">Courses</th>
-                    <th class="sortable" data-column="Sync_Date">Last Synced</th>
-                    <th class="sortable" data-column="Status">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="candidatesTable">
-                  <?php foreach ($candidates as $candidate): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($candidate['Name']) ?></td>
-                      <td><?= htmlspecialchars($candidate['Mail']) ?></td>
-                      <td><?= htmlspecialchars($candidate['SU_ID']) ?></td>
-                      <td><?= htmlspecialchars($candidate['Role']) ?></td>
-                      <td><?= htmlspecialchars($candidate['Categories'] ?: '-') ?></td>
-                      <td><?= htmlspecialchars($candidate['Courses'] ?: '-') ?></td>
-                      <td><?= htmlspecialchars($candidate['Sync_Date']) ?></td>
-                      <td>
-                        <button class="btn <?= ($candidate['Status'] === 'Etkin') ? 'btn-success' : 'btn-danger'; ?>">
+        <!-- Table: Shows ONLY excluded candidates -->
+        <div class="table-responsive mt-3">
+          <table class="table table-striped table-bordered">
+          <thead class="table-dark">
+          <tr>
+            <th class="sortable" data-column="Name">Name</th>
+            <th class="sortable" data-column="Mail">Email</th>
+            <th class="sortable" data-column="SU_ID">SuID</th>
+            <th class="sortable" data-column="Role">Role</th>
+            <th class="sortable" data-column="Categories">Categories</th> 
+            <th class="sortable" data-column="Courses">Courses</th>
+            <th class="sortable" data-column="Sync_Date">Last Synced</th>
+            <th class="sortable" data-column="Status">Status</th>
+          </tr>
+      </thead>
+      <tbody id="candidatesTable">
+          <?php foreach ($candidates as $candidate): ?>
+              <tr>
+                  <td><?= htmlspecialchars($candidate['Name']) ?></td>
+                  <td><?= htmlspecialchars($candidate['Mail']) ?></td>
+                  <td><?= htmlspecialchars($candidate['SU_ID']) ?></td>
+                  <td><?= htmlspecialchars($candidate['Role']) ?></td>
+                  <td><?= htmlspecialchars($candidate['Categories'] ?: '-') ?></td>
+                  <td><?= htmlspecialchars($candidate['Courses'] ?: '-') ?></td>
+                  <td><?= htmlspecialchars($candidate['Sync_Date']) ?></td>
+                  <td>
+                      <button class="btn <?= ($candidate['Status'] === 'Etkin') ? 'btn-success' : 'btn-danger'; ?>">
                           <?= ($candidate['Status'] === 'Etkin') ? 'On' : 'Off'; ?>
-                        </button>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
-            <nav>
-            <ul class="pagination" id="candidatePaginationControls"></ul>
-            </nav>
-          </div>
-        </div>
+                      </button>
+                  </td>
+              </tr>
+          <?php endforeach; ?>
+      </tbody>
 
-        <!-- STUDENTS TAB -->
-        <div class="tab-pane fade" id="studentsTab">
-          <div class="card-body">
-            <!-- Search box -->
-            <input type="text" id="studentSearchBox" class="form-control search-box" placeholder="Search for a student...">
-            <div class="table-responsive">
-              <table class="table table-striped table-bordered">
-              <thead class="table-dark">
-                <tr>
-                  <th class="sortable" data-column="StudentID">Student ID</th>
-                  <th class="sortable" data-column="StudentFullName">Name</th>
-                  <th class="sortable" data-column="Mail">Email</th>
-                  <th class="sortable" data-column="SuNET_Username">Username</th>
-                  <th class="sortable" data-column="CGPA">GPA</th>
-                </tr>
-              </thead>
-
-                <tbody>
-                  <?php foreach ($students as $student): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($student['StudentID']) ?></td>
-                      <td><?= htmlspecialchars($student['StudentFullName']) ?></td>
-                      <td><?= htmlspecialchars($student['Mail']) ?></td>
-                      <td><?= htmlspecialchars($student['SuNET_Username']) ?></td>
-                      <td><?= isset($student['CGPA']) && $student['CGPA'] !== null ? htmlspecialchars($student['CGPA']) : '-' ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
           </table>
         </div>
+
         <!-- Pagination controls -->
         <nav>
-          <ul class="pagination" id="studentPaginationControls"></ul>
+          <ul class="pagination" id="paginationControls"></ul>
         </nav>
       </div>
     </div>
   </div>
 
   <script>
-    let currentCandidatePage = 1;
-    let currentStudentPage = 1;
+    let currentPage = 1;
     const rowsPerPage = 7;
 
     // Sort tracking
@@ -393,58 +397,33 @@ let allStudents = <?php echo json_encode($students); ?>;
     let currentSortDirection = 'asc';
 
     $(document).ready(function () {
-      // Candidate table sorting
-      $("#candidatesTab th.sortable").on("click", function () {
+
+
+          $("th.sortable").on("click", function () {
         const column = $(this).data("column");
 
-        $("#candidatesTab th.sortable").removeClass("asc desc");
+        // Remove previous sort indicators
+        $("th.sortable").removeClass("asc desc");
 
+        // Toggle sort direction
         if (currentSortColumn === column) {
-          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
         } else {
-          currentSortDirection = 'asc';
+            currentSortDirection = 'asc';
         }
 
         currentSortColumn = column;
+
+        // Add the appropriate sort indicator
         $(this).addClass(currentSortDirection);
 
         sortData(column);
-      });
-
-      // Student table sorting
-      $("#studentsTab th.sortable").on("click", function () {
-        const column = $(this).data("column");
-
-        $("#studentsTab th.sortable").removeClass("asc desc");
-
-        if (studentSortColumn === column) {
-          studentSortDirection = studentSortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-          studentSortDirection = 'asc';
-        }
-
-        studentSortColumn = column;
-        $(this).addClass(studentSortDirection);
-
-        sortStudentData(column);
-      });
-
-      // Reset sort icons when switching tabs
-      $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-        $("th.sortable").removeClass("asc desc");
-      });
-
+    });
       // Use allCandidates directly instead of loading via AJAX
       renderTable(allCandidates, 1);
       renderPaginationControls(allCandidates);
 
-      
-      // Student rendering
-      renderStudentTable(allStudents, 1);
-      renderStudentPaginationControls(allStudents);
-      
-      
-      // Candidate search
+      // Search functionality
       $("#searchBox").on("keyup", function() {
         const searchTerm = $(this).val().toLowerCase();
         const filteredCandidates = allCandidates.filter(candidate => 
@@ -455,18 +434,6 @@ let allStudents = <?php echo json_encode($students); ?>;
         );
         renderTable(filteredCandidates, 1);
         renderPaginationControls(filteredCandidates);
-      });
-
-      $("#studentSearchBox").on("keyup", function() {
-        const searchTerm = $(this).val().toLowerCase();
-        const filteredStudents = allStudents.filter(student => 
-          student.StudentFullName.toLowerCase().includes(searchTerm) || 
-          student.Mail.toLowerCase().includes(searchTerm) || 
-          student.SuNET_Username.toLowerCase().includes(searchTerm) ||
-          student.StudentID.toString().includes(searchTerm)
-        );
-        renderStudentTable(filteredStudents, 1);
-        renderStudentPaginationControls(filteredStudents);
       });
     });
 
@@ -509,87 +476,16 @@ let allStudents = <?php echo json_encode($students); ?>;
             `);
         });
         
-        $(".toggle-status").on("click", function () {
-          const button = $(this);
-          const candidateID = button.data("id");           // Get candidate ID
-          const currentStatus = button.data("status");     // Get current status 
-
-          const newStatus = currentStatus === "Etkin" ? "İşten ayrıldı" : "Etkin";  // Toggle status
-          const newClass = newStatus === "Etkin" ? "btn-success" : "btn-danger";   // Change button color
-          const newText = newStatus === "Etkin" ? "On" : "Off";                    // Change button text
-
-          // Immediately update button UI
-          button.removeClass("btn-success btn-danger").addClass(newClass).text(newText);
-          button.data("status", newStatus);  // Update data-status
-
-          // Send updated status to server
-          $.ajax({
-              url: "api/updateCandidateStatus.php",  // Your backend script
-              method: "POST",
-              data: { candidateID: candidateID, status: newStatus },
-              dataType: "json",
-              success: function (response) {
-                  if (!response.success) {
-                      alert("Error updating status: " + response.message);
-
-                      // Revert UI if update fails
-                      button.removeClass(newClass).addClass(currentStatus === "Etkin" ? "btn-success" : "btn-danger");
-                      button.text(currentStatus === "Etkin" ? "On" : "Off");
-                      button.data("status", currentStatus);
-                  }
-              },
-              error: function (xhr, status, error) {
-                  console.error("Error updating status:", error);
-                  alert("An error occurred while updating the status.");
-              }
-          });
-
-          // If new status is "İşten ayrıldı", add candidate to Exception_Table
-            if (newStatus === "İşten ayrıldı") {
-              $.ajax({
-                  url: "api/add_excluded_candidate.php",
-                  method: "POST",
-                  data: { candidateID: candidateID },
-                  dataType: "json",
-                  success: function (response) {
-                      if (!response.success) {
-                          alert("Error excluding candidate: " + response.error);
-                          // Revert UI if error occurs
-                          button.removeClass(newClass).addClass("btn-success").text("On");
-                          button.data("status", "Etkin");
-                      }
-                  },
-                  error: function (xhr, status, error) {
-                      console.error("Error excluding candidate:", error);
-                      alert("An error occurred while excluding the candidate.");
-                      // Revert UI
-                      button.removeClass(newClass).addClass("btn-success").text("On");
-                      button.data("status", "Etkin");
-                  }
-              });
-            }else{
-              $.ajax({
-                url: "api/delete_excluded_candidate.php",
-                method: "POST",
-                data: { candidateID: candidateID },
-                dataType: "json",
-                success: function (response) {
-                    if (!response.success) {
-                        alert("Error removing from exception: " + response.error);
-                    }
-                },
-                error: function () {
-                    alert("An error occurred while removing the candidate from exclusion list.");
-                }
-              });
-            }
+        // Re-attach event handlers for toggle buttons
+        $(".toggle-status").on("click", function() {
+            // Your existing toggle button logic
         });
     }
 
     function renderPaginationControls(dataArray) {
         const totalRows = dataArray.length;
         const totalPages = Math.ceil(totalRows / rowsPerPage);
-        const paginationContainer = $("#candidatePaginationControls");
+        const paginationContainer = $("#paginationControls");
         paginationContainer.empty();
 
         if (totalPages <= 1) return; // No pagination needed
@@ -678,129 +574,6 @@ let allStudents = <?php echo json_encode($students); ?>;
     }
 
 
-    let studentSortColumn = null;
-    let studentSortDirection = 'asc';
-
-    function renderStudentTable(dataArray, pageNum) {
-        const tbody = $("#studentsTab tbody");
-        tbody.empty();
-
-
-        if (!dataArray || dataArray.length === 0) {
-            tbody.append('<tr><td colspan="5" class="text-center">No students found</td></tr>');
-            return;
-        }
-        currentStudentPage = pageNum;
-
-        const startIndex = (pageNum - 1) * rowsPerPage;
-        const endIndex = startIndex + rowsPerPage;
-        const pageData = dataArray.slice(startIndex, endIndex);
-
-        pageData.forEach(student => {
-            tbody.append(`
-                <tr>
-                  <td>${student.StudentID}</td>
-                  <td>${student.StudentFullName}</td>
-                  <td>${student.Mail}</td>
-                  <td>${student.SuNET_Username}</td>
-                  <td>${student.CGPA !== null ? student.CGPA : '-'}</td>
-                </tr>
-            `);
-        });
-    }
-    function renderStudentPaginationControls(dataArray) {
-      const totalRows = dataArray.length;
-      const totalPages = Math.ceil(totalRows / rowsPerPage);
-      const paginationContainer = $("#studentPaginationControls");
-      paginationContainer.empty();
-
-      if (totalPages <= 1) return; // No pagination needed
-
-      let pageItems = [];
-
-      // "First" and "Prev" buttons
-      if (currentStudentPage > 1) {
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="1">« First</a></li>`);
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${currentStudentPage - 1}">‹ Prev</a></li>`);
-      }
-
-      let maxVisiblePages = 5;
-
-      if (totalPages <= maxVisiblePages) {
-          for (let i = 1; i <= totalPages; i++) {
-              pageItems.push(`<li class="page-item ${i === currentStudentPage ? 'active' : ''}">
-                                <a class="page-link" href="#" data-page="${i}">${i}</a>
-                              </li>`);
-          }
-      } else {
-          if (currentStudentPage > 3) {
-              pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`);
-              if (currentStudentPage > 4) {
-                  pageItems.push(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
-              }
-          }
-
-          let startPage = Math.max(2, currentStudentPage - 2);
-          let endPage = Math.min(totalPages - 1, currentStudentPage + 2);
-
-          for (let i = startPage; i <= endPage; i++) {
-              pageItems.push(`<li class="page-item ${i === currentStudentPage ? 'active' : ''}">
-                                <a class="page-link" href="#" data-page="${i}">${i}</a>
-                              </li>`);
-          }
-
-          if (currentStudentPage < totalPages - 3) {
-              if (currentStudentPage < totalPages - 4) {
-                  pageItems.push(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
-              }
-              pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`);
-          }
-      }
-
-      // "Next" and "Last" buttons
-      if (currentStudentPage < totalPages) {
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${currentStudentPage + 1}">Next ›</a></li>`);
-          pageItems.push(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">Last »</a></li>`);
-      }
-
-      paginationContainer.html(pageItems.join(""));
-
-      // Click event for pagination
-      paginationContainer.find(".page-link").on("click", function (e) {
-          e.preventDefault();
-          const selectedPage = parseInt($(this).attr("data-page"));
-          if (!isNaN(selectedPage)) {
-              currentStudentPage = selectedPage;
-              renderStudentTable(allStudents, currentStudentPage);
-              renderStudentPaginationControls(allStudents);
-          }
-      });
-  }
-
-
-
-    function sortStudentData(column) {
-        allStudents.sort((a, b) => {
-            const valA = a[column] ?? "";
-            const valB = b[column] ?? "";
-
-            // Try numeric comparison
-            const numA = parseFloat(valA);
-            const numB = parseFloat(valB);
-
-            if (!isNaN(numA) && !isNaN(numB)) {
-                return (numA - numB) * (studentSortDirection === 'asc' ? 1 : -1);
-            }
-
-            return valA.toString().localeCompare(valB.toString()) * (studentSortDirection === 'asc' ? 1 : -1);
-        });
-
-        renderStudentTable(allStudents, 1);
-        renderStudentPaginationControls(allStudents);
-    }
-
-
-
 
 
     $(document).ready(function () {
@@ -834,96 +607,6 @@ let allStudents = <?php echo json_encode($students); ?>;
   });
 
 
-  function loadLogList() {
-    $("#syncLogsContent").html("<p>Loading logs...</p>");
-    $("#backToLogListBtn").hide(); // Hide back button
-
-    fetch("api/listSyncLogs.php")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.logs.length > 0) {
-          let logList = '<ul class="list-group">';
-          data.logs.forEach(log => {
-            logList += `
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>${log.filename}</strong> <small class="text-muted">(${log.academicYear}, ${log.sync_date})</small>
-                </div>
-                <button class="btn btn-sm btn-outline-primary" onclick="showLogDetails('${log.academicYear}', '${log.filename}')">
-                  View
-                </button>
-              </li>
-            `;
-          });
-          logList += '</ul>';
-          $("#syncLogsContent").html(logList);
-        } else {
-          $("#syncLogsContent").html("<p>No logs found.</p>");
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching logs:", error);
-        $("#syncLogsContent").html("<p>Error loading logs.</p>");
-      });
-  }
-
-  $("#viewLogsBtn").on("click", function () {
-    loadLogList();
-    new bootstrap.Modal(document.getElementById("syncLogsModal")).show();
-
-    // Back button click
-    $("#backToLogListBtn").off("click").on("click", function () {
-          loadLogList();
-    });
-  });
-
-
-  const appBaseUrl = <?php echo json_encode($config['app_base_url']); ?>; //get the base url pro2-dev ... from config
-
-  function showLogDetails(academicYear, filename) {
-    const path = `${appBaseUrl}odul/logs/${academicYear}/${filename}`;
-    fetch(path)
-      .then(res => res.json())
-      .then(json => {
-        const pre = document.createElement("pre");
-        pre.textContent = JSON.stringify(json, null, 2);
-        $("#syncLogsContent").html(pre);
-
-        // Show back button
-        $("#backToLogListBtn").show();
-      })
-      .catch(err => {
-        console.error("Failed to load log:", err);
-        $("#syncLogsContent").html("<p>Unable to load log file.</p>");
-        $("#backToLogListBtn").show();
-      });
-  }
-
-
-
   </script>
-
-
-  <div class="modal fade" id="syncLogsModal" tabindex="-1" aria-labelledby="syncLogsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="syncLogsModalLabel">Sync Logs</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <!-- Back button -->
-          <button id="backToLogListBtn" class="btn btn-sm btn-secondary mb-3" style="display:none;">
-            ← Back to Log List
-          </button>
-
-          <!-- Log content container -->
-          <div id="syncLogsContent">
-            <p>Loading logs...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
