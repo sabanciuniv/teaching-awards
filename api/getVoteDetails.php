@@ -13,40 +13,50 @@ try {
         exit();
     }
 
-    // 2) Check for category code in the query string, e.g. ?category=A1
+    // 2) Validate category code in query
     if (!isset($_GET['category'])) {
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => "No category code provided."]);
         exit();
     }
 
-    $categoryCode   = $_GET['category'];
-    $sunet_username = $_SESSION['user'];
+    $categoryCode = $_GET['category'];
 
-    // 3) Get the student record
-    $stmtStudent = $pdo->prepare("
-        SELECT id, YearID
-        FROM Student_Table
-        WHERE SuNET_Username = :sunet_username
-    ");
-    $stmtStudent->execute(['sunet_username' => $sunet_username]);
-    $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
+    // 3) Resolve student ID & YearID based on session
+    if (isset($_SESSION['impersonating']) && $_SESSION['impersonating']) {
+        $student_id = $_SESSION['student_id'];
+        $year_id = $_SESSION['year_id'] ?? null;
 
-    if (!$student) {
-        http_response_code(404);
-        echo json_encode(["status" => "error", "message" => "Student not found."]);
-        exit();
+        if (!$year_id) {
+            $stmt = $pdo->prepare("SELECT YearID FROM Student_Table WHERE id = ?");
+            $stmt->execute([$student_id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $year_id = $row['YearID'] ?? null;
+            $_SESSION['year_id'] = $year_id;
+        }
+    } else {
+        $sunet_username = $_SESSION['user'];
+
+        $stmtStudent = $pdo->prepare("
+            SELECT id, YearID 
+            FROM Student_Table 
+            WHERE SuNET_Username = :sunet_username
+        ");
+        $stmtStudent->execute(['sunet_username' => $sunet_username]);
+        $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
+
+        if (!$student) {
+            http_response_code(404);
+            echo json_encode(["status" => "error", "message" => "Student not found."]);
+            exit();
+        }
+
+        $student_id = $student['id'];
+        $year_id    = $student['YearID'];
     }
 
-    $student_id = $student['id'];
-    $year_id    = $student['YearID'];
-
-    // 4) Convert CategoryCode (e.g. "A1") to numeric CategoryID
-    $stmtCat = $pdo->prepare("
-        SELECT CategoryID
-        FROM Category_Table
-        WHERE CategoryCode = :catCode
-    ");
+    // 4) Get CategoryID from CategoryCode
+    $stmtCat = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :catCode");
     $stmtCat->execute(['catCode' => $categoryCode]);
     $catRow = $stmtCat->fetch(PDO::FETCH_ASSOC);
 
@@ -58,8 +68,7 @@ try {
 
     $categoryId = $catRow['CategoryID'];
 
-    // 5) Fetch the user's votes for this category + academic year
-    //    Adjust table/column names as needed (Votes_Table vs. Vote_Table, etc.).
+    // 5) Fetch user's votes for this category and academic year
     $stmtVotes = $pdo->prepare("
         SELECT 
             vt.id             AS VoteID,
@@ -82,7 +91,7 @@ try {
 
     $votes = $stmtVotes->fetchAll(PDO::FETCH_ASSOC);
 
-    // 6) If no votes found, return a simple message
+    // 6) No votes found?
     if (empty($votes)) {
         echo json_encode([
             "status"      => "success",
@@ -91,7 +100,7 @@ try {
         exit();
     }
 
-    // 7) Build an HTML snippet listing each vote (Removed the duplicate "Your Vote Details" heading)
+    // 7) Build HTML for the vote details
     $html = "<ul>";
     foreach ($votes as $vote) {
         $candidateName = htmlspecialchars($vote['CandidateName']);
@@ -110,7 +119,7 @@ try {
     }
     $html .= "</ul>";
 
-    // 8) Return the HTML snippet in JSON
+    // 8) Return it
     echo json_encode([
         "status"      => "success",
         "voteDetails" => $html

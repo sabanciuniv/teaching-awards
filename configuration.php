@@ -392,7 +392,7 @@ let allStudents = <?php echo json_encode($students); ?>;
                     <tr>
                       <td><?= htmlspecialchars($student['StudentID']) ?></td>
                       <td>
-                        <a href="impersonate.php?student_id=<?= $student['StudentID'] ?>" class="text-decoration-none text-primary">
+                        <a href="impersonate.php?student_id=<?= $student['id'] ?>" class="text-decoration-none text-primary">
                           <?= htmlspecialchars($student['StudentFullName']) ?>
                         </a>
                       </td>

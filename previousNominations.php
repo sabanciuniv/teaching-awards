@@ -1,23 +1,17 @@
 <?php
 session_start();
-require_once __DIR__ . '/database/dbConnection.php'; // Ensure database connection
+require_once __DIR__ . '/database/dbConnection.php';
 
-// Check if user is logged in
+// Redirect if not logged in
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
 }
 
-// Trim username to remove accidental spaces
+// Always use the current session 'user' — whether impersonated or not
 $username = trim($_SESSION['user']);
 
 try {
-    // Ensure database connection is established
-    if (!isset($pdo) || !$pdo) {
-        throw new Exception("Database connection not established.");
-    }
-
-    // Fetch user's nominations and their uploaded documents
     $stmt = $pdo->prepare("
         SELECT n.nominationID, n.NomineeName, n.NomineeSurname, n.SubmissionDate, d.DocumentCodedName, d.DocumentOriginalName
         FROM `Nomination_Table` AS n
@@ -28,13 +22,15 @@ try {
     $stmt->execute([$username]);
     $nominations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!$nominations) {
+    if (empty($nominations)) {
         $noNominations = true;
     }
 } catch (PDOException $e) {
     die("<div class='alert alert-danger text-center'>SQL Error: " . $e->getMessage() . "</div>");
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">

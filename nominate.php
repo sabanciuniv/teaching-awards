@@ -1,12 +1,22 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+
 if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
     header("Location: login.php");
     exit();
 }
+
+// Use impersonated username if impersonation is active
+$usernameToUse = isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true
+    ? $_SESSION['impersonated_user']
+    : $_SESSION['user'];
+
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -228,13 +238,22 @@ if (!isset($_SESSION['user'])) {
                     <div class="form-body">
                         <form id="nominationForm" action="submitNomination.php" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="year_id" id="year_id">
-            
+                            <?php
+                            // Determine the correct username based on impersonation status
+                            $usernameToUse = (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true)
+                                ? $_SESSION['impersonated_user']
+                                : $_SESSION['user'];
+
+                            ?>
+  
                             <!-- Your Username -->
                             <div class="mb-3">
                                 <label class="form-label text-secondary">Your Username</label>
                                 <input type="text" name="SUnetUsername" class="form-control border-secondary text-secondary" 
-                                       value="<?php echo htmlspecialchars($_SESSION['user']); ?>" readonly>
+                                    value="<?php echo htmlspecialchars($usernameToUse); ?>" readonly>
+
                             </div>
+
                             <!-- Nominee's Name -->
                             <div class="mb-3">
                                 <label class="form-label text-secondary">Nominee's Name</label>

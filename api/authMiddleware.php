@@ -8,16 +8,16 @@ $cas_service_url = getenv('CAS_SERVICE_URL') ?: $app_base_url;
 phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 session_start();
 
-// Redirect to login if the user is not authenticated
-if (!isset($_SESSION['user'])) {
-    header("Location: index.php");
-    exit();
-}
-
-// Check if cookies are set
-if (!isset($_COOKIE['username']) || !isset($_COOKIE['cookie_id'])) {
-    phpCAS::logoutWithRedirectService($app_base_url . "/ENS491-492");
-    exit();
+// ✅ Only set `$_SESSION['user']` from cookie if not impersonating
+if (!isset($_SESSION['impersonating']) || $_SESSION['impersonating'] !== true) {
+    if (!isset($_SESSION['user']) && isset($_COOKIE['username'])) {
+        $_SESSION['user'] = $_COOKIE['username'];
+    }
+} else {
+    // If impersonating but impersonated_user is not set (somehow), set it
+    if (!isset($_SESSION['impersonated_user'])) {
+        $_SESSION['impersonated_user'] = $_SESSION['user'];
+    }
 }
 
 // Include the database connection
