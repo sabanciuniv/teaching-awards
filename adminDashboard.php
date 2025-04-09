@@ -220,6 +220,12 @@ try {
             <a href="reportPage.php" style="text-decoration: none;">
                 <button class="btn btn-secondary w-100">Get Reports</button>
             </a>
+
+            <a href="mailPage.php" style="text-decoration: none;">
+                <button class="btn btn-secondary w-100">Mails</button>
+            </a>
+
+            
         </div>
 
         <div class="image-section">
