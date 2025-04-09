@@ -50,7 +50,16 @@ $stmt->bindParam(':academicYear', $currentYearID, PDO::PARAM_INT);
 $stmt->execute();
 $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$stmtStudents = $pdo->prepare("SELECT * FROM Student_Table WHERE YearID = :yearID");
+$stmtStudents = $pdo->prepare("
+SELECT s.*, 
+       GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories
+FROM Student_Table s
+LEFT JOIN Student_Category_Relation scr ON s.id = scr.student_id
+LEFT JOIN Category_Table cat ON scr.categoryID = cat.CategoryID
+WHERE s.YearID = :yearID
+GROUP BY s.id
+");
+
 $stmtStudents->bindParam(':yearID', $currentYearID, PDO::PARAM_INT);
 $stmtStudents->execute();
 $students = $stmtStudents->fetchAll(PDO::FETCH_ASSOC);
@@ -384,6 +393,7 @@ let allStudents = <?php echo json_encode($students); ?>;
                   <th class="sortable" data-column="Mail">Email</th>
                   <th class="sortable" data-column="SuNET_Username">Username</th>
                   <th class="sortable" data-column="CGPA">GPA</th>
+                  <th class="sortable" data-column="Categories">Categories</th>
                 </tr>
               </thead>
 
@@ -737,6 +747,8 @@ let allStudents = <?php echo json_encode($students); ?>;
                 <td>${student.Mail}</td>
                 <td>${student.SuNET_Username}</td>
                 <td>${student.CGPA !== null ? student.CGPA : '-'}</td>
+                <td>${student.Categories || '-'}</td>
+
               </tr>
           `);
         });
