@@ -184,10 +184,10 @@ try {
                                     <p><strong>Uploaded Documents:</strong></p>
                                     <ul class="document-list">
                                         <li>
-                                            <a href="uploads/<?php echo urlencode($nomination['DocumentCodedName']); ?>"
-                                            download="<?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>">
-                                                <?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>
-                                            </a>
+                                        <a href="downloads.php?nominationID=<?php echo urlencode($nomination['nominationID']); ?>">
+                                            <?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>
+                                        </a>
+
                                         </li>
                                     </ul>
                                 <?php } else { ?>

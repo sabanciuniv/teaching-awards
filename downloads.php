@@ -1,7 +1,13 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
+
 require_once 'api/authMiddleware.php'; // Ensure user authentication
-require_once '../database/dbConnection.php'; 
+require_once '../ENS491-492/database/dbConnection.php'; 
 
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
@@ -18,7 +24,7 @@ if (!isset($_GET['nominationID']) || !is_numeric($_GET['nominationID'])) {
 $nominationID = intval($_GET['nominationID']);
 
 // Fetch file details from the database
-$stmt = $pdo->prepare("SELECT DocumentCodedName, DocumentOriginalName FROM documents WHERE NominationID = ?");
+$stmt = $pdo->prepare("SELECT DocumentCodedName, DocumentOriginalName FROM AdditionalDocuments_Table WHERE NominationID = ?");
 $stmt->execute([$nominationID]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
