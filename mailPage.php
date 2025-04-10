@@ -122,9 +122,11 @@ try {
     <link href="assets/css/layout.min.css" rel="stylesheet">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
     <!-- DataTables & Buttons CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
     <style>
         body {
             background-color: #f9f9f9;
@@ -180,6 +182,19 @@ try {
             align-items: flex-end;
             gap: 10px;
         }
+        /* Custom close button for the modal (red "x") */
+        .close-modal-btn {
+            color: red;
+            background: none;
+            border: none;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .close-modal-btn:hover {
+            color: darkred;
+        }
     </style>
 </head>
 <body>
@@ -221,7 +236,8 @@ try {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="editTemplateModalLabel">Edit Mail Template</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Replace the default Bootstrap close icon with our custom red "×" button -->
+        <button type="button" class="close-modal-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="editTemplateForm">
@@ -250,7 +266,7 @@ try {
   </div>
 </div>
 
-<!-- Action Container: Return to Reports Page button -->
+<!-- Action Container: Return to Admin Dashboard button -->
 <div class="action-container">
     <button class="return-button" onclick="window.location.href='adminDashboard.php'">
         <i class="fa fa-arrow-left"></i> Return to Admin Dashboard
@@ -260,6 +276,7 @@ try {
 <!-- JS Libraries -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <!-- DataTables & Buttons -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -299,7 +316,7 @@ $(document).ready(function() {
         modalEl.show();
     });
 
-    // When "Save changes" is clicked, send an AJAX POST to update the template.
+    // When "Save changes" is clicked, send an AJAX POST to update the template
     $('#saveTemplateBtn').on('click', function() {
         var templateID = $('#templateID').val();
         var updatedContent = $('#templateContentEditor').html();
