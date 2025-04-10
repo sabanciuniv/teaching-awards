@@ -38,7 +38,6 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A2
     body {
       margin: 0;
       padding-top: 80px;
-      font-family: 'Roboto', sans-serif;
       background-color: #f5f7fa;
     }
 
@@ -248,7 +247,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'A2
             <div class="card">
               <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
               <h6>${instructor.InstructorName || 'Unknown'}</h6>
-              <p>${instructor.CourseName || 'Unknown Course'}</p>
+              <p>${(instructor.Subject_Code && instructor.Course_Number) ? instructor.Subject_Code + ' ' + instructor.Course_Number : 'Unknown Course'}</p>
               <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle rank-btn"
                         type="button"
