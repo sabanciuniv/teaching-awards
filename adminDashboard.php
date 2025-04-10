@@ -2,6 +2,12 @@
 session_start();
 require_once 'api/authMiddleware.php';
 
+
+if (isset($_SESSION['impersonated_user']) && $_SESSION['impersonating'] === true) {
+    header("Location: index.php"); // Redirect to the homepage or any other page
+    exit();
+}
+
 // If the user is not logged in, redirect to the login page
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");

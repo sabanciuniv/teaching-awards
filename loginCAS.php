@@ -29,6 +29,8 @@ $lastname  = $attributes['lastname'] ?? '';
 $email     = $attributes['email'] ?? '';
 
 
+
+
 // Start the session and store the username
 session_start();
 $_SESSION['user'] = $user;
@@ -77,7 +79,7 @@ try {
     }
 
     // (2) Set cookies for the client, valid for 2 hours
-    $cookie_lifetime = 2 * 60 * 60; // 2 hours in seconds
+    $cookie_lifetime = 24 * 60 * 60; // 2 hours in seconds
     setcookie("username", $user, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
     setcookie("cookie_id", $cookie_id, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
 
@@ -99,18 +101,23 @@ try {
 if (isset($_GET['redirect']) && $_GET['redirect'] === 'adminDashboard.php') {
     try {
         // Check if the username exists in Admin_Table and has checkRole <> 'Removed'
-        $adminQuery = "SELECT 1 
+        $adminQuery = "SELECT Role
                        FROM Admin_Table 
                        WHERE AdminSuUsername = :username
                          AND checkRole <> 'Removed'";
         $adminStmt  = $pdo->prepare($adminQuery);
         $adminStmt->execute([':username' => $user]);
         
-        // If not found, redirect to index.php and exit
-        if (!$adminStmt->fetch()) {
+        // If user is found, fetch the role and store it in the session
+        if ($adminRow = $adminStmt->fetch()) {
+            $role = $adminRow['Role']; // Get the 'Role' from the result
+            $_SESSION['role'] = $role; // Store the role in the session
+        } else {
+            // If not found or role is 'Removed', redirect to index.php
             header("Location: index.php");
             exit;
         }
+
     } catch (PDOException $e) {
         die("Admin check failed: " . $e->getMessage());
     }

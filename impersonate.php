@@ -3,8 +3,8 @@ session_start();
 require_once 'database/dbConnection.php';
 
 // Only allow admin
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
-    die("Access denied. Only admins can impersonate.");
+if (!isset($_SESSION['user']) || !in_array($_SESSION['role'], ['Admin', 'IT_Admin'])) {
+    die("Access denied. Only Admins or IT_Admins can impersonate.");
 }
 
 
@@ -26,11 +26,13 @@ $stmt = $pdo->prepare("SELECT * FROM Student_Table WHERE StudentID = ?");
 $stmt->execute([$studentID]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
+
+/* 
 // Right after fetching student info
 $stmt = $pdo->prepare("SELECT * FROM Student_Table WHERE StudentID = ?");
 $stmt->execute([$studentID]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
-
+*/
 
 if (!$student) {
     die("Student not found.");
