@@ -67,7 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // 2) Gather form data
-    $username       = $_SESSION['user'];
+    // Check if admin is impersonating a student
+    if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true && isset($_SESSION['impersonated_user'])) {
+        $username = $_SESSION['impersonated_user'];
+    } else {
+        $username = $_SESSION['user'];
+    }
+
     $nomineeName    = htmlspecialchars($_POST['NomineeName'] ?? '');
     $nomineeSurname = htmlspecialchars($_POST['NomineeSurname'] ?? '');
     $yearID         = htmlspecialchars($_POST['year_id'] ?? '');
