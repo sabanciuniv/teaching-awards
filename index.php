@@ -144,22 +144,6 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
             font-weight: 1000;
             color:rgb(54, 56, 70);
         }
-
-        .rules-button {
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 10px 42px;
-            border-radius: 8px;
-            margin: 10px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .rules-button:hover {
-            background-color: #c2d4ff;
-        }
-
         .action-buttons .btn {
             margin: 10px;
             font-size: 1rem;
@@ -194,6 +178,31 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
             color:rgb(54, 56, 70);
             font-weight: bold;
         }
+
+        .unified-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .unified-button {
+            width: 260px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 12px 0;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+
+        .unified-button:hover {
+            background-color: #7d97e0;
+            color: white;
+        }
+
+
 
     </style>
 </head>
@@ -247,19 +256,14 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
                             FAVORITE
                         </h1>
 
-                        <!-- Rules Button -->
-                        <button class="rules-button btn-secondary text-white" data-toggle="modal" data-target="#rulesModal">⬇ View the Rules ⬇</button>
-
-                        <!-- Action Buttons -->
-                        <div class="action-buttons">
-                            <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary">Nominate</a>
-                            <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary">Vote</a>
-                            <!-- <a href="viewWinners.php" class="btn btn-indigo">View Winners</a> -->
+                        <!-- Unified Button Column -->
+                        <div class="unified-buttons">
+                            <a href="#" class="btn btn-secondary unified-button" data-toggle="modal" data-target="#rulesModal"> View the Rules </a>
+                            <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary unified-button">Nominate a TA</a>
+                            <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary unified-button">Vote   <i class="fas fa-vote-yea"></i></a>
+                            <a href="viewWinners.php" class="btn btn-secondary unified-button">View Previous Winners</a>
                         </div>
 
-                        <div class="action-buttons" style="text-align: center;">
-                            <a href="viewWinners.php" class="btn btn-secondary" style="width: 260px;">View Previous Winners</a>
-                        </div>
 
                         <!-- Footer Text -->
                         <p class="footer-text">YOU CAN VOTE BETWEEN <?php echo $startDate; ?> - <?php echo $endDate; ?></p>
