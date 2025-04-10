@@ -263,7 +263,7 @@ try {
 
                     <!-- Start Date & Time -->
                     <div class="mb-3">
-                        <label for="start_date" class="form-label">Start Date & Time</label>
+                        <label for="start_date" class="form-label">Voting Start Date & Time</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="ph-calendar"></i></span>
                             <!-- We'll show user "DD-MM-YYYY HH:mm" in the date picker -->
@@ -273,7 +273,7 @@ try {
 
                     <!-- End Date & Time -->
                     <div class="mb-3">
-                        <label for="end_date" class="form-label">End Date & Time</label>
+                        <label for="end_date" class="form-label">Voting End Date & Time</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="ph-calendar"></i></span>
                             <input type="text" id="end-date-picker" name="end_date" class="form-control" placeholder="Select end date & time" required>
@@ -294,8 +294,8 @@ try {
                         <thead>
                             <tr>
                                 <th>Academic Year</th>
-                                <th>Start Date & Time</th>
-                                <th>End Date & Time</th>
+                                <th>Voting Start Date & Time</th>
+                                <th>Voting End Date & Time</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -361,13 +361,13 @@ try {
 
                         <!-- Start Date & Time -->
                         <div class="mb-3">
-                            <label for="start_date" class="form-label">Start Date & Time</label>
+                            <label for="start_date" class="form-label">Voting Start Date & Time</label>
                             <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
                         </div>
 
                         <!-- End Date & Time -->
                         <div class="mb-3">
-                            <label for="end_date" class="form-label">End Date & Time</label>
+                            <label for="end_date" class="form-label">Voting End Date & Time</label>
                             <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
                         </div>
                     </div>

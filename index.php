@@ -286,7 +286,7 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
                 <div class="modal-body">
                 <p>To vote, you must enter your e-mail Username and password. Students are authorized to vote in their category according to their class. You have the right to enter the application and <strong>VOTE ONLY ONCE.</strong></p>
 
-<p>Once logged in securely, you have <strong>30 minutes to complete your voting</strong> using the drop down menus provided. You can rank your choices in the order of 1, 2, and 3, where 1 represents your top choice. You may vote for 1, 2, or 3 candidates, but you cannot vote for more than 3 candidates or assign the same rank to multiple candidates.</p>
+<p>Once logged in securely, you have <strong>24 hours to complete your voting</strong> using the drop down menus provided. You can rank your choices in the order of 1, 2, and 3, where 1 represents your top choice. You may vote for 1, 2, or 3 candidates, but you cannot vote for more than 3 candidates or assign the same rank to multiple candidates.</p>
 
 <p>The points are distributed as follows:</p>
 <ul>
