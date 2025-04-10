@@ -74,37 +74,19 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabancı University Teaching Awards</title>
-    <!-- Global stylesheets -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-    <!-- /global stylesheets -->
-
-    <!-- FontAwesome -->
+    
+    <!-- Limitless Theme Styles -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+    <link href="assets/css/components.min.css" rel="stylesheet">
+    <link href="assets/css/layout.min.css" rel="stylesheet">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Core JS files -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/global_assets/js/main/jquery.min.js"></script>
-    <script src="assets/global_assets/js/main/bootstrap.bundle.min.js"></script>
-    <!-- /core JS files -->
-
-    <!-- Theme JS files -->
-    <script src="assets/js/app.js"></script>
-    <script src="assets/js/custom.js"></script>
-    <!-- /theme JS files -->
 
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding-top: 70px;
             background-color: #f5f5f5;
         }
         .header {
@@ -164,17 +146,6 @@ try {
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        .navbar-brand img {
-            height: 40px;
-        }
-
-        .navbar-brand span {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: white !important;
-            margin-left: 10px;
-        }
     </style>
 </head>
 <body>
@@ -186,7 +157,7 @@ try {
             <button 
                 class="btn btn-secondary w-100 mb-2" 
                 onclick="window.location.href='manageAcademicYear.php';">
-                + Manage New Academic Year
+                Manage New Academic Year
             </button>
 
             <!-- Show 'Manage Admin' button ONLY if $role is 'IT_Admin' -->

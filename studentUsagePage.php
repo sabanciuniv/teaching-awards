@@ -93,10 +93,25 @@ try {
 <head>
     <meta charset="UTF-8">
     <title>Student Voting Status</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
+    <!-- Theme Styles -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+    <link href="assets/css/components.min.css" rel="stylesheet">
+    <link href="assets/css/layout.min.css" rel="stylesheet">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- DataTables core + buttons (for student tables and export) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
     <style>
+        body{
+            padding-top: 70px;
+        }
         .action-container {
             position: fixed;
             bottom: 20px;
@@ -121,6 +136,7 @@ try {
     </style>
 </head>
 <body>
+<?php include 'navbar.php'; ?>
 <div class="container mt-4">
     <h3 class="text-center mb-4">Student Voting Status</h3>
     <form class="mb-4 d-flex justify-content-center" method="GET">
@@ -174,6 +190,7 @@ try {
     </button>
 </div>
 
+<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>

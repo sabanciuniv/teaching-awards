@@ -130,8 +130,8 @@ try {
     <title>All Faculty Scores by Category &amp; Year</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-     <!-- Theme Styles -->
-     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Theme Styles -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
     <link href="assets/css/components.min.css" rel="stylesheet">
     <link href="assets/css/layout.min.css" rel="stylesheet">
@@ -146,6 +146,7 @@ try {
         body {
             overflow: auto;
             background-color: #f9f9f9;
+            padding-top: 70px;
         }
 
         .title {
@@ -209,6 +210,8 @@ try {
     </style>
 </head>
 <body>
+
+<?php include 'navbar.php'; ?>
 
 <div class="container">
     <div class="title">All Faculty Scores by Category &amp; Year</div>

@@ -104,23 +104,13 @@ let allStudents = <?php echo json_encode($students); ?>;
   <title>Teaching Awards - Excluded Candidates</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Bootstrap CSS (CDN) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Optional CSS -->
-  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-
-  <!-- FontAwesome (CDN) -->
+  <!-- Limitless Theme Styles -->
+  <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+  <link href="assets/css/components.min.css" rel="stylesheet">
+  <link href="assets/css/layout.min.css" rel="stylesheet">
+  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-  <!-- jQuery (CDN) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Bootstrap Bundle (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- DataTables + Buttons CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
@@ -142,9 +132,8 @@ let allStudents = <?php echo json_encode($students); ?>;
       overflow-y: auto;
     }
     body {
-      font-family: Arial, sans-serif;
       background-color: #f9f9f9;
-      padding-top: 20px; /* Adjust if you have a fixed navbar */
+      padding-top: 50px; 
     }
     .card-header {
       background-color: #45748a;

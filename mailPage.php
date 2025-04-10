@@ -145,6 +145,7 @@ try {
         body {
             background-color: #f9f9f9;
             overflow: auto;
+            padding-top: 70px;
         }
         .title {
             text-align: center;
@@ -212,6 +213,7 @@ try {
     </style>
 </head>
 <body>
+<?php include 'navbar.php'; ?>
 <div class="container">
     <h2 class="title">Mail Templates for Categories</h2>
     <div class="table-container">

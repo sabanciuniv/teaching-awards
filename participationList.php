@@ -70,6 +70,7 @@ try {
         body {
             overflow: auto;
             background-color: #f9f9f9;
+            padding-top: 70px;
         }
 
         /* Title Styling */
@@ -145,6 +146,7 @@ try {
     </style>
 </head>
 <body>
+<?php include 'navbar.php'; ?>
 
 <div class="container">
     <h2 class="title">Voting Participation by Year</h2>

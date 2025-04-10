@@ -49,25 +49,19 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Category</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Limitless Theme CSS -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+    <!-- Limitless Theme Styles -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+    <link href="assets/css/components.min.css" rel="stylesheet">
+    <link href="assets/css/layout.min.css" rel="stylesheet">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 
     <style>
         body {
             background-color: #f9f9f9;
-            font-family: Arial, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -81,7 +75,7 @@ try {
         }
 
         .title {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 20px;
             color: #000;
@@ -156,20 +150,6 @@ try {
         .return-button:hover {
             background-color: #0056b3;
         }
-
-        
-        .navbar-brand img {
-            height: 40px;
-        }
-
-        .navbar-brand span {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: white !important;
-            margin-left: 10px;
-        }
-
-        
     </style>
 </head>
 <body>
