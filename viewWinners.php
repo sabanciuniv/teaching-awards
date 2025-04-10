@@ -7,6 +7,13 @@ require_once __DIR__ . '/database/dbConnection.php';
 
 // Fetch all available years from the AcademicYear_Table to populate the dropdown
 try {
+    // Fetch current academic year using Start_date_time DESC
+    $stmtCurrent = $pdo->prepare("SELECT Academic_year FROM AcademicYear_Table ORDER BY Start_date_time DESC LIMIT 1");
+    $stmtCurrent->execute();
+    $currentYearRow = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
+    $currentAcademicYear = $currentYearRow ? $currentYearRow['Academic_year'] : null;
+
+
     $stmtYears = $pdo->prepare("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
     $stmtYears->execute();
     $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
@@ -73,21 +80,23 @@ include 'navbar.php';
             <!-- Year Dropdown -->
             <select id="year" name="year" class="form-select w-25 me-3" required>
                 <option value="" disabled selected>Select Year</option>
-                <?php foreach($academicYears as $year): ?>
-                    <option value="<?php echo $year['YearID']; ?>">
-                        <?php echo htmlspecialchars($year['Academic_year']); ?>
+                <?php foreach ($academicYears as $year): ?>
+                    <?php if ($year['Academic_year'] == $currentAcademicYear) continue; ?>
+                    <option value="<?= $year['YearID']; ?>">
+                        <?= htmlspecialchars($year['Academic_year']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
 
+
             <!-- Category Dropdown -->
             <select id="category" name="category" class="form-select w-25 me-5" required>
                 <option value="" disabled selected>Select Category</option>
-                <option value="1">A1</option>
-                <option value="2">A2</option>
-                <option value="3">B</option>
-                <option value="4">C</option>
-                <option value="5">D</option>
+                <option value="1">Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1</option>
+                <option value="2">Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2</option>
+                <option value="3">Yılın Mezunları Ödülü</option>
+                <option value="4">Temel Geliştirme Yılı</option>
+                <option value="5">Birinci Sınıf Eğitim Asistanı Ödülü</option>
             </select>
 
             <button type="submit" class="btn btn-primary">View Winners</button>
