@@ -18,7 +18,9 @@
  
  // Fetch academic years
  try {
-   $stmt = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY Academic_year DESC LIMIT 1");
+   $stmt = $pdo->query("SELECT YearID, Academic_year, Start_date_time, End_date_time 
+                        FROM AcademicYear_Table 
+                        ORDER BY Academic_year DESC LIMIT 1");
    $currentYear = $stmt->fetch(PDO::FETCH_ASSOC);
  
    if (!$currentYear) {
@@ -30,6 +32,8 @@
  
  $currentYearID = $currentYear['YearID'];  // Use this in the query
  $currentAcademicYear = $currentYear['Academic_year'];  // Display this in UI
+ $startDate = $currentYear['Start_date_time'];
+ $endDate = $currentYear['End_date_time'];
  
  // Prepare SQL query using YearID (not Academic_year)
  $stmt = $pdo->prepare("
@@ -877,107 +881,119 @@
  
  
  
-     function sortStudentData(column) {
-         allStudents.sort((a, b) => {
-             const valA = a[column] ?? "";
-             const valB = b[column] ?? "";
- 
-             // Try numeric comparison
-             const numA = parseFloat(valA);
-             const numB = parseFloat(valB);
- 
-             if (!isNaN(numA) && !isNaN(numB)) {
-                 return (numA - numB) * (studentSortDirection === 'asc' ? 1 : -1);
-             }
- 
-             return valA.toString().localeCompare(valB.toString()) * (studentSortDirection === 'asc' ? 1 : -1);
-         });
- 
-         renderStudentTable(allStudents, 1);
-         renderStudentPaginationControls(allStudents);
-     }
- 
- 
+  function sortStudentData(column) {
+        allStudents.sort((a, b) => {
+            const valA = a[column] ?? "";
+            const valB = b[column] ?? "";
+
+            // Try numeric comparison
+            const numA = parseFloat(valA);
+            const numB = parseFloat(valB);
+
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return (numA - numB) * (studentSortDirection === 'asc' ? 1 : -1);
+            }
+
+            return valA.toString().localeCompare(valB.toString()) * (studentSortDirection === 'asc' ? 1 : -1);
+        });
+
+        renderStudentTable(allStudents, 1);
+        renderStudentPaginationControls(allStudents);
+    }
  
  
- 
-     $(document).ready(function () {
-     $("#syncButton").on("click", function () {
-         const syncButton = $(this);
-         syncButton.prop("disabled", true); // Disable button during sync
-         syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...'); // Show loading animation
- 
-         $.ajax({
-             url: "api/synchronizeAll.php", // The PHP script that runs the sync
-             method: "POST",
-             dataType: "json",
-             success: function (response) {
-                 if (response.success) {                    
-                     // Instead of reloading, update table dynamically
-                     location.reload();
-                 } else {
-                     alert("Error: " + response.message);
-                 }
-             },
-             error: function (xhr, status, error) {
-                 console.error("Synchronization error:", error);
-                 alert(`An error occurred during synchronization: ${xhr.responseText}`);
-             },
-             complete: function () {
-                 syncButton.prop("disabled", false); // Re-enable button
-                 syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync'); // Restore original text
-             }
-         });
-     });
-   });
+     // Pass the start and end dates from PHP to JavaScript
+    const startDate = new Date("<?php echo $startDate; ?>");
+    const endDate = new Date("<?php echo $endDate; ?>");
+    const currentDate = new Date();  // Current date
  
  
-   function loadLogList() {
-     $("#syncLogsContent").html("<p>Loading logs...</p>");
-     $("#backToLogListBtn").hide(); // Hide back button
+    $(document).ready(function () {     
+      const syncButton = $("#syncButton");
+      if (currentDate >= startDate && currentDate <= endDate) {
+            syncButton.prop("disabled", true);  // Disable button if within the range
+            syncButton.html('<i class="fa-solid fa-sync"></i> Sync Disabled');
+      } else {
+            syncButton.prop("disabled", false); // Enable button if outside the range
+            syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync');
+      }
+      
+      syncButton.on("click", function () {
+        //const syncButton = $(this);
+        syncButton.prop("disabled", true); // Disable button during sync
+        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...'); // Show loading animation
+
+        $.ajax({
+            url: "api/synchronizeAll.php", // The PHP script that runs the sync
+            method: "POST",
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {                    
+                    // Instead of reloading, update table dynamically
+                    location.reload();
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Synchronization error:", error);
+                alert(`An error occurred during synchronization: ${xhr.responseText}`);
+            },
+            complete: function () {
+                syncButton.prop("disabled", false); // Re-enable button
+                syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync'); // Restore original text
+            }
+        });
+    });
+    });
  
-     fetch("api/listSyncLogs.php")
-       .then(res => res.json())
-       .then(data => {
-         if (data.success && data.logs.length > 0) {
-           let logList = '<ul class="list-group">';
-           data.logs.forEach(log => {
-             logList += `
-               <li class="list-group-item d-flex justify-content-between align-items-center">
-                 <div>
-                   <strong>${log.filename}</strong> <small class="text-muted">(${log.academicYear}, ${log.sync_date})</small>
-                 </div>
-                 <button class="btn btn-sm btn-outline-primary" onclick="showLogDetails('${log.academicYear}', '${log.filename}')">
-                   View
-                 </button>
-               </li>
-             `;
-           });
-           logList += '</ul>';
-           $("#syncLogsContent").html(logList);
-         } else {
-           $("#syncLogsContent").html("<p>No logs found.</p>");
-         }
-       })
-       .catch(error => {
-         console.error("Error fetching logs:", error);
-         $("#syncLogsContent").html("<p>Error loading logs.</p>");
-       });
-   }
  
-   $("#viewLogsBtn").on("click", function () {
+  function loadLogList() {
+    $("#syncLogsContent").html("<p>Loading logs...</p>");
+    $("#backToLogListBtn").hide(); // Hide back button
+ 
+    fetch("api/listSyncLogs.php")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.logs.length > 0) {
+          let logList = '<ul class="list-group">';
+          data.logs.forEach(log => {
+            logList += `
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${log.filename}</strong> <small class="text-muted">(${log.academicYear}, ${log.sync_date})</small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="showLogDetails('${log.academicYear}', '${log.filename}')">
+                  View
+                </button>
+              </li>
+            `;
+          });
+          logList += '</ul>';
+          $("#syncLogsContent").html(logList);
+        } else {
+          $("#syncLogsContent").html("<p>No logs found.</p>");
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching logs:", error);
+        $("#syncLogsContent").html("<p>Error loading logs.</p>");
+      });
+  }
+ 
+  $("#viewLogsBtn").on("click", function () {
      loadLogList();
      new bootstrap.Modal(document.getElementById("syncLogsModal")).show();
  
      // Back button click
      $("#backToLogListBtn").off("click").on("click", function () {
            loadLogList();
-     });
-   });
+    });
+  });
  
-   const appBaseUrl = <?php echo json_encode($config['app_base_url']); ?>; //get the base url pro2-dev ... from config
+  const appBaseUrl = <?php echo json_encode($config['app_base_url']); ?>; //get the base url pro2-dev ... from config
  
-   function showLogDetails(academicYear, filename) {
+  function showLogDetails(academicYear, filename) {
      const path = `${appBaseUrl}odul/logs/${academicYear}/${filename}`;
      fetch(path)
        .then(res => res.json())
@@ -994,11 +1010,11 @@
          $("#syncLogsContent").html("<p>Unable to load log file.</p>");
          $("#backToLogListBtn").show();
        });
-   }
+  }
  
  
  
-   </script>
+  </script>
  
  
  <div class="modal fade" id="syncLogsModal" tabindex="-1" aria-labelledby="syncLogsModalLabel" aria-hidden="true">
