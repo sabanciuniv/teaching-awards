@@ -18,7 +18,6 @@ session_start();
   <style>
     body {
       background-color: #f9f9f9;
-      font-family: Arial, sans-serif;
       margin: 0;
       display: flex;
       align-items: center;
@@ -35,7 +34,7 @@ session_start();
       text-align: center;
     }
     .title {
-      font-size: 2rem;
+      font-size: 1.65rem;
       font-weight: bold;
       margin-bottom: 20px;
       color: #000;

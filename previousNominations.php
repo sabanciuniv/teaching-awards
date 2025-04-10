@@ -63,7 +63,6 @@ try {
     <style>
         body {
             background-color: #f9f9f9;
-            font-family: Arial, sans-serif;
             margin: 0;
             padding-top: 70px;
             display: flex;
@@ -84,7 +83,6 @@ try {
         /* Ensure the accordion button background is always secondary */
         .accordion-button {
             color: white !important;
-            font-weight: bold;
             border-radius: 5px;
             padding: 15px;
             font-size: 1.1rem;
@@ -159,7 +157,7 @@ try {
     <?php $backLink = "nominate.php"; include 'navbar.php'; ?>
 
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Previous Nominations</h2>
+        <h2 class="text-center mb-4" style="font-weight: bold;">Previous Nominations</h2>
 
         <?php if (isset($noNominations)) { ?>
             <div class="alert alert-info text-center">You have not made any nominations yet.</div>

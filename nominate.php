@@ -42,7 +42,6 @@ error_reporting(E_ALL);
     <style>
         body {
             background-color: #f9f9f9;
-            font-family: Arial, sans-serif;
             margin: 0;
             padding-top: 70px;
             overflow-y: auto;
