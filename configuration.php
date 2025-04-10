@@ -122,6 +122,11 @@ let allStudents = <?php echo json_encode($students); ?>;
   <!-- Bootstrap Bundle (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- DataTables + Buttons CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+
   <style>
     /* Make the entire page scrollable */
 
@@ -383,9 +388,12 @@ let allStudents = <?php echo json_encode($students); ?>;
         <div class="tab-pane fade" id="studentsTab">
           <div class="card-body">
             <!-- Search box -->
-            <input type="text" id="studentSearchBox" class="form-control search-box" placeholder="Search for a student...">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <input type="text" id="studentSearchBox" class="form-control search-box" placeholder="Search for a student..." style="max-width: 300px;">
+              <div id="exportButtonContainer" class="text-end"></div>
+            </div>
             <div class="table-responsive">
-              <table class="table table-striped table-bordered">
+            <table id="studentsExportTable" class="table table-striped table-bordered">
               <thead class="table-dark">
                 <tr>
                   <th class="sortable" data-column="StudentID">Student ID</th>
@@ -449,6 +457,48 @@ let allStudents = <?php echo json_encode($students); ?>;
 
         sortData(column);
       });
+
+      let studentsTableInitialized = false;
+
+      $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        if (e.target.id === 'students-tab' && !studentsTableInitialized) {
+          $('#studentsExportTable').DataTable({
+            dom: '<"d-flex justify-content-end align-items-center mb-3"<"export-buttons"B>>tip',
+            buttons: [
+              {
+                extend: 'excelHtml5',
+                title: 'Students Export',
+                text: 'Export to Excel',
+                className: 'btn btn-custom',
+                exportOptions: {
+                  modifier: {
+                    search: 'none',  
+                    page: 'all'
+                  }
+                }
+              }
+            ],
+            pageLength: 7,
+            ordering: false,
+            // This is critical - initialize with the complete dataset
+            data: allStudents,
+            columns: [
+              { data: 'StudentID' },
+              { data: 'StudentFullName' },
+              { data: 'Mail' },
+              { data: 'SuNET_Username' },
+              { data: 'CGPA' },
+              { data: 'Categories' }
+            ],
+            initComplete: function(){
+              const exportButtons = $('.export-buttons').detach();
+              $('#exportButtonContainer').append(exportButtons)
+            }
+          });
+          studentsTableInitialized = true;
+        }
+      });
+
 
       // Student table sorting
       $("#studentsTab th.sortable").on("click", function () {
@@ -969,5 +1019,12 @@ let allStudents = <?php echo json_encode($students); ?>;
       </div>
     </div>
   </div>
+  
+  <!-- DataTables + Buttons JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 </body>
 </html>
