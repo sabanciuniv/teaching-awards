@@ -9,7 +9,6 @@ if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
 }
-
 require_once __DIR__ . '/database/dbConnection.php';
 
 $user = $_SESSION['user'];
@@ -107,6 +106,22 @@ try {
 } catch (PDOException $e) {
     die("Error fetching mail templates: " . $e->getMessage());
 }
+
+// -------------------------
+// Fetch Mail Log Data
+// -------------------------
+try {
+    $stmtMailLogs = $pdo->prepare("
+        SELECT LogID, Sender, StudentEmail, StudentName, MailContent, SentTime
+        FROM MailLog_Table
+        ORDER BY SentTime DESC
+    ");
+    $stmtMailLogs->execute();
+    $mailLogs = $stmtMailLogs->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    // If fetching logs fails, we use an empty array.
+    $mailLogs = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -122,11 +137,10 @@ try {
     <link href="assets/css/layout.min.css" rel="stylesheet">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
     <!-- DataTables & Buttons CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-
+    
     <style>
         body {
             background-color: #f9f9f9;
@@ -143,7 +157,7 @@ try {
             margin: 20px auto;
             max-width: 90%;
         }
-        /* Button styling for both .btn-custom and .return-button */
+        /* Button styling for .btn-custom, .return-button, and our new view log button */
         .btn-custom,
         .return-button {
             background-color: #45748a !important;
@@ -172,7 +186,7 @@ try {
             padding: 10px;
             background-color: #fff;
         }
-        /* Action Container for Return button */
+        /* Action Container for the bottom-right buttons */
         .action-container {
             position: fixed;
             bottom: 20px;
@@ -182,7 +196,7 @@ try {
             align-items: flex-end;
             gap: 10px;
         }
-        /* Custom close button for the modal (red "x") */
+        /* Custom close button for the modal (red "×") */
         .close-modal-btn {
             color: red;
             background: none;
@@ -236,7 +250,7 @@ try {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="editTemplateModalLabel">Edit Mail Template</h5>
-        <!-- Replace the default Bootstrap close icon with our custom red "×" button -->
+        <!-- Custom red close button -->
         <button type="button" class="close-modal-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
@@ -266,17 +280,51 @@ try {
   </div>
 </div>
 
-<!-- Action Container: Return to Admin Dashboard button -->
+<!-- Modal for Viewing Mail Log -->
+<div class="modal fade" id="mailLogModal" tabindex="-1" aria-labelledby="mailLogModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mailLogModalLabel">Mail Log</h5>
+        <button type="button" class="close-modal-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table id="mailLogTable" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Sender</th>
+                    <th>Student Email</th>
+                    <th>Student Name</th>
+                    <th>Mail Content</th>
+                    <th>Sent Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be loaded via DataTable -->
+            </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Container: Buttons for Return and View Mail Log -->
 <div class="action-container">
     <button class="return-button" onclick="window.location.href='adminDashboard.php'">
         <i class="fa fa-arrow-left"></i> Return to Admin Dashboard
+    </button>
+    <button class="btn btn-custom" id="viewMailLogBtn">
+        <i class="fa fa-eye"></i> View Mail Log
     </button>
 </div>
 
 <!-- JS Libraries -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <!-- DataTables & Buttons -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -284,13 +332,13 @@ try {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
-// Execute basic formatting commands in the custom editor
+// Basic editor command function
 function execCmd(command) {
     document.execCommand(command, false, null);
 }
 
 $(document).ready(function() {
-    // Initialize DataTable
+    // Initialize DataTable for Mail Templates
     var table = $('#mailTemplatesTable').DataTable({
         dom: '<"datatable-header d-flex justify-content-between align-items-center mb-2"fB>t<"datatable-footer"ip>',
         buttons: [
@@ -304,7 +352,7 @@ $(document).ready(function() {
         pageLength: 10
     });
 
-    // When an Edit button is clicked, load the current template into the editor and show the modal
+    // Edit Template Button Click: load template into editor modal
     $('.edit-template-btn').on('click', function() {
         var templateID = $(this).data('templateid');
         var templateBody = $(this).data('templatebody');
@@ -316,19 +364,18 @@ $(document).ready(function() {
         modalEl.show();
     });
 
-    // When "Save changes" is clicked, send an AJAX POST to update the template
+    // Save changes button in template editor modal
     $('#saveTemplateBtn').on('click', function() {
         var templateID = $('#templateID').val();
         var updatedContent = $('#templateContentEditor').html();
 
         $.ajax({
-            url: 'mailPage.php', // API call to the same file for update processing
+            url: 'mailPage.php', // API call to same file for update
             type: 'POST',
-            dataType: 'json', // Expect JSON response
+            dataType: 'json',
             data: { templateID: templateID, templateContent: updatedContent },
             success: function(data) {
                 if (data.success) {
-                    // Update the table cell with the new content and hide the modal
                     $('#row-' + templateID).find('.template-content').html(updatedContent);
                     alert("Template updated successfully!");
                     bootstrap.Modal.getInstance(document.getElementById('editTemplateModal')).hide();
@@ -341,6 +388,42 @@ $(document).ready(function() {
                 alert("There was an error updating the template.");
             }
         });
+    });
+
+    // When "View Mail Log" button is clicked, open mail log modal and initialize DataTable
+    $('#viewMailLogBtn').on('click', function() {
+        // Initialize DataTable for Mail Log with pre-fetched data from PHP (JSON encoded)
+        // We output the PHP variable as JSON in a JS variable
+        var mailLogs = <?php echo json_encode($mailLogs); ?>;
+        // Check if DataTable is already initialized. If so, destroy and reinitialize.
+        if ($.fn.DataTable.isDataTable('#mailLogTable')) {
+            $('#mailLogTable').DataTable().clear().destroy();
+        }
+        $('#mailLogTable').DataTable({
+            data: mailLogs,
+            columns: [
+                { title: "Log ID", data: "LogID" },
+                { title: "Sender", data: "Sender" },
+                { title: "Student Email", data: "StudentEmail" },
+                { title: "Student Name", data: "StudentName" },
+                { title: "Mail Content", data: "MailContent" },
+                { title: "Sent Time", data: "SentTime" }
+            ],
+            dom: '<"datatable-header d-flex justify-content-between align-items-center mb-2"fB>t<"datatable-footer"ip>',
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Mail Log',
+                    text: 'Export to Excel',
+                    className: 'btn btn-custom'
+                }
+            ],
+            pageLength: 10
+        });
+
+        // Show the modal
+        var logModal = new bootstrap.Modal(document.getElementById('mailLogModal'));
+        logModal.show();
     });
 });
 </script>
