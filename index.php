@@ -247,20 +247,18 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
                             FAVORITE
                         </h1>
 
-                        <p class="login-subtitle">Click Below to View the Rules</p>
-
                         <!-- Rules Button -->
                         <button class="rules-button btn-secondary text-white" data-toggle="modal" data-target="#rulesModal">⬇ View the Rules ⬇</button>
 
                         <!-- Action Buttons -->
                         <div class="action-buttons">
                             <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary">Nominate</a>
-                            <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary">Vote Page</a>
+                            <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary">Vote</a>
                             <!-- <a href="viewWinners.php" class="btn btn-indigo">View Winners</a> -->
                         </div>
 
                         <div class="action-buttons" style="text-align: center;">
-                            <a href="viewWinners.php" class="btn btn-secondary" style="width: 260px;">View Winners</a>
+                            <a href="viewWinners.php" class="btn btn-secondary" style="width: 260px;">View Previous Winners</a>
                         </div>
 
                         <!-- Footer Text -->

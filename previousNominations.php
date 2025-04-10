@@ -8,8 +8,10 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-// Always use the current session 'user' — whether impersonated or not
-$username = trim($_SESSION['user']);
+$username = isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true
+    ? $_SESSION['impersonated_user']
+    : $_SESSION['user'];
+
 
 try {
     $stmt = $pdo->prepare("

@@ -8,11 +8,11 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
 }
 
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['student_id'])) {
     die("Missing student ID.");
 }
 
-$studentID = $_GET['id'];
+$studentID = $_GET['student_id'];
 
 // Store original admin identity - store ALL session variables that should be preserved
 $_SESSION['admin_user'] = $_SESSION['user'];
@@ -31,11 +31,6 @@ $stmt = $pdo->prepare("SELECT * FROM Student_Table WHERE StudentID = ?");
 $stmt->execute([$studentID]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Debug - print the student info
-echo "<pre>";
-print_r($student);
-echo "</pre>";
-exit;
 
 if (!$student) {
     die("Student not found.");
@@ -50,7 +45,7 @@ $_SESSION['lastname'] = ''; // Clear lastname since full name is in firstname
 $_SESSION['impersonating'] = true;
 $_SESSION['impersonated_full_name'] = $student['StudentFullName'];
 $_SESSION['student_id'] = $student['id']; // Store student ID for reference
-$_SESSION['year_id'] = $student['YearID']; // ✅ used for filtering in voting APIs
+$_SESSION['year_id'] = $student['YearID']; //  used for filtering in voting APIs
 
 
 // Force fresh load of session

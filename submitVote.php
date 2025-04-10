@@ -16,18 +16,25 @@ try {
         exit();
     }
 
-    $username = ($_SESSION['user']); //
+    // Check if impersonation is active
+    if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true && isset($_SESSION['impersonated_user'])) {
+        $impersonatedUsername = $_SESSION['impersonated_user'];
+    } else {
+        $impersonatedUsername = $_SESSION['user'];
+    }
+
     $stmt = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = ?");
-    $stmt->execute([$username]);
+    $stmt->execute([$impersonatedUsername]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$student || !isset($student['id'])) {
-        error_log("User not found in Student_Table. Username: $username");
+        error_log("User not found in Student_Table. Username: $impersonatedUsername");
         echo json_encode(["status" => "error", "message" => "User not found in Student_Table."]);
         exit();
     }
 
-    $voterID = $student['id']; 
+    $voterID = $student['id'];
+
 
     $jsonInput = file_get_contents('php://input');
     $data = json_decode($jsonInput, true);

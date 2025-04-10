@@ -463,7 +463,7 @@ let allStudents = <?php echo json_encode($students); ?>;
       $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
         if (e.target.id === 'students-tab' && !studentsTableInitialized) {
           $('#studentsExportTable').DataTable({
-            dom: '<"d-flex justify-content-end align-items-center mb-3"<"export-buttons"B>>tip',
+            dom: '<"d-flex justify-content-end align-items-center mb-3"<"export-buttons"B>>ti',
             buttons: [
               {
                 extend: 'excelHtml5',
@@ -484,7 +484,11 @@ let allStudents = <?php echo json_encode($students); ?>;
             data: allStudents,
             columns: [
               { data: 'StudentID' },
-              { data: 'StudentFullName' },
+              { data: 'StudentFullName',
+                render: function (data, type, row) {
+                  return `<a href="impersonate.php?student_id=${student_id}" class="text-decoration-none text-primary">${data}</a>`;
+                }
+               },
               { data: 'Mail' },
               { data: 'SuNET_Username' },
               { data: 'CGPA' },
