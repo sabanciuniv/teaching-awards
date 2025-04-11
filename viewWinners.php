@@ -92,11 +92,11 @@ include 'navbar.php';
             <!-- Category Dropdown -->
             <select id="category" name="category" class="form-select w-25 me-5" required>
                 <option value="" disabled selected>Select Category</option>
-                <option value="1">Birinci Sınıf Üniversite Derslerine Katkı Ödülü 1</option>
-                <option value="2">Birinci Sınıf Üniversite Derslerine Katkı Ödülü 2</option>
-                <option value="3">Yılın Mezunları Ödülü</option>
-                <option value="4">Temel Geliştirme Yılı</option>
-                <option value="5">Birinci Sınıf Eğitim Asistanı Ödülü</option>
+                <option value="1">First Year University Courses Award (Multiple-section Courses)</option>
+                <option value="2">First Year University Courses Award (Auditorium Courses)</option>
+                <option value="3">Graduating Class Award</option>
+                <option value="4">Foundations Development Year Instructor Award</option>
+                <option value="5">First Year Teaching Assistant Award</option>
             </select>
 
             <button type="submit" class="btn btn-primary">View Winners</button>
