@@ -90,7 +90,7 @@ try {
     $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
 
     // 2) Categories
-    $stmtCats = $pdo->prepare("SELECT CategoryID, CategoryCode FROM Category_Table ORDER BY CategoryID ASC");
+    $stmtCats = $pdo->prepare("SELECT CategoryID, CategoryDescription FROM Category_Table ORDER BY CategoryID ASC");
     $stmtCats->execute();
     $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
@@ -151,24 +151,19 @@ try {
 
         .title {
             text-align: center;
-            margin: 20px 0;
+            margin: 40px 0 20px;
             font-size: 24px;
             font-weight: bold;
             color: black;
         }
 
         .form-section {
+            margin-top: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 10px;
             margin-bottom: 20px;
-        }
-
-        .form-select.custom-select {
-            width: 200px;
-            padding: 10px;
-            border-radius: 6px;
         }
 
         .table-container {
@@ -203,10 +198,45 @@ try {
             text-align: center;
             transition: 0.3s ease;
         }
-
+        
         .return-button:hover, .btn-custom:hover {
             background-color: #365a6b !important;
         }
+
+        .dropdown-menu {
+            background-color: white !important;
+            border: 1px solid #ccc;
+            padding: 5px 0;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item {
+            color: #333;
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: white !important;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f1f1 !important;
+            color: #000;
+        }
+
+        .btn.dropdown-toggle {
+            background-color: white !important;
+            color: #333 !important;
+            border: 1px solid #ccc !important;
+            border-radius: 6px !important;
+            padding: 10px 20px;
+            min-width: 350px;
+            text-align: left;
+            white-space: nowrap;       
+            overflow: hidden;         
+            text-overflow: ellipsis;
+        }
+
     </style>
 </head>
 <body>
@@ -221,7 +251,7 @@ try {
         <input type="hidden" id="selectedYearInput" name="year">
         <input type="hidden" id="selectedCategoryInput" name="category">
         <div class="btn-group year-dropdown">
-            <button id="yearSelectBtn" class="btn btn-custom dropdown-toggle" data-bs-toggle="dropdown">
+            <button id="yearSelectBtn" class="btn dropdown-toggle" data-bs-toggle="dropdown">
             <?= isset($_GET['year']) ? htmlspecialchars($academicYears[array_search($_GET['year'], array_column($academicYears, 'YearID'))]['Academic_year']) : 'Select Year' ?>
             </button>
             <!-- Year Dropdown (label: e.g. 2024, value: e.g. 1) -->
@@ -235,13 +265,13 @@ try {
             </div>
 
             <div class="btn-group year-dropdown">
-                <button id="categorySelectBtn" class="btn btn-custom dropdown-toggle" data-bs-toggle="dropdown">
-                <?= isset($_GET['category']) ? htmlspecialchars($categories[array_search($_GET['category'], array_column($categories, 'CategoryID'))]['CategoryCode']) : 'Select Category' ?>
+                <button id="categorySelectBtn" class="btn dropdown-toggle" data-bs-toggle="dropdown">
+                <?= isset($_GET['category']) ? htmlspecialchars($categories[array_search($_GET['category'], array_column($categories, 'CategoryID'))]['CategoryDescription']) : 'Select Category' ?>
                 </button>
                 <div class="dropdown-menu">
                     <?php foreach ($categories as $c): ?>
                         <a href="#" class="dropdown-item category-option" data-value="<?= $c['CategoryID'] ?>">
-                            <?= htmlspecialchars($c['CategoryCode']) ?>
+                            <?= htmlspecialchars($c['CategoryDescription']) ?>
                         </a>
                     <?php endforeach; ?>
                 </div>

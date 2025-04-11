@@ -68,26 +68,72 @@ try {
 
     <style>
         body {
-            overflow: auto;
             background-color: #f9f9f9;
             padding-top: 70px;
         }
 
-        /* Title Styling */
         .title {
             text-align: center;
-            margin: 20px 0;
+            margin: 40px 0 20px;
             font-size: 24px;
             font-weight: bold;
             color: black;
         }
 
         .form-section {
+            margin-top: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dropdown-select {
+            background-color: white !important;
+            color: #333 !important;
+            border: 1px solid #ccc !important;
+            border-radius: 6px !important;
+            padding: 10px 20px;
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .dropdown-menu {
+            background-color: white !important;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item {
+            color: #333;
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: white !important;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f1f1 !important;
+            color: #000;
+        }
+
+        .btn-custom, .return-button {
+            background-color: #45748a !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 200px;
+            text-align: center;
+            transition: 0.3s ease;
+        }
+
+        .btn-custom:hover, .return-button:hover {
+            background-color: #365a6b !important;
         }
 
         .table-container {
@@ -108,53 +154,20 @@ try {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-        }
-
-        /* Match button colors */
-        .return-button, 
-        .btn-custom {
-            background-color: #45748a !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 200px;
-            text-align: center;
-            transition: 0.3s ease;
-        }
-
-        .return-button:hover, 
-        .btn-custom:hover {
-            background-color: #365a6b !important;
-        }
-
-        /* Custom Year Dropdown */
-        .year-dropdown .btn {
-            width: 200px;
-            text-align: left;
-        }
-
-        .year-dropdown .dropdown-menu {
-            width: 100%;
         }
     </style>
+
 </head>
 <body>
 <?php include 'navbar.php'; ?>
 
 <div class="container">
-    <h2 class="title">Voting Participation by Year</h2>
+    <div class="title">Voting Participation by Year</h2>
 
     <!-- Year Selection -->
     <div class="form-section">
         <div class="btn-group year-dropdown">
-            <button id="yearSelectBtn" class="btn btn-custom dropdown-toggle" data-bs-toggle="dropdown">
+        <button id="yearSelectBtn" class="btn dropdown-toggle dropdown-select" data-bs-toggle="dropdown">
                 Select Year
             </button>
             <div class="dropdown-menu">

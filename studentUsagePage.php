@@ -12,7 +12,7 @@ require_once __DIR__ . '/database/dbConnection.php';
 $stmtYears = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
 $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
 
-$stmtCats = $pdo->query("SELECT CategoryID, CategoryCode FROM Category_Table ORDER BY CategoryID ASC");
+$stmtCats = $pdo->query("SELECT CategoryID, CategoryDescription FROM Category_Table ORDER BY CategoryID ASC");
 $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch students and separate by vote status
@@ -109,15 +109,38 @@ try {
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 
     <style>
-        body{
+        body {
+            background-color: #f9f9f9;
             padding-top: 70px;
         }
-        .action-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
+
+        .title {
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
         }
-        .return-button, .btn-custom {
+
+        .form-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .dropdown-select {
+            background-color: white !important;
+            color: #333 !important;
+            border: 1px solid #ccc !important;
+            border-radius: 6px !important;
+            padding: 10px 20px;
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .btn-custom {
             background-color: #45748a !important;
             color: white !important;
             border: none !important;
@@ -125,22 +148,43 @@ try {
             font-size: 14px;
             border-radius: 5px;
             cursor: pointer;
-            width: 200px;
-            text-align: center;
             transition: 0.3s ease;
         }
 
-        .return-button:hover, .btn-custom:hover {
+        .btn-custom:hover {
+            background-color: #365a6b !important;
+        }
+
+        .action-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .return-button {
+            background-color: #45748a !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            width: 200px;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        .return-button:hover {
             background-color: #365a6b !important;
         }
     </style>
+
 </head>
 <body>
 <?php include 'navbar.php'; ?>
 <div class="container mt-4">
-    <h3 class="text-center mb-4">Student Voting Status</h3>
-    <form class="mb-4 d-flex justify-content-center" method="GET">
-        <select name="year" class="form-select w-auto me-2" required>
+    <h3 class="title">Student Voting Status</h3>
+    <form method="GET" class="form-section">
+        <select name="year" class="dropdown-select" required>
             <option value="" disabled selected>Select Year</option>
             <?php foreach ($academicYears as $y): ?>
                 <option value="<?= $y['YearID'] ?>" <?= ($_GET['year'] ?? '') == $y['YearID'] ? 'selected' : '' ?>>
@@ -148,15 +192,15 @@ try {
                 </option>
             <?php endforeach; ?>
         </select>
-        <select name="category" class="form-select w-auto me-2" required>
+        <select name="category" class="dropdown-select" required>
             <option value="" disabled selected>Select Category</option>
             <?php foreach ($categories as $c): ?>
                 <option value="<?= $c['CategoryID'] ?>" <?= ($_GET['category'] ?? '') == $c['CategoryID'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($c['CategoryCode']) ?>
+                    <?= htmlspecialchars($c['CategoryDescription']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
-        <button type="submit" class="btn btn-custom">View Students</button>
+        <button type="submit" class="btn btn-custom"><i class="fa fa-eye"></i> View Students</button>
     </form>
 
     <?php if (!empty($students)): ?>
