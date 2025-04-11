@@ -93,6 +93,7 @@ try {
         body {
             margin: 0;
             padding-top: 70px;
+            overflow-y: auto;
             background-color: #f5f5f5;
         }
         .header {
@@ -200,6 +201,9 @@ try {
 
             <a href="mailPage.php" style="text-decoration: none;">
                 <button class="btn btn-secondary w-100">Mails</button>
+            </a>
+            <a href="setWinners.php" style="text-decoration: none;">
+                <button class="btn btn-secondary w-100">Set Winners</button>
             </a>
 
             
