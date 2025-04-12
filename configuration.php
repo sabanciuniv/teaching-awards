@@ -340,13 +340,14 @@
  
  
        <div class="tab-content mt-3">
- 
          <!-- CANDIDATES TAB -->
          <div class="tab-pane fade show active" id="candidatesTab">
            <div class="card-body">
              <!-- Search box -->
-             <input type="text" id="searchBox" class="form-control search-box" placeholder="Search for a candidate...">
- 
+             <div class="d-flex justify-content-between align-items-center mb-3">
+              <input type="text" id="searchBox" class="form-control search-box" placeholder="Search for a candidate..." style="max-width: 300px;">
+              <div id="exportCandidatesButtonContainer" class="text-end mb-2"></div>
+            </div>
              <div class="table-responsive mt-3">
                <table class="table table-striped table-bordered">
                  <thead class="table-dark">
@@ -381,11 +382,42 @@
                  </tbody>
                </table>
              </div>
-             <nav>
-             <ul class="pagination" id="candidatePaginationControls"></ul>
-             </nav>
-           </div>
-         </div>
+
+            <!-- Invisible Export Table -->
+            <table id="candidatesExportTable" class="table table-bordered d-none">
+              <thead class="table-dark">
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>SuID</th>
+                  <th>Role</th>
+                  <th>Categories</th>
+                  <th>Courses</th>
+                  <th>Last Synced</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($candidates as $candidate): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($candidate['Name']) ?></td>
+                    <td><?= htmlspecialchars($candidate['Mail']) ?></td>
+                    <td><?= htmlspecialchars($candidate['SU_ID']) ?></td>
+                    <td><?= htmlspecialchars($candidate['Role']) ?></td>
+                    <td><?= htmlspecialchars($candidate['Categories'] ?: '-') ?></td>
+                    <td><?= htmlspecialchars($candidate['Courses'] ?: '-') ?></td>
+                    <td><?= htmlspecialchars($candidate['Sync_Date']) ?></td>
+                    <td><?= ($candidate['Status'] === 'Etkin') ? 'On' : 'Off'; ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+            <!--  End Export Table -->
+            <nav>
+            <ul class="pagination" id="candidatePaginationControls"></ul>
+            </nav>
+          </div>
+        </div>
  
          <!-- STUDENTS TAB -->
          <div class="tab-pane fade" id="studentsTab">
@@ -393,7 +425,8 @@
              <!-- Search box -->
              <div class="d-flex justify-content-between align-items-center mb-3">
                <input type="text" id="studentSearchBox" class="form-control search-box" placeholder="Search for a student..." style="max-width: 300px;">
-               <div id="exportButtonContainer" class="text-end"></div>
+               <div id="exportStudentButtonContainer" class="text-end mb-2"></div>
+
              </div>
              <div class="table-responsive">
              <table id="studentsExportTable" class="table table-striped table-bordered">
@@ -425,6 +458,33 @@
                  </tbody>
            </table>
          </div>
+         <!--  Invisible Export Table for Students -->
+         <table id="studentsExportHiddenTable" class="table table-bordered d-none">
+          <thead class="table-dark">
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Username</th>
+              <th>GPA</th>
+              <th>Categories</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($students as $student): ?>
+              <tr>
+                <td><?= htmlspecialchars($student['StudentID']) ?></td>
+                <td><?= htmlspecialchars($student['StudentFullName']) ?></td>
+                <td><?= htmlspecialchars($student['Mail']) ?></td>
+                <td><?= htmlspecialchars($student['SuNET_Username']) ?></td>
+                <td><?= isset($student['CGPA']) && $student['CGPA'] !== null ? htmlspecialchars($student['CGPA']) : '-' ?></td>
+                <td><?= htmlspecialchars($student['Categories'] ?: '-') ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+        <!-- End of Export Table -->
+
          <!-- Pagination controls -->
          <nav>
            <ul class="pagination" id="studentPaginationControls"></ul>
@@ -442,66 +502,72 @@
      let currentSortColumn = null;
      let currentSortDirection = 'asc';
  
-     $(document).ready(function () {
-       // Candidate table sorting
-       $("#candidatesTab th.sortable").on("click", function () {
-         const column = $(this).data("column");
+    $(document).ready(function () {
+      // Initialize invisible export table for candidates
+      $('#studentsExportHiddenTable').DataTable({
+        dom: '<"d-flex justify-content-end align-items-center mb-3"<"export-students-buttons"B>>ti',
+        buttons: [
+          {
+            extend: 'excelHtml5',
+            title: 'Students Export',
+            text: 'Export Students to Excel',
+            className: 'btn btn-custom'
+          }
+        ],
+        paging: false,
+        searching: false,
+        ordering: false,
+        info: false,
+        initComplete: function () {
+          const exportButtons = $('.export-students-buttons').detach();
+          $('#exportStudentButtonContainer').append(exportButtons);
+        }
+      });
+
+      let candidateExportInitialized = false;
+
+      $('#candidatesExportTable').DataTable({
+        dom: '<"d-flex justify-content-end align-items-center mb-3"<"export-candidates-buttons"B>>ti',
+        buttons: [
+          {
+            extend: 'excelHtml5',
+            title: 'Candidates Export',
+            text: 'Export Candidates to Excel',
+            className: 'btn btn-custom'
+          }
+        ],
+        paging: false,
+        searching: false,
+        ordering: false,
+        info: false,
+        initComplete: function () {
+          const exportButtons = $('.export-candidates-buttons').detach();
+          $('#exportCandidatesButtonContainer').append(exportButtons);
+        }
+      });
+      
+    // Candidate table sorting
+      $("#candidatesTab th.sortable").on("click", function () {
+        const column = $(this).data("column");
+
+        $("#candidatesTab th.sortable").removeClass("asc desc");
+
+        if (currentSortColumn === column) {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSortDirection = 'asc';
+        }
+
+        currentSortColumn = column;
+        $(this).addClass(currentSortDirection);
+
+        sortData(column);
+      });
  
-         $("#candidatesTab th.sortable").removeClass("asc desc");
- 
-         if (currentSortColumn === column) {
-           currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-         } else {
-           currentSortDirection = 'asc';
-         }
- 
-         currentSortColumn = column;
-         $(this).addClass(currentSortDirection);
- 
-         sortData(column);
-       });
- 
-       let studentsTableInitialized = false;
+      let studentsTableInitialized = false;
  
        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
          if (e.target.id === 'students-tab' && !studentsTableInitialized) {
-           $('#studentsExportTable').DataTable({
-             dom: '<"d-flex justify-content-end align-items-center mb-3"<"export-buttons"B>>ti',
-             buttons: [
-               {
-                 extend: 'excelHtml5',
-                 title: 'Students Export',
-                 text: 'Export to Excel',
-                 className: 'btn btn-custom',
-                 exportOptions: {
-                   modifier: {
-                     search: 'none',  
-                     page: 'all'
-                   }
-                 }
-               }
-             ],
-             pageLength: 7,
-             ordering: false,
-             // This is critical - initialize with the complete dataset
-             data: allStudents,
-             columns: [
-               { data: 'StudentID' },
-               { data: 'StudentFullName',
-                 render: function (data, type, row) {
-                   return `<a href="impersonate.php?student_id=${student_id}" class="text-decoration-none text-primary">${data}</a>`;
-                 }
-                },
-               { data: 'Mail' },
-               { data: 'SuNET_Username' },
-               { data: 'CGPA' },
-               { data: 'Categories' }
-             ],
-             initComplete: function(){
-               const exportButtons = $('.export-buttons').detach();
-               $('#exportButtonContainer').append(exportButtons)
-             }
-           });
            studentsTableInitialized = true;
          }
        });

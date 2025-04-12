@@ -11,7 +11,7 @@ $cas_context   = $config['cas_context'];
 $cas_port      = $config['cas_port'];
 $app_base_url  = $config['app_base_url'];
 
-phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $app_base_url);
+phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 
 // Disable server validation (for testing only)
 phpCAS::setNoCasServerValidation();
@@ -19,26 +19,14 @@ phpCAS::setNoCasServerValidation();
 // Force CAS authentication
 phpCAS::forceAuthentication();
 
-
 // Retrieve the authenticated user's ID
 $user = phpCAS::getUser();
-$attributes = phpCAS::getAttributes(); // Get all attributes
-
-$firstname = $attributes['firstname'] ?? '';
-$lastname  = $attributes['lastname'] ?? '';
-$email     = $attributes['email'] ?? '';
-
 
 
 
 // Start the session and store the username
 session_start();
 $_SESSION['user'] = $user;
-$_SESSION['firstname'] = $firstname;
-$_SESSION['lastname']  = $lastname;
-$_SESSION['email']     = $email;
-
-
 // -------------------------
 // BEGIN: Cookie & DB Logic
 // -------------------------
@@ -90,6 +78,40 @@ try {
 // -----------------------
 // END: Cookie & DB Logic
 // -----------------------
+// -------------------------
+// BEGIN: Fetch name and surname from database
+// -----
+// 
+try {
+    // First, try fetching from Student_Table
+    $stmtStudent = $pdo->prepare("SELECT StudentFullName FROM Student_Table WHERE SuNET_Username = :username LIMIT 1");
+    $stmtStudent->execute([':username' => $user]);
+    $rowStudent = $stmtStudent->fetch(PDO::FETCH_ASSOC);
+
+    if ($rowStudent) {
+        $_SESSION['full_name'] = $rowStudent['StudentFullName'];
+    } else {
+        // If not found in Student_Table, try Admin_Table
+        $stmtAdmin = $pdo->prepare("SELECT Name FROM Admin_Table WHERE AdminSuUsername = :username LIMIT 1");
+        $stmtAdmin->execute([':username' => $user]);
+        $rowAdmin = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+
+        if ($rowAdmin) {
+            $_SESSION['full_name'] = $rowAdmin['Name'];
+        } else {
+            $_SESSION['full_name'] = 'Unknown';
+        }
+    }
+} catch (PDOException $e) {
+    $_SESSION['full_name'] = 'Unknown';
+    error_log("Failed to fetch full name: " . $e->getMessage());
+}
+
+
+// -----------------------
+// END:name and surname from database
+// -----------------------
+
 
 
 // -------------------------
@@ -138,6 +160,8 @@ if (isset($_GET['redirect'])) {
         exit;
     }
 }
+
+
 
 // Default action if no redirect parameter is provided
 echo "Authentication successful for user: " . htmlspecialchars($user);
