@@ -509,7 +509,7 @@
         buttons: [
           {
             extend: 'excelHtml5',
-            title: 'Students Export',
+            title: 'Students Table',
             text: 'Export Students to Excel',
             className: 'btn btn-custom'
           }
@@ -531,7 +531,7 @@
         buttons: [
           {
             extend: 'excelHtml5',
-            title: 'Candidates Export',
+            title: 'Candidates Table',
             text: 'Export Candidates to Excel',
             className: 'btn btn-custom'
           }
