@@ -15,8 +15,9 @@ $successMessage = null;
 
 $user = $_SESSION['user'];
 
+/*
 // Process the form submission if year and category are provided
-/*if (isset($_GET['year']) && isset($_GET['category'])) {
+if (isset($_GET['year']) && isset($_GET['category'])) {
     $yearId = intval($_GET['year']);
     $categoryId = intval($_GET['category']);
     
@@ -42,6 +43,7 @@ $user = $_SESSION['user'];
                     c.Name AS candidate_name,
                     c.Mail AS candidate_email,
                     c.Role AS candidate_role,
+                    COUNT(*) AS total_voters,
                     COALESCE(SUM(v.Points), 0) AS total_points,
                     COALESCE(SUM(CASE WHEN v.Points = 1 THEN 1 ELSE 0 END), 0) AS points_1_count,
                     COALESCE(SUM(CASE WHEN v.Points = 2 THEN 1 ELSE 0 END), 0) AS points_2_count,
@@ -80,7 +82,8 @@ $user = $_SESSION['user'];
     } catch (Exception $e) {
         $errorMessage = 'Database error: ' . $e->getMessage();
     }
-}*/
+}
+*/
 
 // Fetch available academic years & categories from the database
 try {
@@ -298,6 +301,7 @@ try {
                     c.Name AS candidate_name,
                     c.Mail AS candidate_email,
                     c.Role AS candidate_role,
+                    COUNT(*) AS total_voters,
                     COALESCE(SUM(v.Points), 0) AS total_points,
                     COALESCE(SUM(CASE WHEN v.Points = 1 THEN 1 ELSE 0 END), 0) AS points_1_count,
                     COALESCE(SUM(CASE WHEN v.Points = 2 THEN 1 ELSE 0 END), 0) AS points_2_count,
@@ -323,9 +327,19 @@ try {
         <table id="facultyScoresTable" class="table table-bordered table-striped" style="width:100%">
             <thead>
                 <tr>
-                    <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Total Points</th>
-                    <th>6-Point</th><th>5-Point</th><th>4-Point</th>
-                    <th>3-Point</th><th>2-Point</th><th>1-Point</th><th>Academic Year</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Total Voters</th>
+                    <th>Total Points</th>
+                    <th>6-Point</th>
+                    <th>5-Point</th>
+                    <th>4-Point</th>
+                    <th>3-Point</th>
+                    <th>2-Point</th>
+                    <th>1-Point</th>
+                    <th>Academic Year</th>
                 </tr>
             </thead>
             <tbody>
@@ -335,6 +349,7 @@ try {
                     <td><?= htmlspecialchars($row['candidate_name']) ?></td>
                     <td><?= htmlspecialchars($row['candidate_email']) ?></td>
                     <td><?= htmlspecialchars($row['candidate_role']) ?></td>
+                    <td><?= $row['total_voters'] ?></td>
                     <td><?= $row['total_points'] ?></td>
                     <td><?= $row['points_6_count'] ?></td>
                     <td><?= $row['points_5_count'] ?></td>
