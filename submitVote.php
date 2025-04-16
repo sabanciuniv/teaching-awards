@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/database/dbConnection.php'; // Ensure database connection
+require_once 'api/impersonationLogger.php';
 
 header('Content-Type: application/json');
 error_reporting(E_ALL);
@@ -125,4 +126,20 @@ try {
     http_response_code(500);
     echo json_encode(["status" => "error", "message" => "Internal Server Error: " . $e->getMessage()]);
 }
+
+logImpersonationAction(
+    $pdo,
+    'Voted',
+    [
+        'category_id' => $categoryID,
+        'category_name' => $categoryName,
+        'voted_for' => [
+            'candidate_id' => $vote['candidateID'],
+            'candidate_name' => $candidateName,
+            'rank' => $rank,
+            'points' => $points
+        ],
+        'student_id' => $_SESSION['student_id'] ?? $voterID
+    ]
+);
 ?>

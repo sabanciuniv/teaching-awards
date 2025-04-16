@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'database/dbConnection.php';
+require_once __DIR__ . '/api/impersonationLogger.php';
 
 // Only allow admin
 if (!isset($_SESSION['user']) || !in_array($_SESSION['role'], ['Admin', 'IT_Admin'])) {
@@ -27,12 +28,11 @@ $stmt->execute([$studentID]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
-/* 
 // Right after fetching student info
 $stmt = $pdo->prepare("SELECT * FROM Student_Table WHERE StudentID = ?");
 $stmt->execute([$studentID]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
-*/
+
 
 if (!$student) {
     die("Student not found.");
@@ -48,6 +48,16 @@ $_SESSION['impersonating'] = true;
 $_SESSION['impersonated_full_name'] = $student['StudentFullName'];
 $_SESSION['student_id'] = $student['id']; // Store student ID for reference
 $_SESSION['year_id'] = $student['YearID']; //  used for filtering in voting APIs
+
+logImpersonationAction(
+    $pdo,
+    'Begin impersonation',
+    [
+        'student_id' => $student['id'],
+        'student_full_name' => $student['StudentFullName'],
+        'year_id' => $student['YearID']
+    ]
+);
 
 
 // Force fresh load of session

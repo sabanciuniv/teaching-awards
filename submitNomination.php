@@ -3,6 +3,8 @@ session_start();
 require_once 'api/authMiddleware.php';
 require_once 'config.php'; // Load config file
 
+require_once __DIR__ . '/api/impersonationLogger.php';
+
 $config = require 'config.php'; // Fetch configuration
 $uploadDir = $config['upload_directory']; // Get the upload directory path
 
@@ -132,7 +134,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     if (!$stmt->execute([$nominationID, $fileExtension, $codedName, $originalName])) {
                         throw new Exception("Error inserting document data.");
                     }
+                    logImpersonationAction(
+                        $pdo,
+                        'Uploaded document',
+                        [
+                            'document_name' => $codedName,
+                            'original_file_name' => $originalName,
+                            'student_id' => $_SESSION['student_id'] ?? null
+                        ],
+                        $codedName
+                    );
+                    
                     $processedFiles[] = $originalName;
+                    
+
                 } else {
                     throw new Exception("Error moving uploaded file: " . $originalName);
                 }

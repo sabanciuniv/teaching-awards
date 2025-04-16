@@ -1,12 +1,25 @@
 <?php
 session_start();
+require_once 'database/dbConnection.php';
+require_once __DIR__ . '/api/impersonationLogger.php';
 
 if (isset($_SESSION['impersonating']) && $_SESSION['impersonating']) {
+
     // Restore original admin identity
     $_SESSION['user'] = $_SESSION['admin_user'];
     $_SESSION['role'] = $_SESSION['admin_role'];
     $_SESSION['firstname'] = $_SESSION['admin_firstname'] ?? '';
     $_SESSION['lastname'] = $_SESSION['admin_lastname'] ?? '';
+
+    // Log impersonation end FIRST
+    logImpersonationAction(
+        $pdo,
+        'End impersonation',
+        [
+            'impersonated_user' => $_SESSION['impersonated_user'],
+            'student_id' => $_SESSION['student_id'] ?? null
+        ]
+    );
     
     // Clean up impersonation variables
     unset($_SESSION['admin_user']);
