@@ -275,10 +275,10 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
 
     <!-- Modal for Rules -->_
     <div class="modal fade" id="rulesModal" tabindex="-1" role="dialog" aria-labelledby="rulesModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="rulesModalLabel">Rules</h5>
+                    <h5 class="modal-title" id="rulesModalLabel"> <strong> General Rules </strong></h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -299,13 +299,37 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
 
 <p>As per the rules, candidates who placed first in a category during the last three years are not eligible to be nominated in that same category.</p>
 
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+<hr>
+
+        <!-- TA Award Rules Section -->
+        <h6><strong>Rules for Teaching Assistant Awards</strong></h6>
+        <p><strong>Purpose:</strong> The Teaching Assistant Award was created to acknowledge Teaching Assistants who excel in their activities.</p>
+
+        <p><strong>Eligibility:</strong></p>
+        <ul>
+            <li>The nominee must be a current graduate student</li>
+            <li>The nominee must be a TA in at least one course during the 2023–2024 academic year</li>
+        </ul>
+
+        <p><strong>Criteria:</strong></p>
+        <ul>
+            <li>a. Being nominated by more than one person</li>
+            <li>b. Being nominated both by faculty and by students</li>
+            <li>c. Course evaluation results</li>
+            <li>d. Data/Feedback about their work in more than one course (from course instructors)</li>
+            <li>e. Whether nomination letters have been provided individually if nominated by a group of students</li>
+            <li>f. GPA of the nominee</li>
+        </ul>
+
+        <p><strong>Questions?</strong> For your questions about the nomination guidelines and the process, please contact Deniz İnan at <a href="mailto:deniz.inan@sabanciuniv.edu">deniz.inan@sabanciuniv.edu</a></p>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Limitless Theme JS -->
     <script src="assets/js/main/jquery.min.js"></script>
