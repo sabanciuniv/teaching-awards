@@ -13,7 +13,7 @@ if (!$selectedYear || !is_numeric($selectedYear)) {
 try {
     error_log("🔍 Debug: Selected Year from Frontend: " . json_encode($selectedYear));
 
-    // ✅ Ensure correct YearID
+    // Ensure correct YearID
     $stmtYearID = $pdo->prepare("SELECT YearID FROM AcademicYear_Table WHERE YearID = :selectedYear LIMIT 1");
     $stmtYearID->execute([':selectedYear' => $selectedYear]);
     $result = $stmtYearID->fetch(PDO::FETCH_ASSOC);
@@ -27,7 +27,7 @@ try {
     $actualYearID = $result['YearID'];
     error_log("Found Year ID: $actualYearID");
 
-    // ✅ Check if any votes exist for this year
+    // Check if any votes exist for this year
     $stmtVoteCheck = $pdo->prepare("SELECT COUNT(*) AS VoteCount FROM Votes_Table WHERE AcademicYear = :actualYearID");
     $stmtVoteCheck->execute([':actualYearID' => $actualYearID]);
     $voteCheck = $stmtVoteCheck->fetch(PDO::FETCH_ASSOC);
