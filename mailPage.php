@@ -140,7 +140,9 @@ try {
     <!-- DataTables & Buttons CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-    
+    <!-- Quill stylesheet -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
     <style>
         body {
             background-color: #f9f9f9;
@@ -259,19 +261,30 @@ try {
         <form id="editTemplateForm">
           <input type="hidden" name="templateID" id="templateID">
           <!-- Toolbar for formatting -->
-          <div id="editorToolbar" class="mb-2">
-              <button type="button" class="btn btn-sm btn-secondary" onclick="execCmd('bold')" title="Bold">
-                <i class="fa fa-bold"></i>
-              </button>
-              <button type="button" class="btn btn-sm btn-secondary" onclick="execCmd('italic')" title="Italic">
-                <i class="fa fa-italic"></i>
-              </button>
-              <button type="button" class="btn btn-sm btn-secondary" onclick="execCmd('underline')" title="Underline">
-                <i class="fa fa-underline"></i>
-              </button>
-          </div>
-          <!-- Contenteditable editor area -->
-          <div id="templateContentEditor" contenteditable="true"></div>
+            <!-- Quill Toolbar -->
+            <div id="quill-toolbar">
+            <span class="ql-formats">
+                <select class="ql-header">
+                <option selected></option>
+                <option value="1">Heading 1</option>
+                <option value="2">Heading 2</option>
+                </select>
+            </span>
+            <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-link"></button>
+            </span>
+            <span class="ql-formats">
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+            </span>
+            </div>
+
+            <!-- Quill Editor -->
+            <div id="templateContentEditor" style="height: 300px;"></div>
+
         </form>
       </div>
       <div class="modal-footer">
@@ -333,15 +346,28 @@ try {
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<script>
-// Basic editor command function
-function execCmd(command) {
-    document.execCommand(command, false, null);
-}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
-$(document).ready(function() {
-    // Initialize DataTable for Mail Templates
-    var table = $('#mailTemplatesTable').DataTable({
+<script>
+let quill;
+
+$(document).ready(function () {
+    // Initialize Quill Editor
+    quill = new Quill('#templateContentEditor', {
+        modules: {
+            toolbar: '#quill-toolbar'
+        },
+        theme: 'snow'
+    });
+
+    // Initialize Mail Templates Table
+    $('#mailTemplatesTable').DataTable({
         dom: '<"datatable-header d-flex justify-content-between align-items-center mb-2"fB>t<"datatable-footer"ip>',
         buttons: [
             {
@@ -354,29 +380,32 @@ $(document).ready(function() {
         pageLength: 10
     });
 
-    // Edit Template Button Click: load template into editor modal
-    $('.edit-template-btn').on('click', function() {
-        var templateID = $(this).data('templateid');
-        var templateBody = $(this).data('templatebody');
+    //  Handle Edit Button Click
+    $('.edit-template-btn').on('click', function () {
+        const templateID = $(this).data('templateid');
+        const templateBody = $(this).data('templatebody');
 
         $('#templateID').val(templateID);
-        $('#templateContentEditor').html(templateBody);
+        quill.setContents(quill.clipboard.convert(templateBody)); // ✅ Proper content loading
 
-        var modalEl = new bootstrap.Modal(document.getElementById('editTemplateModal'));
+        const modalEl = new bootstrap.Modal(document.getElementById('editTemplateModal'));
         modalEl.show();
     });
 
-    // Save changes button in template editor modal
-    $('#saveTemplateBtn').on('click', function() {
-        var templateID = $('#templateID').val();
-        var updatedContent = $('#templateContentEditor').html();
+    //  Save Updated Template
+    $('#saveTemplateBtn').on('click', function () {
+        const templateID = $('#templateID').val();
+        const updatedContent = quill.root.innerHTML;
 
         $.ajax({
-            url: 'mailPage.php', // API call to same file for update
+            url: 'mailPage.php',
             type: 'POST',
             dataType: 'json',
-            data: { templateID: templateID, templateContent: updatedContent },
-            success: function(data) {
+            data: {
+                templateID: templateID,
+                templateContent: updatedContent
+            },
+            success: function (data) {
                 if (data.success) {
                     $('#row-' + templateID).find('.template-content').html(updatedContent);
                     alert("Template updated successfully!");
@@ -385,22 +414,20 @@ $(document).ready(function() {
                     alert("Error updating the template: " + (data.error || "Unknown error."));
                 }
             },
-            error: function(xhr, status, error) {
-                console.error("AJAX Error:", status, error);
+            error: function () {
                 alert("There was an error updating the template.");
             }
         });
     });
 
-    // When "View Mail Log" button is clicked, open mail log modal and initialize DataTable
-    $('#viewMailLogBtn').on('click', function() {
-        // Initialize DataTable for Mail Log with pre-fetched data from PHP (JSON encoded)
-        // We output the PHP variable as JSON in a JS variable
+    // Mail Log Viewer
+    $('#viewMailLogBtn').on('click', function () {
         var mailLogs = <?php echo json_encode($mailLogs); ?>;
-        // Check if DataTable is already initialized. If so, destroy and reinitialize.
+
         if ($.fn.DataTable.isDataTable('#mailLogTable')) {
             $('#mailLogTable').DataTable().clear().destroy();
         }
+
         $('#mailLogTable').DataTable({
             data: mailLogs,
             columns: [
@@ -423,11 +450,12 @@ $(document).ready(function() {
             pageLength: 10
         });
 
-        // Show the modal
-        var logModal = new bootstrap.Modal(document.getElementById('mailLogModal'));
-        logModal.show();
+        new bootstrap.Modal(document.getElementById('mailLogModal')).show();
     });
 });
 </script>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
 </body>
 </html>
