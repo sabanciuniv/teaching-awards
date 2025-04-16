@@ -126,3 +126,21 @@
         </div>
     </div>
 </nav>
+<?php if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true): ?>
+    <div style="width: 100%; display: flex; justify-content: center; margin-top: 8rem;">
+        <div style="
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            font-weight: 500;
+            max-width: 600px;
+            text-align: center;
+        ">
+            You're impersonating: <strong><?php echo htmlspecialchars($_SESSION['impersonated_user']); ?></strong>
+            <a href="revertImpersonation.php" class="btn btn-sm btn-danger" style="margin-left: 10px">Exit Impersonation</a>
+        </div>
+    </div>
+<?php endif; ?>
+
