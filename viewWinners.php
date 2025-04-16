@@ -353,6 +353,7 @@ foreach ($allWinners as $row) {
     </style>
 </head>
 <body>
+<?php include 'navbar.php'; ?>
 <div class="container">
     <h2 class="text-center">Set Winner</h2>
     
