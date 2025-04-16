@@ -24,10 +24,7 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
     $endDate = 'N/A';
 }
 
-
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -48,12 +45,6 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-
-
 
     <style>
         
@@ -202,8 +193,6 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
             color: white;
         }
 
-
-
     </style>
 </head>
 
@@ -263,7 +252,6 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
                             <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary unified-button">Vote   <i class="fas fa-vote-yea"></i></a>
                             <a href="viewWinners.php" class="btn btn-secondary unified-button">View Previous Winners</a>
                         </div>
-
 
                         <!-- Footer Text -->
                         <p class="footer-text">YOU CAN VOTE BETWEEN <?php echo $startDate; ?> - <?php echo $endDate; ?></p>
@@ -325,7 +313,7 @@ if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['e
 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
