@@ -133,7 +133,7 @@
     </div>
 </nav>
 <?php if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true): ?>
-    <div style="width: 100%; display: flex; justify-content: center; margin-top: 8rem;">
+    <div style="width: 100%; display: flex; justify-content: center; margin-top: 5rem;">
         <div style="
             background-color: #f8d7da;
             color: #721c24;
