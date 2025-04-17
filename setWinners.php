@@ -273,8 +273,6 @@ foreach ($allWinners as $row) {
         }
         /* Prelook container styling */
         .prelook-container {
-            max-height: 700px;
-            overflow-y: auto;
             margin-top: 30px;
         }
         /* Category row styling for collapsible preview */
