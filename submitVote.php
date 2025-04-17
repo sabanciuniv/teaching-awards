@@ -68,7 +68,7 @@ try {
     }
     $academicYearID = $yearRow['YearID'];
 
-    $categoryStmt = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = ?");
+    $categoryStmt = $pdo->prepare("SELECT CategoryID, CategoryDescription FROM Category_Table WHERE CategoryCode = ?");
     $categoryStmt->execute([$categoryCode]);
     $categoryRow = $categoryStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -77,6 +77,7 @@ try {
         exit();
     }
     $categoryID = $categoryRow['CategoryID'];
+    $categoryDescription = $categoryRow['CategoryDescription'];
 
     // Assign points based on the number of instructors ranked
     $numRanks = count($votes);
@@ -93,6 +94,8 @@ try {
     // Insert votes with calculated points
     $insertStmt = $pdo->prepare("INSERT INTO Votes_Table (AcademicYear, VoterID, CandidateID, CategoryID, Points, `Rank`)
                                  VALUES (?, ?, ?, ?, ?, ?)");
+
+    $candidateStmt = $pdo->prepare("SELECT Name, SU_ID FROM Candidate_Table WHERE id = ?");
 
     foreach ($votes as $index => $vote) {
         if (!isset($vote['candidateID'], $vote['rank'])) {
@@ -112,6 +115,32 @@ try {
             exit();
         } else {
             error_log("Vote inserted successfully: VoterID=$voterID, CandidateID={$vote['candidateID']}, Rank=$rank, Points=$points");
+             // Get candidate name and SU_ID
+            $candidateStmt->execute([$vote['candidateID']]);
+            $candidateData = $candidateStmt->fetch(PDO::FETCH_ASSOC);
+
+            $candidateName = $candidateData['Name'] ?? 'Unknown';
+            $candidateSU_ID = $candidateData['SU_ID'] ?? 'Unknown';
+            
+            // If impersonating, log the action
+            if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true) {
+                logImpersonationAction(
+                    $pdo,
+                    'Voted',
+                    [
+                        'category_id' => $categoryID,
+                        'category_Code' => $categoryCode,
+                        'category_Name'=> $categoryDescription,
+                        'voted_for' => [
+                            'candidate_name' => $candidateName,
+                            'candidate_su_id' => $candidateSU_ID,
+                            'rank' => $rank,
+                            'points' => $points
+                        ],
+                        'student_id' => $_SESSION['student_id'] ?? $voterID
+                    ]
+                );
+            }
         }
     
     }
@@ -127,19 +156,6 @@ try {
     echo json_encode(["status" => "error", "message" => "Internal Server Error: " . $e->getMessage()]);
 }
 
-logImpersonationAction(
-    $pdo,
-    'Voted',
-    [
-        'category_id' => $categoryID,
-        'category_name' => $categoryName,
-        'voted_for' => [
-            'candidate_id' => $vote['candidateID'],
-            'candidate_name' => $candidateName,
-            'rank' => $rank,
-            'points' => $points
-        ],
-        'student_id' => $_SESSION['student_id'] ?? $voterID
-    ]
-);
 ?>
+
+
