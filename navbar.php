@@ -98,7 +98,13 @@
 
                     <strong>
                         Welcome, 
-                        <?= htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['user']); ?>
+                        <?php 
+                        echo htmlspecialchars(
+                            (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true) 
+                            ? $_SESSION['impersonated_full_name'] 
+                            : (isset($_SESSION['full_name']) ? $_SESSION['full_name'] : (isset($_SESSION['user']) ? $_SESSION['user'] : 'User'))
+                        ); 
+                        ?>
                     </strong>
 
                     </a>
