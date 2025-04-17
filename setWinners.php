@@ -250,8 +250,8 @@ foreach ($allWinners as $row) {
     <title>Set Winner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap CSS & FontAwesome -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
     <link href="assets/css/components.min.css" rel="stylesheet">
     <link href="assets/css/layout.min.css" rel="stylesheet">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
@@ -259,7 +259,7 @@ foreach ($allWinners as $row) {
     <style>
         body {
             background-color: #f9f9f9;
-            padding-top: 40px;
+            padding-top: 80px;
             overflow-y: auto;
         }
         .container {
@@ -372,6 +372,7 @@ foreach ($allWinners as $row) {
     </style>
 </head>
 <body>
+<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 <div class="container">
     <h2 class="text-center">Set Winner</h2>
     
