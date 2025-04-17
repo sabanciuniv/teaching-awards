@@ -148,6 +148,14 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
     #confirmModal .btn-close:focus::before {
       opacity: 0.8;
     }
+    .course-history-scroll {
+      max-height: 100px;
+      overflow-y: auto;
+      width: 100%;
+      text-align: left;
+      padding: 0 10px;
+    }
+
   </style>
 </head>
 
@@ -234,31 +242,58 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       }
 
       instructors.forEach((instructor, index) => {
-        container.innerHTML += `
-          <div class="col-md-3">
-            <div class="card">
-              <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-              <h6>${instructor.InstructorName || 'Unknown'}</h6>
-              <p>${(instructor.Subject_Code && instructor.Course_Number) ? instructor.Subject_Code + ' ' + instructor.Course_Number : 'Unknown Course'}</p>
-              <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle rank-btn"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        id="rank-btn-${index}"
-                        data-candidate-id="${instructor.InstructorID}">
-                  Rank here
-                </button>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
-                  <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
-                  <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
-                </div>
-              </div>
-              <div id="selected-rank-${index}" class="mt-2"></div>
+      const cardHTML = `
+        <div class="col-md-3">
+          <div class="card">
+            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
+            <h6>${instructor.InstructorName || 'Unknown'}</h6>
+            <div class="course-history-scroll">
+              <div id="course-history-${index}" class="text-muted" style="font-size: 0.9rem;">Loading past courses...</div>
             </div>
+
+
+            <div class="dropdown mt-2">
+              <button class="btn btn-secondary dropdown-toggle rank-btn"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      id="rank-btn-${index}"
+                      data-candidate-id="${instructor.InstructorID}">
+                Rank here
+              </button>
+              <div class="dropdown-menu">
+                <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+              </div>
+            </div>
+            <div id="selected-rank-${index}" class="mt-2"></div>
           </div>
-        `;
-      });
+        </div>
+      `;
+
+      container.innerHTML += cardHTML;
+
+      // Fetch and display course history for this instructor
+      fetch(`api/getInstructorCourses.php?instructorID=${instructor.InstructorID}`)
+        .then(res => res.json())
+        .then(courseData => {
+          const courseDiv = document.getElementById(`course-history-${index}`);
+          if (courseData.status === "success" && courseData.data.length > 0) {
+            const courseList = courseData.data.map(c =>
+              `${c.Subject_Code || ''} ${c.Course_Number || ''} (${c.Term})`
+            ).join("<br>");
+            courseDiv.innerHTML = `<strong>Courses:</strong><br>${courseList}`;
+          } else {
+            courseDiv.innerHTML = "No recent courses found.";
+          }
+        })
+        .catch(err => {
+          const courseDiv = document.getElementById(`course-history-${index}`);
+          courseDiv.innerHTML = "Error loading courses.";
+          console.error("Error fetching instructor courses:", err);
+        });
+    });
+
 
       // Add event listeners for each dropdown rank option
       document.querySelectorAll('.rank-option').forEach(item => {
