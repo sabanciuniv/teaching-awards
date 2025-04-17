@@ -82,13 +82,23 @@ SQL
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+
   <meta charset="UTF-8">
   <title>Award Winners</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <!-- Theme CSS -->
-  <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
-  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
+  <!-- Limitless Theme CSS -->
+  <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+  <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+  <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
+  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+
+
   <style>
     body {
       background: #f9f9f9;
@@ -236,6 +246,20 @@ SQL
   </style>
 </head>
 <body>
+
+  <?php 
+  // Include your navbar; adjust the path or remove if not needed
+  $backLink = "index.php"; 
+  $backLink = isset($_SESSION['previous_page']) && $_SESSION['previous_page'] === 'adminDashboard.php'
+      ? "adminDashboard.php"
+      : "index.php";
+  
+  // Clear referrer after use
+  unset($_SESSION['previous_page']);
+  
+  
+  include 'navbar.php'; 
+  ?>
   <div class="container">
     <h1>Award Winners</h1>
 
