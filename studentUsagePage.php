@@ -1,82 +1,25 @@
 <?php
 session_start();
-
-// Display errors in development
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-require_once __DIR__ . '/database/dbConnection.php';
-
-// Fetch academic years and categories
-$stmtYears = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
-$academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
-
-$stmtCats = $pdo->query("SELECT CategoryID, CategoryDescription FROM Category_Table ORDER BY CategoryID ASC");
-$categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch students and separate by vote status
-$students = [];
-$votedStudents = [];
-$notVotedStudents = [];
-
-if (isset($_GET['year']) && isset($_GET['category'])) {
-    $yearId = (int)$_GET['year'];
-    $categoryId = (int)$_GET['category'];
-
-    $stmt = $pdo->prepare("SELECT * FROM Student_Table WHERE YearID = ? ORDER BY StudentID ASC");
-    $stmt->execute([$yearId]);
-    $allStudents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($allStudents as $s) {
-        $studentId = $s['id'];
-        $voteStatus = "-";
-
-        $rel = $pdo->prepare("SELECT 1 FROM Student_Category_Relation WHERE student_id = ? AND categoryID = ? LIMIT 1");
-        $rel->execute([$studentId, $categoryId]);
-
-        if ($rel->fetchColumn()) {
-            $vote = $pdo->prepare("SELECT 1 FROM Votes_Table WHERE VoterID = ? AND CategoryID = ? AND AcademicYear = ? LIMIT 1");
-            $vote->execute([$studentId, $categoryId, $yearId]);
-            $voteStatus = $vote->fetchColumn() ? "Voted" : "Not Voted";
-        }
-
-        $entry = array_merge($s, ['VoteStatus' => $voteStatus]);
-        $students[] = $entry;
-
-        if ($voteStatus === 'Voted') {
-            $votedStudents[] = $entry;
-        } elseif ($voteStatus === 'Not Voted') {
-            $notVotedStudents[] = $entry;
-        }
-    }
-}
-
-// -------------------------
-// BEGIN: Admin Access Check
-// -------------------------
-
-// Make sure to assign the session user to a variable
+require_once 'api/authMiddleware.php';
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
 }
+require_once __DIR__ . '/database/dbConnection.php';
 $user = $_SESSION['user'];
 
+// Admin check
 try {
-    // This query ensures the user exists in Admin_Table, is not marked as 'Removed',
-    // and that their Role is either 'IT_Admin' or 'Admin'
-    $adminQuery = "SELECT 1 
-                     FROM Admin_Table 
-                    WHERE AdminSuUsername = :username 
-                      AND checkRole <> 'Removed'
-                      AND Role IN ('IT_Admin', 'Admin')
-                    LIMIT 1";
-    $adminStmt = $pdo->prepare($adminQuery);
-    $adminStmt->execute([':username' => $user]);
-    
-    // If no record is found, redirect to index.php
-    if (!$adminStmt->fetch()) {
+    $adm = $pdo->prepare("
+      SELECT 1
+        FROM Admin_Table
+       WHERE AdminSuUsername = :u
+         AND checkRole <> 'Removed'
+         AND Role IN ('IT_Admin','Admin')
+       LIMIT 1
+    ");
+    $adm->execute([':u' => $user]);
+    if (!$adm->fetch()) {
         header("Location: index.php");
         exit();
     }
@@ -84,215 +27,271 @@ try {
     die("Admin check failed: " . $e->getMessage());
 }
 
-// -----------------------
-// END: Admin Access Check
-// -----------------------
-?>
-<!DOCTYPE html>
+// Fetch academic years
+$stmtYears = $pdo->query("
+    SELECT YearID, Academic_year
+      FROM AcademicYear_Table
+  ORDER BY Academic_year DESC
+");
+$academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
+
+// If a year is selected, gather students + categories + vote flag
+$votedStudents    = [];
+$notVotedStudents = [];
+$yearLabel        = '';
+if (!empty($_GET['year'])) {
+    $yearId = (int)$_GET['year'];
+    foreach ($academicYears as $y) {
+        if ($y['YearID'] == $yearId) {
+            $yearLabel = $y['Academic_year'];
+            break;
+        }
+    }
+    $sql = "
+      SELECT
+        s.StudentID,
+        s.StudentFullName,
+        s.Mail           AS Email,
+        s.SuNET_Username AS Username,
+        s.CGPA           AS GPA,
+        COALESCE(
+          GROUP_CONCAT(DISTINCT c.CategoryDescription ORDER BY c.CategoryDescription SEPARATOR ', '),
+          ''
+        ) AS Categories,
+        EXISTS(
+          SELECT 1 FROM Votes_Table v
+           WHERE v.VoterID = s.id
+             AND v.AcademicYear = :yr
+        ) AS VotedFlag
+      FROM Student_Table s
+      LEFT JOIN Student_Category_Relation scr
+        ON s.id = scr.student_id
+      LEFT JOIN Category_Table c
+        ON scr.CategoryID = c.CategoryID
+     WHERE s.YearID = :yr
+     GROUP BY s.id
+     ORDER BY s.StudentID
+    ";
+    $stm = $pdo->prepare($sql);
+    $stm->execute([':yr' => $yearId]);
+    $all = $stm->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($all as $r) {
+        if ($r['VotedFlag']) {
+            $votedStudents[] = $r;
+        } else {
+            $notVotedStudents[] = $r;
+        }
+    }
+}
+?><!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Student Voting Status</title>
-    <!-- Theme Styles -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
-    <link href="assets/css/components.min.css" rel="stylesheet">
-    <link href="assets/css/layout.min.css" rel="stylesheet">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-    <!-- DataTables core + buttons (for student tables and export) -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-
-    <style>
-        body {
-            background-color: #f9f9f9;
-            padding-top: 70px;
-        }
-
-        .title {
-            text-align: center;
-            margin: 40px 0 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: black;
-        }
-
-        .form-section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .dropdown-select {
-            background-color: white !important;
-            color: #333 !important;
-            border: 1px solid #ccc !important;
-            border-radius: 6px !important;
-            padding: 10px 20px;
-            min-width: 200px;
-            text-align: left;
-        }
-
-        .btn-custom {
-            background-color: #45748a !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s ease;
-        }
-
-        .btn-custom:hover {
-            background-color: #365a6b !important;
-        }
-
-        .action-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-        }
-
-        .return-button {
-            background-color: #45748a !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 5px;
-            width: 200px;
-            cursor: pointer;
-            transition: 0.3s ease;
-        }
-
-        .return-button:hover {
-            background-color: #365a6b !important;
-        }
-    </style>
-
+  <meta charset="UTF-8">
+  <title>Student Voting Status</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- CSS -->
+  <link href="assets/css/bootstrap.min.css"           rel="stylesheet">
+  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+  <link href="assets/css/components.min.css"          rel="stylesheet">
+  <link href="assets/css/layout.min.css"              rel="stylesheet">
+  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
+  <style>
+    body {
+      background:#f9f9f9;
+      padding-top:70px;
+    }
+    .container {
+      max-width:900px;
+      margin:auto;
+    }
+    h3.title {
+      text-align:center;
+      margin-bottom:1.5rem;
+    }
+    .form-section {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      gap:1rem;
+      margin-bottom:20px;
+    }
+    .dropdown-select {
+      background:#fff!important;
+      color:#333!important;
+      border:1px solid #ccc!important;
+      border-radius:6px!important;
+      padding:10px 20px!important;
+      min-width:200px;
+    }
+    .btn-custom {
+      background:#45748a!important;
+      color:#fff!important;
+      border:none!important;
+      padding:10px 20px!important;
+      font-size:14px;
+      border-radius:5px!important;
+      display:flex;
+      align-items:center;
+      gap:5px;
+    }
+    .btn-custom:hover { background:#365a6b!important; }
+    .action-container {
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      display:flex;
+      gap:10px;
+    }
+    .return-button {
+      background:#45748a!important;
+      color:#fff!important;
+      border:none!important;
+      padding:10px 20px!important;
+      font-size:14px;
+      border-radius:5px!important;
+    }
+    .return-button:hover { background:#365a6b!important; }
+    /* remove manual table-body scroll overrides */
+  </style>
 </head>
 <body>
 <?php include 'navbar.php'; ?>
-<div class="container mt-4">
-    <h3 class="title">Student Voting Status</h3>
-    <form method="GET" class="form-section">
-        <select name="year" class="dropdown-select" required>
-            <option value="" disabled selected>Select Year</option>
-            <?php foreach ($academicYears as $y): ?>
-                <option value="<?= $y['YearID'] ?>" <?= ($_GET['year'] ?? '') == $y['YearID'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($y['Academic_year']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <select name="category" class="dropdown-select" required>
-            <option value="" disabled selected>Select Category</option>
-            <?php foreach ($categories as $c): ?>
-                <option value="<?= $c['CategoryID'] ?>" <?= ($_GET['category'] ?? '') == $c['CategoryID'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($c['CategoryDescription']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <button type="submit" class="btn btn-custom"><i class="fa fa-eye"></i> View Students</button>
-    </form>
 
-    <?php if (!empty($students)): ?>
+<div class="container mt-4">
+  <h3 class="title">Student Voting Status</h3>
+  <form method="get" class="form-section">
+    <select name="year" class="dropdown-select" required>
+      <option value="" disabled <?= empty($_GET['year'])?'selected':'' ?>>Select Academic Year</option>
+      <?php foreach($academicYears as $y): ?>
+        <option value="<?= $y['YearID']?>" <?= (isset($_GET['year'])&&$_GET['year']==$y['YearID'])?'selected':''?>>
+          <?= htmlspecialchars($y['Academic_year'])?>
+        </option>
+      <?php endforeach; ?>
+    </select>
+    <button type="submit" class="btn-custom">
+      <i class="fa fa-eye"></i> View Students
+    </button>
+  </form>
+
+  <?php if(!empty($_GET['year'])): ?>
     <ul class="nav nav-tabs" id="voteTabs" role="tablist">
-        <li class="nav-item">
-            <button class="nav-link active" id="voted-tab" data-bs-toggle="tab" data-bs-target="#voted">Voted Students</button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="not-voted-tab" data-bs-toggle="tab" data-bs-target="#notVoted">Not Voted Students</button>
-        </li>
+      <li class="nav-item">
+        <button class="nav-link active" id="voted-tab"
+                data-bs-toggle="tab" data-bs-target="#voted"
+                type="button" role="tab">Voted Students
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="not-voted-tab"
+                data-bs-toggle="tab" data-bs-target="#notVoted"
+                type="button" role="tab">Not Voted Students
+        </button>
+      </li>
     </ul>
 
     <div class="tab-content mt-3">
-        <div class="tab-pane fade show active" id="voted">
-            <table id="votedTable" class="table table-striped" style="width:100%"></table>
+      <div class="tab-pane fade show active" id="voted" role="tabpanel">
+        <table id="votedTable" class="display nowrap" style="width:100%"></table>
+      </div>
+      <div class="tab-pane fade" id="notVoted" role="tabpanel">
+        <table id="notVotedTable" class="display nowrap" style="width:100%"></table>
+        <div class="mt-3 text-end">
+          <button id="notifyBtn" class="btn-custom d-none">
+            <i class="fa fa-envelope"></i> Notify Students
+          </button>
         </div>
-        <div class="tab-pane fade" id="notVoted">
-            <table id="notVotedTable" class="table table-striped" style="width:100%"></table>
-        </div>
+      </div>
     </div>
-
-    <div class="mt-3 text-end">
-        <button id="notifyBtn" class="btn btn-custom d-none">Notify Students</button>
-    </div>
-    <?php endif; ?>
+  <?php endif; ?>
 </div>
 
 <div class="action-container">
-    <button class="return-button" onclick="window.location.href='reportPage.php'">
-        <i class="fa fa-arrow-left"></i> Return to Reports Page
-    </button>
+  <button class="return-button" onclick="location.href='reportPage.php'">
+    <i class="fa fa-arrow-left"></i> Return to Reports Page
+  </button>
 </div>
 
-<!-- Scripts -->
+<!-- JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <script>
-const votedData = <?= json_encode($votedStudents) ?>;
+const votedData    = <?= json_encode($votedStudents) ?>;
 const notVotedData = <?= json_encode($notVotedStudents) ?>;
-const category = <?= json_encode($_GET['category'] ?? '') ?>;
+const yearLabel    = <?= json_encode($yearLabel) ?> || 'Year';
 
-$(document).ready(function() {
-    $('#votedTable').DataTable({
-        data: votedData,
-        columns: [
-            { title: "Student ID", data: "StudentID" },
-            { title: "Name", data: "StudentFullName" },
-            { title: "Email", data: "Mail" },
-            { title: "Username", data: "SuNET_Username" },
-            { title: "GPA", data: "CGPA" }
-        ],
-        dom: 'Bfrtip',
-        buttons: ['excel'],
-    });
+$(function(){
+  const cols = [
+    { title:"Student ID",   data:"StudentID"   },
+    { title:"Name",         data:"StudentFullName" },
+    { title:"Email",        data:"Email"       },
+    { title:"Username",     data:"Username"    },
+    { title:"GPA",          data:"GPA"         },
+    { title:"Categories",   data:"Categories"  }
+  ];
 
-    $('#notVotedTable').DataTable({
-        data: notVotedData,
-        columns: [
-            { title: "Student ID", data: "StudentID" },
-            { title: "Name", data: "StudentFullName" },
-            { title: "Email", data: "Mail" },
-            { title: "Username", data: "SuNET_Username" },
-            { title: "GPA", data: "CGPA" }
-        ],
-        dom: 'Bfrtip',
-        buttons: ['excel'],
-    });
+  $('#votedTable').DataTable({
+    data: votedData,
+    columns: cols,
+    dom: 'Bfrtip',
+    buttons: [{
+      extend:'excelHtml5',
+      text:'Export Excel',
+      className:'btn-custom',
+      filename:`Voted_${yearLabel}`
+    }],
+    scrollY:'50vh',
+    scrollX:true,
+    scrollCollapse:true,
+    paging:false
+  });
 
-    $('#voteTabs button').on('shown.bs.tab', function (event) {
-        $('#notifyBtn').toggleClass('d-none', event.target.id !== 'not-voted-tab');
-    });
+  $('#notVotedTable').DataTable({
+    data: notVotedData,
+    columns: cols,
+    dom: 'Bfrtip',
+    buttons: [{
+      extend:'excelHtml5',
+      text:'Export Excel',
+      className:'btn-custom',
+      filename:`NotVoted_${yearLabel}`
+    }],
+    scrollY:'50vh',
+    scrollX:true,
+    scrollCollapse:true,
+    paging:false
+  });
 
-    $('#notifyBtn').click(async function () {
-        if (notVotedData.length === 0) return alert('No students to notify.');
+  $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e){
+    $('#notifyBtn').toggleClass('d-none', e.target.id!=='not-voted-tab');
+  });
 
-        const confirmed = confirm(`Notify ${notVotedData.length} students who have not voted?`);
-        if (!confirmed) return;
-
-        const response = await fetch('notifyStudents.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ students: notVotedData, category: category })
-        });
-
-        const result = await response.json();
-        alert(`Notification result: ${result.sent} sent, ${result.failed.length} failed.`);
-    });
+  $('#notifyBtn').on('click', async function(){
+    if (!notVotedData.length) return alert('No students to notify.');
+    if (!confirm(`Send notification to ${notVotedData.length} students?`)) return;
+    try {
+      const res = await fetch('notifyStudents.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ students:notVotedData, year:Number(<?= json_encode($_GET['year'] ?? 0) ?>) })
+      });
+      const o = await res.json();
+      if (res.ok) {
+        alert(`Sent: ${o.sent}, Failed: ${o.failed.length}`);
+      } else {
+        alert(`Error: ${o.error||'Unknown'}`);
+      }
+    } catch(err){
+      console.error(err);
+      alert('Notification request failed.');
+    }
+  });
 });
 </script>
 </body>

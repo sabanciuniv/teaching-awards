@@ -104,6 +104,7 @@ SQL
       background: #f9f9f9;
       padding: 2rem 0;
       overflow-x: hidden;
+      overflow-y: auto;
     }
     .container {
       max-width: 800px;
