@@ -2,11 +2,12 @@
 session_start();
 require_once 'api/authMiddleware.php';
 
-
+/*
 if (isset($_SESSION['impersonated_user']) && $_SESSION['impersonating'] === true) {
     header("Location: index.php"); // Redirect to the homepage or any other page
     exit();
 }
+*/
 
 // If the user is not logged in, redirect to the login page
 if (!isset($_SESSION['user'])) {
@@ -18,8 +19,14 @@ if (!isset($_SESSION['user'])) {
 require_once 'database/dbConnection.php';
 
 // Fetch the username from session
-$username = $_SESSION['user'];
-$user = $_SESSION['user'];
+// Determine if impersonation is active
+if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true && isset($_SESSION['impersonated_user'])) {
+    $username = $_SESSION['impersonated_user']; // use impersonated user
+} else {
+    $username = $_SESSION['user'];
+}
+$user = $username;
+
 
 // Default role 
 $role = null;
