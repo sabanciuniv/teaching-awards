@@ -83,7 +83,7 @@ try {
 // -----
 // 
 try {
-    // First, try fetching from Student_Table
+    // Try fetching from Student_Table
     $stmtStudent = $pdo->prepare("SELECT StudentFullName FROM Student_Table WHERE SuNET_Username = :username LIMIT 1");
     $stmtStudent->execute([':username' => $user]);
     $rowStudent = $stmtStudent->fetch(PDO::FETCH_ASSOC);
@@ -91,7 +91,7 @@ try {
     if ($rowStudent) {
         $_SESSION['full_name'] = $rowStudent['StudentFullName'];
     } else {
-        // If not found in Student_Table, try Admin_Table
+        // Try Admin_Table
         $stmtAdmin = $pdo->prepare("SELECT Name FROM Admin_Table WHERE AdminSuUsername = :username LIMIT 1");
         $stmtAdmin->execute([':username' => $user]);
         $rowAdmin = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
@@ -99,13 +99,15 @@ try {
         if ($rowAdmin) {
             $_SESSION['full_name'] = $rowAdmin['Name'];
         } else {
-            $_SESSION['full_name'] = 'Unknown';
+            // For candidates, just use the username from CAS ---> they dont have usernames in database
+            $_SESSION['full_name'] = $user;
         }
     }
 } catch (PDOException $e) {
-    $_SESSION['full_name'] = 'Unknown';
+    $_SESSION['full_name'] = $user; // fallback to username if there's an error
     error_log("Failed to fetch full name: " . $e->getMessage());
 }
+
 
 
 // -----------------------
