@@ -1,108 +1,226 @@
 <?php
+// mailPage.php
+
 session_start();
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
 
-// -------------
-//  API: Update a template via AJAX
-// -------------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' 
+// PHPMailer
+require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/PHPMailer/src/Exception.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// ----------------------------------------------------------------
+// A) AJAX: Save template edits
+// ----------------------------------------------------------------
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_GET['action']) && $_GET['action'] === 'saveTemplate'
     && isset($_POST['templateID'], $_POST['MailType'], $_POST['MailHeader'], $_POST['MailBody'])
-    && isset($_GET['action']) && $_GET['action']==='saveTemplate'
 ) {
     header('Content-Type: application/json; charset=utf-8');
-    $id     = (int)$_POST['templateID'];
-    $type   = trim($_POST['MailType']);
-    $header = trim($_POST['MailHeader']);
-    $body   = $_POST['MailBody'];
 
-    if (!$id || $type==='' || $header==='') {
-        echo json_encode(['success'=>false,'error'=>'Missing fields.']);
+    $id   = (int) $_POST['templateID'];
+    $hdr  = trim($_POST['MailHeader']);
+    $body = $_POST['MailBody'];
+
+    if (!$id || $hdr === '') {
+        echo json_encode(['success' => false, 'error' => 'Missing fields']);
         exit;
     }
+
     try {
         $stmt = $pdo->prepare("
-          UPDATE MailTemplate_Table
-             SET MailType   = :type,
-                 MailHeader = :hdr,
-                 MailBody   = :body
-           WHERE TemplateID = :id
+            UPDATE MailTemplate_Table
+               SET MailHeader = :hdr,
+                   MailBody   = :body
+             WHERE TemplateID = :id
         ");
         $stmt->execute([
-            ':type' => $type,
-            ':hdr'  => $header,
+            ':hdr'  => $hdr,
             ':body' => $body,
             ':id'   => $id
         ]);
-        echo json_encode(['success'=>true]);
-    } catch(PDOException $e){
-        echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
     exit;
 }
 
-// -------------
-//  Access control
-// -------------
+// ----------------------------------------------------------------
+// B) AJAX: Send Opening Mail
+// ----------------------------------------------------------------
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_GET['action']) && $_GET['action'] === 'sendOpeningMail'
+) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    // 1) Current academic year
+    $ay = $pdo->query("
+        SELECT YearID 
+          FROM AcademicYear_Table 
+         ORDER BY Start_date_time DESC 
+         LIMIT 1
+    ")->fetchColumn();
+    if (!$ay) {
+        http_response_code(500);
+        echo json_encode(['error' => 'No academic year found']);
+        exit;
+    }
+
+    // 2) Students
+    $stm = $pdo->prepare("
+        SELECT id, StudentFullName, Mail 
+          FROM Student_Table 
+         WHERE YearID = :y
+    ");
+    $stm->execute([':y' => $ay]);
+    $students = $stm->fetchAll(PDO::FETCH_ASSOC);
+    $total    = count($students);
+
+    // 3) OpeningMail template
+    $t = $pdo->prepare("
+        SELECT TemplateID, MailHeader, MailBody 
+          FROM MailTemplate_Table 
+         WHERE MailType = 'OpeningMail'
+         LIMIT 1
+    ");
+    $t->execute();
+    $tpl = $t->fetch(PDO::FETCH_ASSOC);
+    if (!$tpl) {
+        http_response_code(404);
+        echo json_encode(['error' => "No 'OpeningMail' template found"]);
+        exit;
+    }
+
+    // 4) PHPMailer setup
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host           = 'smtp.gmail.com';
+        $mail->SMTPAuth       = true;
+        $mail->Username       = 'ens492odul@gmail.com';
+        $mail->Password       = 'aycmatyxmxhphsvh';
+        $mail->SMTPSecure     = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port           = 587;
+        $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
+        $mail->SMTPKeepAlive  = true;
+        $mail->isHTML(true);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'SMTP init failed: '.$e->getMessage()]);
+        exit;
+    }
+
+    // 5) Send loop & log
+    $sent   = 0;
+    $failed = [];
+    foreach ($students as $stu) {
+        $addr = $stu['Mail'];
+        if (!filter_var($addr, FILTER_VALIDATE_EMAIL)) {
+            $failed[] = ['email' => $addr, 'reason' => 'Invalid email'];
+            continue;
+        }
+        try {
+            $mail->clearAddresses();
+            $mail->addAddress($addr, $stu['StudentFullName']);
+            $mail->Subject = $tpl['MailHeader'];
+
+            $body = str_replace(
+                ['{studentName}','{year}'],
+                [$stu['StudentFullName'], date('Y')],
+                $tpl['MailBody']
+            );
+            $mail->Body    = $body;
+            $mail->AltBody = strip_tags($body);
+            $mail->send();
+            $sent++;
+
+            // log entry
+            $l = $pdo->prepare("
+                INSERT INTO MailLog_Table
+                    (Sender, StudentEmail, StudentName, TemplateID, MailContent)
+                VALUES
+                    (:s, :e, :n, :tid, :c)
+            ");
+            $l->execute([
+                ':s'   => $_SESSION['user'],
+                ':e'   => $addr,
+                ':n'   => $stu['StudentFullName'],
+                ':tid' => $tpl['TemplateID'],
+                ':c'   => $body
+            ]);
+
+        } catch (Exception $e) {
+            $failed[] = ['email' => $addr, 'reason' => $e->getMessage()];
+        }
+    }
+    $mail->smtpClose();
+
+    echo json_encode(['sent' => $sent, 'total' => $total, 'failed' => $failed]);
+    exit;
+}
+
+// ----------------------------------------------------------------
+// C) Normal page
+// ----------------------------------------------------------------
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit;
 }
-$user = $_SESSION['user'];
 try {
     $adm = $pdo->prepare("
-      SELECT 1 
-        FROM Admin_Table 
-       WHERE AdminSuUsername = :u 
-         AND checkRole <> 'Removed' 
-         AND Role IN ('IT_Admin','Admin')
-       LIMIT 1
+        SELECT 1 
+          FROM Admin_Table 
+         WHERE AdminSuUsername = :u
+           AND checkRole <> 'Removed'
+           AND Role IN ('IT_Admin','Admin')
+         LIMIT 1
     ");
-    $adm->execute([':u'=>$user]);
+    $adm->execute([':u' => $_SESSION['user']]);
     if (!$adm->fetch()) {
         header("Location: index.php");
         exit;
     }
-} catch(PDOException $e){
+} catch (Exception $e) {
     die("Admin check failed: ".$e->getMessage());
 }
 
-// -------------
-//  Fetch templates
-// -------------
+// fetch templates
 $mailTemplates = $pdo
-  ->query("SELECT TemplateID, MailType, MailHeader, MailBody FROM MailTemplate_Table ORDER BY TemplateID")
-  ->fetchAll(PDO::FETCH_ASSOC);
+    ->query("SELECT TemplateID, MailType, MailHeader, MailBody FROM MailTemplate_Table ORDER BY TemplateID")
+    ->fetchAll(PDO::FETCH_ASSOC);
 
-// -------------
-//  Fetch mail‐log joined to template
-// -------------
+// fetch log (most recent first)
 $mailLogs = $pdo
-  ->query(<<<'SQL'
-    SELECT 
-      l.LogID,
-      l.Sender,
-      l.StudentEmail,
-      l.StudentName,
-      t.MailType,
-      t.MailHeader,
-      l.MailContent AS MailBody,
-      l.SentTime
-    FROM MailLog_Table AS l
-    LEFT JOIN MailTemplate_Table AS t 
-      ON l.TemplateID = t.TemplateID
-    ORDER BY l.SentTime DESC
-  SQL
-  )
-  ->fetchAll(PDO::FETCH_ASSOC);
-?>
-
-<!DOCTYPE html>
+    ->query(<<<'SQL'
+        SELECT 
+          l.LogID,
+          l.Sender,
+          l.StudentEmail,
+          l.StudentName,
+          t.MailType,
+          t.MailHeader,
+          l.MailContent AS MailBody,
+          l.SentTime
+        FROM MailLog_Table l
+        LEFT JOIN MailTemplate_Table t
+          ON l.TemplateID = t.TemplateID
+        ORDER BY l.SentTime DESC
+    SQL
+    )
+    ->fetchAll(PDO::FETCH_ASSOC);
+?><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Mail Templates &amp; Log</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- CSS -->
   <link href="assets/css/bootstrap.min.css"           rel="stylesheet">
   <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
   <link href="assets/css/components.min.css"          rel="stylesheet">
@@ -113,19 +231,23 @@ $mailLogs = $pdo
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
   <style>
-    body { background:#f9f9f9; padding-top:70px; overflow:auto;}
-    .container { max-width:90%; margin:auto;}
-    .title { text-align:center; font-size:1.5rem; margin-bottom:1rem;}
+    body { background:#f9f9f9; padding-top:70px; overflow:auto; }
+    .container{ max-width:90%; margin:auto; }
+    .title { text-align:center; font-size:1.5rem; margin-bottom:1rem; }
     .btn-custom {
       background:#45748a!important; color:#fff!important; border:none!important;
       padding:.5rem 1rem; border-radius:4px; cursor:pointer;
     }
     .btn-custom:hover { background:#365a6b!important; }
-    .action-container {
-      position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:8px;
-    }
     .close-modal-btn {
-      color:red; background:none; border:none; font-size:1.5rem; line-height:1; cursor:pointer;
+      color:red; background:none; border:none; font-size:1.5rem; cursor:pointer;
+    }
+    .action-container {
+      position:fixed; bottom:20px; right:20px;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    #sendOpeningBtn {
+      position: fixed; bottom: 20px; left: 20px; z-index: 1000;
     }
   </style>
 </head>
@@ -137,21 +259,21 @@ $mailLogs = $pdo
   <table id="templatesTable" class="table table-striped">
     <thead>
       <tr>
-        <th>Type</th>
         <th>Header</th>
         <th>Body</th>
         <th>Action</th>
       </tr>
     </thead>
     <tbody>
-      <?php foreach($mailTemplates as $t): ?>
-      <tr data-id="<?= $t['TemplateID'] ?>"
-          data-type="<?= htmlspecialchars($t['MailType'],ENT_QUOTES) ?>"
-          data-header="<?= htmlspecialchars($t['MailHeader'],ENT_QUOTES) ?>"
-          data-body="<?= htmlspecialchars($t['MailBody'],ENT_QUOTES) ?>">
-        <td><?= htmlspecialchars($t['MailType']) ?></td>
+      <?php foreach ($mailTemplates as $t): ?>
+      <tr
+        data-id="<?= $t['TemplateID'] ?>"
+        data-type="<?= htmlspecialchars($t['MailType'], ENT_QUOTES) ?>"
+        data-header="<?= htmlspecialchars($t['MailHeader'], ENT_QUOTES) ?>"
+        data-body="<?= htmlspecialchars($t['MailBody'], ENT_QUOTES) ?>"
+      >
         <td><?= htmlspecialchars($t['MailHeader']) ?></td>
-        <td class="body-cell"><?= htmlspecialchars(substr($t['MailBody'],0,60)) ?>…</td>
+        <td><?= htmlspecialchars(mb_strimwidth($t['MailBody'],0,60,'…')) ?></td>
         <td>
           <button class="btn btn-custom edit-btn">
             <i class="fa fa-edit"></i> Edit
@@ -165,38 +287,41 @@ $mailLogs = $pdo
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Mail Template</h5>
-        <button type="button" class="close-modal-btn" data-bs-dismiss="modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="editForm">
-          <input type="hidden" id="TemplateID" name="templateID">
-          <div class="mb-3">
-            <label for="MailType" class="form-label">Mail Type</label>
-            <input type="text" id="MailType" name="MailType" class="form-control">
-          </div>
-          <div class="mb-3">
-            <label for="MailHeader" class="form-label">Mail Header</label>
-            <input type="text" id="MailHeader" name="MailHeader" class="form-control">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Mail Body</label>
-            <div id="MailBodyEditor" style="height:200px; background:#fff;"></div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button id="saveBtn" class="btn btn-custom">Save</button>
-      </div>
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Edit Mail Template</h5>
+      <button type="button" class="close-modal-btn" data-bs-dismiss="modal">&times;</button>
     </div>
-  </div>
+    <div class="modal-body">
+      <form id="editForm">
+        <input type="hidden" id="TemplateID" name="templateID">
+        <div class="mb-3">
+          <label class="form-label">Mail Type</label>
+          <input type="text" id="MailType" name="MailType" class="form-control" readonly>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mail Header</label>
+          <input type="text" id="MailHeader" name="MailHeader" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mail Body</label>
+          <div id="MailBodyEditor" style="height:200px;background:#fff;"></div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button id="saveBtn" class="btn btn-custom">Save</button>
+    </div>
+  </div></div>
 </div>
 
-<!-- Action Buttons -->
+<!-- Send Opening Mail (bottom-left) -->
+<button id="sendOpeningBtn" class="btn btn-custom">
+  <i class="fa fa-paper-plane"></i> Send Opening Mail
+</button>
+
+<!-- Action buttons (bottom-right) -->
 <div class="action-container">
   <button class="btn btn-custom" id="viewLogBtn">
     <i class="fa fa-list"></i> View Mail Log
@@ -206,34 +331,24 @@ $mailLogs = $pdo
   </button>
 </div>
 
-<!-- Mail Log Modal -->
-<div class="modal fade" id="logModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Mail Log</h5>
-        <button class="close-modal-btn" data-bs-dismiss="modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <table id="logTable" class="table table-striped" style="width:100%">
-          <thead>
-            <tr>
-              <th>LogID</th>
-              <th>Sender</th>
-              <th>StudentEmail</th>
-              <th>StudentName</th>
-              <th>MailType</th>
-              <th>MailHeader</th>
-              <th>MailBody</th>
-              <th>SentTime</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
+<!-- Log Modal -->
+<div class="modal fade" id="logModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Mail Log</h5>
+    <button class="close-modal-btn" data-bs-dismiss="modal">&times;</button>
   </div>
-</div>
+  <div class="modal-body">
+    <table id="logTable" class="table table-striped" style="width:100%">
+      <thead>
+        <tr>
+          <th>LogID</th><th>Sender</th><th>StudentEmail</th><th>StudentName</th>
+          <th>MailType</th><th>MailHeader</th><th>MailBody</th><th>SentTime</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div></div></div>
 
 <!-- JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -245,71 +360,79 @@ $mailLogs = $pdo
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
-let quill = new Quill('#MailBodyEditor',{ theme:'snow' });
+  // Quill editor
+  let quill = new Quill('#MailBodyEditor',{ theme: 'snow' });
 
-// Templates grid
-$('#templatesTable').DataTable({
-  dom:'Bfrtip',
-  buttons:[{
-    extend:'excelHtml5',
-    title:'MailTemplates',
-    className:'btn btn-custom'
-  }]
-});
-
-// When “Edit” clicked
-$('.edit-btn').on('click',function(){
-  let $tr = $(this).closest('tr');
-  $('#TemplateID').val( $tr.data('id') );
-  $('#MailType').val( $tr.data('type') );
-  $('#MailHeader').val( $tr.data('header') );
-  quill.root.innerHTML = $tr.data('body');
-  new bootstrap.Modal($('#editModal')).show();
-});
-
-// Save AJAX
-$('#saveBtn').on('click',()=>{
-  let data = {
-    templateID: $('#TemplateID').val(),
-    MailType:   $('#MailType').val(),
-    MailHeader: $('#MailHeader').val(),
-    MailBody:   quill.root.innerHTML
-  };
-  $.post('?action=saveTemplate', data, function(res){
-    if(res.success){
-      alert('Saved!');
-      location.reload();
-    } else {
-      alert('Error: '+res.error);
-    }
-  },'json');
-});
-
-// Mail Log
-const logs = <?= json_encode($mailLogs) ?>;
-$('#viewLogBtn').on('click',()=>{
-  let dt = $('#logTable').DataTable({
-    data: logs,
-    destroy:true,
-    dom:'Bfrtip',
-    buttons:[{
-      extend:'excelHtml5',
-      title:'MailLog',
-      className:'btn btn-custom'
-    }],
-    columns:[
-      {data:'LogID'},
-      {data:'Sender'},
-      {data:'StudentEmail'},
-      {data:'StudentName'},
-      {data:'MailType'},
-      {data:'MailHeader'},
-      {data:'MailBody'},
-      {data:'SentTime'}
-    ]
+  // Templates table
+  $('#templatesTable').DataTable({
+    dom: 'Bfrtip',
+    buttons: [{
+      extend: 'excelHtml5',
+      title: 'MailTemplates',
+      className: 'btn btn-custom'
+    }]
   });
-  new bootstrap.Modal($('#logModal')).show();
-});
+
+  // Edit button
+  $('.edit-btn').click(function(){
+    let tr = $(this).closest('tr');
+    $('#TemplateID').val(tr.data('id'));
+    $('#MailType').val(tr.data('type'));
+    $('#MailHeader').val(tr.data('header'));
+    quill.root.innerHTML = tr.data('body');
+    new bootstrap.Modal($('#editModal')).show();
+  });
+
+  // Save edits
+  $('#saveBtn').click(function(){
+    $.post('?action=saveTemplate', {
+      templateID: $('#TemplateID').val(),
+      MailType:   $('#MailType').val(),
+      MailHeader: $('#MailHeader').val(),
+      MailBody:   quill.root.innerHTML
+    }, function(res){
+      if(res.success) location.reload();
+      else alert('Error: '+res.error);
+    }, 'json');
+  });
+
+  // Send Opening Mail
+  $('#sendOpeningBtn').click(async function(){
+    const resp = await fetch('mailPage.php?action=sendOpeningMail',{ method:'POST' });
+    const result = await resp.json();
+    if(resp.ok){
+      alert(`Sent ${result.sent}/${result.total}\nFailed: ${result.failed.length}`);
+    } else {
+      alert(`Error: ${result.error||resp.statusText}`);
+    }
+  });
+
+  // View Mail Log
+  const logs = <?= json_encode($mailLogs) ?>;
+  $('#viewLogBtn').click(function(){
+    $('#logTable').DataTable({
+      data: logs,
+      destroy: true,
+      order: [[7, 'desc']],
+      dom: 'Bfrtip',
+      buttons: [{
+        extend: 'excelHtml5',
+        title: 'MailLog',
+        className: 'btn btn-custom'
+      }],
+      columns: [
+        { data:'LogID' },
+        { data:'Sender' },
+        { data:'StudentEmail' },
+        { data:'StudentName' },
+        { data:'MailType' },
+        { data:'MailHeader' },
+        { data:'MailBody' },
+        { data:'SentTime' }
+      ]
+    });
+    new bootstrap.Modal($('#logModal')).show();
+  });
 </script>
 </body>
 </html>
