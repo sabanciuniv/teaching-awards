@@ -1,5 +1,6 @@
 <?php
 require_once '../database/dbConnection.php';
+require_once 'commonFunc.php';
 
 header('Content-Type: application/json');
 
@@ -11,14 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    try {
-        $stmt = $pdo->prepare("DELETE FROM Exception_Table WHERE CandidateID = :candidateID");
-        $stmt->execute(['candidateID' => $candidateID]);
-
-        echo json_encode(['success' => true]);
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-    }
+    $result = deleteExcludedCandidate($pdo, (int)$candidateID);
+    echo json_encode($result);
 } else {
     echo json_encode(['success' => false, 'error' => 'Invalid request']);
 }

@@ -985,32 +985,22 @@
       }
       
       syncButton.on("click", function () {
-        //const syncButton = $(this);
-        syncButton.prop("disabled", true); // Disable button during sync
-        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...'); // Show loading animation
+        syncButton.prop("disabled", true);
+        syncButton.html('<i class="fa-solid fa-sync fa-spin"></i> Synchronizing...');
 
-        $.ajax({
-            url: "api/synchronizeAll.php", // The PHP script that runs the sync
-            method: "POST",
-            dataType: "json",
-            success: function (response) {
-                if (response.success) {                    
-                    // Instead of reloading, update table dynamically
-                    location.reload();
-                } else {
-                    alert("Error: " + response.message);
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error("Synchronization error:", error);
-                alert(`An error occurred during synchronization: ${xhr.responseText}`);
-            },
-            complete: function () {
-                syncButton.prop("disabled", false); // Re-enable button
-                syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync'); // Restore original text
+        $.post("api/synchronizeFunc.php", { syncAll: "true" }, function (response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert("Error: " + response.message);
             }
+        }).fail(function (xhr) {
+            alert("AJAX error: " + xhr.responseText);
+        }).always(function () {
+            syncButton.prop("disabled", false);
+            syncButton.html('<i class="fa-solid fa-sync"></i> Data Sync');
         });
-    });
+      });
     });
  
  

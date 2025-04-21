@@ -8,7 +8,7 @@ $cas_service_url = getenv('CAS_SERVICE_URL') ?: $app_base_url;
 phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 session_start();
 
-// ✅ Only set `$_SESSION['user']` from cookie if not impersonating
+// Only set `$_SESSION['user']` from cookie if not impersonating
 if (!isset($_SESSION['impersonating']) || $_SESSION['impersonating'] !== true) {
     if (!isset($_SESSION['user']) && isset($_COOKIE['username'])) {
         $_SESSION['user'] = $_COOKIE['username'];
