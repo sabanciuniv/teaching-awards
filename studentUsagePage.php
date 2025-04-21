@@ -269,7 +269,14 @@ $(function(){
   });
 
   $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e){
-    $('#notifyBtn').toggleClass('d-none', e.target.id!=='not-voted-tab');
+    $('#notifyBtn').toggleClass('d-none', e.target.id !== 'not-voted-tab');
+
+    // Fix alignment on tab change
+    if (e.target.id === 'not-voted-tab') {
+      $('#notVotedTable').DataTable().columns.adjust().draw();
+    } else if (e.target.id === 'voted-tab') {
+      $('#votedTable').DataTable().columns.adjust().draw();
+    }
   });
 
   $('#notifyBtn').on('click', async function(){
