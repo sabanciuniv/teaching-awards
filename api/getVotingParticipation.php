@@ -11,7 +11,7 @@ if (!$selectedYear || !is_numeric($selectedYear)) {
 }
 
 try {
-    error_log("🔍 Debug: Selected Year from Frontend: " . json_encode($selectedYear));
+    error_log("Debug: Selected Year from Frontend: " . json_encode($selectedYear));
 
     // Ensure correct YearID
     $stmtYearID = $pdo->prepare("SELECT YearID FROM AcademicYear_Table WHERE YearID = :selectedYear LIMIT 1");
