@@ -97,6 +97,8 @@ if (!empty($_GET['year'])) {
   <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
     body {
       background:#f9f9f9;
@@ -158,7 +160,7 @@ if (!empty($_GET['year'])) {
   </style>
 </head>
 <body>
-<?php include 'navbar.php'; ?>
+<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
 <div class="container mt-4">
   <h3 class="title">Student Voting Status</h3>

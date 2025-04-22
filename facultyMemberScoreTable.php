@@ -244,7 +244,7 @@ try {
 </head>
 <body>
 
-<?php include 'navbar.php'; ?>
+<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
 <div class="container">
     <div class="title">All Faculty Scores by Category &amp; Year</div>

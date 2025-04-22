@@ -159,7 +159,7 @@ try {
 
 </head>
 <body>
-<?php include 'navbar.php'; ?>
+<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
 <div class="container">
     <div class="title">Voting Participation by Year</h2>
