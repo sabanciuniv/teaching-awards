@@ -5,30 +5,21 @@ require_once __DIR__ . '/../database/dbConnection.php';
 header('Content-Type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
+require_once '../commonFunc.php';
 
 
 try {
-    // Get the current academic year ID from session or database
+    // Get the current academic year ID from the common Func
     if (!isset($_SESSION['academic_year_id'])) {
-        // Fetch the latest academic year if not stored in session
-        $stmtAcademicYear = $pdo->prepare("
-            SELECT YearID 
-            FROM AcademicYear_Table 
-            ORDER BY Start_date_time DESC 
-            LIMIT 1
-        ");
-        $stmtAcademicYear->execute();
-        $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
-
-        if ($academicYear) {
-            $_SESSION['academic_year_id'] = $academicYear['YearID'];
+        $yearID = getCurrentAcademicYearID($pdo);
+        if ($yearID) {
+            $_SESSION['academic_year_id'] = $yearID;
         } else {
             echo json_encode(['status' => 'error', 'message' => 'No academic year found']);
             exit();
         }
     }
-
+    
     $currentYearID = $_SESSION['academic_year_id'];
 
     // Fetch all candidates for the current academic year

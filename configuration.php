@@ -2,7 +2,8 @@
  session_start();
  require_once 'api/authMiddleware.php';  
  require_once 'database/dbConnection.php';
- 
+ require_once 'api/commonFunc.php';
+
  // If not logged in, redirect 
  if (!isset($_SESSION['user'])) {
      header("Location: login.php");
@@ -15,6 +16,24 @@
  
  $username = $_SESSION['user'];  // Current user
  $user = $_SESSION['user'];
+
+ 
+ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidateID'], $_POST['action'])) {
+  $candidateID = intval($_POST['candidateID']);
+  $username = $_SESSION['user'] ?? 'system';
+
+  if ($_POST['action'] === 'exclude') {
+      $result = addExcludedCandidate($pdo, $candidateID, $username);
+  } elseif ($_POST['action'] === 'unexclude') {
+      $result = deleteExcludedCandidate($pdo, $candidateID);
+  } else {
+      $result = ['success' => false, 'error' => 'Invalid action.'];
+  }
+
+  echo json_encode($result);
+  exit;
+}
+
  
  // Fetch academic years
  try {
@@ -705,46 +724,31 @@
                    alert("An error occurred while updating the status.");
                }
            });
- 
-           // If new status is "İşten ayrıldı", add candidate to Exception_Table
-             if (newStatus === "İşten ayrıldı") {
-               $.ajax({
-                   url: "api/add_excluded_candidate.php",
-                   method: "POST",
-                   data: { candidateID: candidateID },
-                   dataType: "json",
-                   success: function (response) {
-                       if (!response.success) {
-                           alert("Error excluding candidate: " + response.error);
-                           // Revert UI if error occurs
-                           button.removeClass(newClass).addClass("btn-success").text("On");
-                           button.data("status", "Etkin");
-                       }
-                   },
-                   error: function (xhr, status, error) {
-                       console.error("Error excluding candidate:", error);
-                       alert("An error occurred while excluding the candidate.");
-                       // Revert UI
-                       button.removeClass(newClass).addClass("btn-success").text("On");
-                       button.data("status", "Etkin");
-                   }
-               });
-             }else{
-               $.ajax({
-                 url: "api/delete_excluded_candidate.php",
-                 method: "POST",
-                 data: { candidateID: candidateID },
-                 dataType: "json",
-                 success: function (response) {
-                     if (!response.success) {
-                         alert("Error removing from exception: " + response.error);
-                     }
-                 },
-                 error: function () {
-                     alert("An error occurred while removing the candidate from exclusion list.");
-                 }
-               });
-             }
+           $.ajax({
+            url: "configuration.php",  // Point to the same file
+            method: "POST",
+            data: {
+                candidateID: candidateID,
+                action: newStatus === "İşten ayrıldı" ? "exclude" : "unexclude"
+            },
+            dataType: "json",
+            success: function (response) {
+                if (!response.success) {
+                    alert("Error updating candidate exclusion: " + response.error);
+                    // Revert UI if error occurs
+                    button.removeClass(newClass).addClass(currentStatus === "Etkin" ? "btn-success" : "btn-danger");
+                    button.text(currentStatus === "Etkin" ? "On" : "Off");
+                    button.data("status", currentStatus);
+                }
+            },
+            error: function () {
+                alert("An error occurred while processing the candidate exclusion.");
+                // Revert UI
+                button.removeClass(newClass).addClass(currentStatus === "Etkin" ? "btn-success" : "btn-danger");
+                button.text(currentStatus === "Etkin" ? "On" : "Off");
+                button.data("status", currentStatus);
+            }
+           });
          });
      }
  
