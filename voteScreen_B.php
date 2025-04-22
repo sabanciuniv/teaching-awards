@@ -280,7 +280,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
           const courseDiv = document.getElementById(`course-history-${index}`);
           if (courseData.status === "success" && courseData.data.length > 0) {
             const courseList = courseData.data.map(c =>
-              `${c.Subject_Code || ''} ${c.Course_Number || ''} (${c.Term})`
+              `${c.Subject_Code || ''} ${c.Course_Number || ''}`
             ).join("<br>");
             courseDiv.innerHTML = `<strong>Courses:</strong><br>${courseList}`;
           } else {
