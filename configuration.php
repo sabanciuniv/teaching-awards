@@ -17,76 +17,27 @@
  $username = $_SESSION['user'];  // Current user
  $user = $_SESSION['user'];
 
+ handleCandidateExclusion($pdo);
+
  
- if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidateID'], $_POST['action'])) {
-  $candidateID = intval($_POST['candidateID']);
-  $username = $_SESSION['user'] ?? 'system';
+ try {
+  $currentYear = fetchCurrentAcademicYear($pdo);
+  $currentYearID = $currentYear['YearID'];
+  $currentAcademicYear = $currentYear['Academic_year'];
+  $startDate = $currentYear['Start_date_time'];
+  $endDate = $currentYear['End_date_time'];
 
-  if ($_POST['action'] === 'exclude') {
-      $result = addExcludedCandidate($pdo, $candidateID, $username);
-  } elseif ($_POST['action'] === 'unexclude') {
-      $result = deleteExcludedCandidate($pdo, $candidateID);
-  } else {
-      $result = ['success' => false, 'error' => 'Invalid action.'];
+  $candidates = getCandidatesForYear($pdo, $currentYearID);
+  $students = getStudentsForYear($pdo, $currentYearID);
+
+  if (!checkIfUserIsAdmin($pdo, $user)) {
+      header("Location: index.php");
+      exit();
   }
-
-  echo json_encode($result);
-  exit;
+} catch (Exception $e) {
+  die("Error: " . $e->getMessage());
 }
 
- 
- // Fetch academic years
- try {
-   $stmt = $pdo->query("SELECT YearID, Academic_year, Start_date_time, End_date_time 
-                        FROM AcademicYear_Table 
-                        ORDER BY Academic_year DESC LIMIT 1");
-   $currentYear = $stmt->fetch(PDO::FETCH_ASSOC);
- 
-   if (!$currentYear) {
-       throw new Exception("No academic year found.");
-   }
- } catch (PDOException $e) {
-   die("<strong style='color:red;'>SQL Error:</strong> " . $e->getMessage());
- }
- 
- $currentYearID = $currentYear['YearID'];  // Use this in the query
- $currentAcademicYear = $currentYear['Academic_year'];  // Display this in UI
- $startDate = $currentYear['Start_date_time'];
- $endDate = $currentYear['End_date_time'];
- 
- // Prepare SQL query using YearID (not Academic_year)
- $stmt = $pdo->prepare("
- SELECT c.id, c.SU_ID, c.Name, c.Mail, c.Role, c.Sync_Date, c.Status,
-       GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories,
-       GROUP_CONCAT(DISTINCT CONCAT(co.Subject_Code, ' ', co.Course_Number) SEPARATOR ', ') AS Courses
- FROM Candidate_Table c
- LEFT JOIN Candidate_Course_Relation cc ON c.id = cc.CandidateID
- LEFT JOIN Category_Table cat ON cc.CategoryID = cat.CategoryID
- LEFT JOIN Courses_Table co ON cc.CourseID = co.CourseID
- WHERE (cc.Academic_Year = :academicYear OR cc.Academic_Year IS NULL)
- GROUP BY c.id
- ORDER BY c.Name ASC;
- ");
- 
- 
- $stmt->bindParam(':academicYear', $currentYearID, PDO::PARAM_INT);
- $stmt->execute();
- $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
- 
- $stmtStudents = $pdo->prepare("
- SELECT s.*, 
-        GROUP_CONCAT(DISTINCT cat.CategoryCode SEPARATOR ', ') AS Categories
- FROM Student_Table s
- LEFT JOIN Student_Category_Relation scr ON s.id = scr.student_id
- LEFT JOIN Category_Table cat ON scr.categoryID = cat.CategoryID
- WHERE s.YearID = :yearID
- GROUP BY s.id
- ");
- 
- $stmtStudents->bindParam(':yearID', $currentYearID, PDO::PARAM_INT);
- $stmtStudents->execute();
- $students = $stmtStudents->fetchAll(PDO::FETCH_ASSOC);
- 
  // -------------------------
  // BEGIN: Admin Access Check
  // -------------------------
@@ -157,6 +108,22 @@
        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
        font-size: 14px;
      }
+
+     .btn-secondary {
+      background: #45748a !important;
+      color: #fff !important;
+      border: none !important;
+      padding: 10px 20px !important;
+      font-size: 14px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-secondary:hover {
+      background: #365a6b !important;
+    }
+
  
      html, body {
        margin: 0;
@@ -343,8 +310,8 @@
        <?php endif; ?>
  
  
-       <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white">
-           <h5 class="mb-0"><i class="fa-solid fa-user-times"></i> Excluded Candidates Table</h5>
+       <div class="card-header d-flex justify-content-between align-items-center bg-white text-dark">
+        <h5 class="mb-0"><i class="fa-solid fa-user-times"></i> Excluded Candidates Table</h5>
        </div>
  
  
@@ -369,7 +336,7 @@
             </div>
              <div class="table-responsive mt-3">
                <table class="table table-striped table-bordered">
-                 <thead class="table-dark">
+                 <thead>
                    <tr>
                      <th class="sortable" data-column="Name">Name</th>
                      <th class="sortable" data-column="Mail">Email</th>
@@ -404,7 +371,7 @@
 
             <!-- Invisible Export Table -->
             <table id="candidatesExportTable" class="table table-bordered d-none">
-              <thead class="table-dark">
+              <thead>
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
@@ -449,7 +416,7 @@
              </div>
              <div class="table-responsive">
              <table id="studentsExportTable" class="table table-striped table-bordered">
-               <thead class="table-dark">
+               <thead>
                  <tr>
                    <th class="sortable" data-column="StudentID">Student ID</th>
                    <th class="sortable" data-column="StudentFullName">Name</th>
@@ -479,7 +446,7 @@
          </div>
          <!--  Invisible Export Table for Students -->
          <table id="studentsExportHiddenTable" class="table table-bordered d-none">
-          <thead class="table-dark">
+          <thead>
             <tr>
               <th>Student ID</th>
               <th>Name</th>
@@ -530,7 +497,7 @@
             extend: 'excelHtml5',
             title: 'Students Table',
             text: 'Export Students to Excel',
-            className: 'btn btn-custom'
+            className: 'btn btn-secondary'
           }
         ],
         paging: false,
@@ -552,7 +519,7 @@
             extend: 'excelHtml5',
             title: 'Candidates Table',
             text: 'Export Candidates to Excel',
-            className: 'btn btn-custom'
+            className: 'btn btn-secondary'
           }
         ],
         paging: false,
@@ -1104,5 +1071,6 @@
  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
- 
+
+
  </body>

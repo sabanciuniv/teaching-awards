@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
 
 if (!isset($_SESSION['user'])) {
     // Redirect if the user is not logged in
@@ -57,10 +58,13 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
     }
 
     /* Instructor Card Styles */
-    .card {
+   /* Instructor Card Styles */
+  .card {
+      height: 300px; /* or any height that fits your content well */
+      width: 270px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
       text-align: center;
       border: 1px solid #ddd;
@@ -69,6 +73,17 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       background-color: #fff;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
+      margin: 10px;
+    }
+
+    .course-history-scroll {
+      max-height: 70px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
+      text-align: center;
+      padding: 0 10px;
+      margin-top: 5px;
     }
     .card img {
       width: 80px;
@@ -211,7 +226,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
     document.addEventListener("DOMContentLoaded", function () {
       const category = "<?= $category ?>";
       const term = "<?= isset($term) ? $term : '' ?>";
-      const apiUrl = `http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getInstructors.php?category=${category}&term=${term}`;
+      const apiUrl = `api/getInstructors.php?category=${category}&term=${term}`;
 
       fetch(apiUrl, { credentials: "include" })
         .then(response => response.json())
@@ -243,12 +258,12 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
 
       instructors.forEach((instructor, index) => {
       const cardHTML = `
-        <div class="col-md-3">
+        <div class="d-flex justify-content-center mb-4">
           <div class="card">
             <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
             <h6>${instructor.InstructorName || 'Unknown'}</h6>
             <div class="course-history-scroll">
-              <div id="course-history-${index}" class="text-muted" style="font-size: 0.9rem;">Loading past courses...</div>
+             <strong>Courses:</strong> ${instructor.Courses || 'No courses found'}
             </div>
 
 
@@ -272,28 +287,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
       `;
 
       container.innerHTML += cardHTML;
-
-      // Fetch and display course history for this instructor
-      fetch(`api/getInstructorCourses.php?instructorID=${instructor.InstructorID}`)
-        .then(res => res.json())
-        .then(courseData => {
-          const courseDiv = document.getElementById(`course-history-${index}`);
-          if (courseData.status === "success" && courseData.data.length > 0) {
-            const courseList = courseData.data.map(c =>
-              `${c.Subject_Code || ''} ${c.Course_Number || ''}`
-            ).join("<br>");
-            courseDiv.innerHTML = `<strong>Courses:</strong><br>${courseList}`;
-          } else {
-            courseDiv.innerHTML = "No recent courses found.";
-          }
-        })
-        .catch(err => {
-          const courseDiv = document.getElementById(`course-history-${index}`);
-          courseDiv.innerHTML = "Error loading courses.";
-          console.error("Error fetching instructor courses:", err);
-        });
-    });
-
+      });
 
       // Add event listeners for each dropdown rank option
       document.querySelectorAll('.rank-option').forEach(item => {

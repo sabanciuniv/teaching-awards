@@ -11,9 +11,9 @@ require_once '../commonFunc.php';
 try {
     // Get the current academic year ID from the common Func
     if (!isset($_SESSION['academic_year_id'])) {
-        $yearID = getCurrentAcademicYearID($pdo);
+        $yearID = fetchCurrentAcademicYear($pdo);
         if ($yearID) {
-            $_SESSION['academic_year_id'] = $yearID;
+            $_SESSION['academic_year_id'] = $year['YearID'];  // Store only the ID
         } else {
             echo json_encode(['status' => 'error', 'message' => 'No academic year found']);
             exit();
