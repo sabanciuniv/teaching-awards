@@ -311,7 +311,6 @@ SQL
         <img src="additionalImages/sabanciFoto1.jpg" class="category-img" alt="">
         <div class="category-info">
           <h4><?= htmlspecialchars($desc) ?></h4>
-          <small><?= $displayDate ?></small>
         </div>
         <div class="category-extra">
           <small>See Winners</small>
