@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 // Integrated removal API: if action=removeCandidate is provided in the URL and a POST winnerID exists, process removal and exit.
 if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['winnerID'])) {
     require_once __DIR__ . '/database/dbConnection.php';
@@ -25,11 +23,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate' && $_SERVER[
 // Include authentication middleware
 require_once 'api/authMiddleware.php';
 
-// Redirect if not logged in
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+require_once 'api/commonFunc.php';//for login  check of user
+init_session();
 
 require_once __DIR__ . '/database/dbConnection.php';
 $user = $_SESSION['user'];
