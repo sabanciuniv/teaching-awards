@@ -2,6 +2,25 @@
 
 // commonFunc.php
 
+//starting session function
+function init_session(): void {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Optionally, enforce login here
+    if (!isset($_SESSION['user'])) {
+        header("Location: login.php");
+        exit();
+    }
+
+    // Error reporting (you can toggle this based on environment)
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
+
+
+
 
 function deleteExcludedCandidate(PDO $pdo, int $candidateID): array {
     try {
@@ -162,10 +181,26 @@ function getStudentsForYear(PDO $pdo, int $yearID): array {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+//check if the user is admin
 function checkIfUserIsAdmin(PDO $pdo, string $username): bool {
     $stmt = $pdo->prepare("SELECT 1 FROM Admin_Table WHERE AdminSuUsername = :username AND checkRole <> 'Removed' LIMIT 1");
     $stmt->execute([':username' => $username]);
     return (bool) $stmt->fetch();
+}
+
+//check if the use is admin or IT_admin
+function getUserAdminRole(PDO $pdo, string $username): ?string {
+    $stmt = $pdo->prepare("
+        SELECT Role 
+        FROM Admin_Table 
+        WHERE AdminSuUsername = :username 
+          AND checkRole <> 'Removed'
+        ORDER BY GrantedDate DESC 
+        LIMIT 1
+    ");
+    $stmt->execute([':username' => $username]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row['Role'] ?? null;
 }
 
 
