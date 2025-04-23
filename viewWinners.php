@@ -60,7 +60,6 @@ SQL
     $winStmt->execute([':y' => $selectedYearID]);
     $all = $winStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Group into winnersByCat[CategoryID] = [ 'date'=>..., 'wins'=>[...] ]
     foreach ($all as $r) {
         $cid = $r['CategoryID'];
         if (!isset($winnersByCat[$cid])) {
@@ -72,8 +71,6 @@ SQL
         $winnersByCat[$cid]['wins'][] = $r;
     }
 
-    // Build sorted list of categories that actually have winners,
-    // ordered by their CategoryCode
     $catIDs = array_keys($winnersByCat);
     usort($catIDs, function($a, $b) use ($allCats) {
         return strcmp($allCats[$a]['code'], $allCats[$b]['code']);
@@ -83,185 +80,74 @@ SQL
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-
   <meta charset="UTF-8">
   <title>Award Winners</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <!-- Theme CSS -->
-  <!-- Limitless Theme CSS -->
   <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
   <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
   <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
   <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-
-
   <style>
-    body {
-      background: #f9f9f9;
-      padding: 2rem 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-weight: 600;
-    }
-    .filter {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-    }
+    body { background: #f9f9f9; padding: 2rem 0; overflow-x: hidden;      overflow-y: auto;    
+    .container { max-width: 800px; margin: auto; }
+    h1 { text-align: center; margin-bottom:1.5rem; font-weight:600; }
+    .filter { display:flex; justify-content:center; align-items:center; gap:.5rem; margin-bottom:2rem; }
     .btn.dropdown-toggle {
-      background: #fff !important;
-      color: #333 !important;
-      border: 1px solid #ccc !important;
-      border-radius: 6px !important;
-      padding: 0.5rem 1rem;
-      min-width: 140px;
-      text-align: left;
+      background:#fff!important; color:#333!important; border:1px solid #ccc!important;
+      border-radius:6px!important; padding:.5rem 1rem; min-width:140px; text-align:left;
     }
     .btn-custom {
-      background-color: #45748a !important;
-      color: #fff !important;
-      border: none !important;
-      padding: 0.5rem 1.25rem !important;
-      border-radius: 6px !important;
-      margin-left: 0.5rem;
+      background:#45748a!important; color:#fff!important; border:none!important;
+      padding:.5rem 1.25rem!important; border-radius:6px!important; margin-left:.5rem;
     }
-    .btn-custom:hover {
-      background-color: #365a6b !important;
+    .btn-custom:hover { background:#365a6b!important; }
+    .dropdown-menu { display:none; background:#fff!important; border:1px solid #ccc!important;
+      border-radius:6px!important; box-shadow:0 4px 6px rgba(0,0,0,0.1)!important;
     }
-    .dropdown-menu {
-      background: #fff !important;
-      border: 1px solid #ccc !important;
-      border-radius: 6px !important;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-    }
-    .dropdown-item {
-      color: #333 !important;
-      padding: 0.5rem 1rem !important;
-    }
-    .dropdown-item:hover {
-      background: #f1f1f1 !important;
-    }
+    .dropdown-menu.show { display:block!important; }
+    .dropdown-item { color:#333!important; padding:.5rem 1rem!important; }
+    .dropdown-item:hover { background:#f1f1f1!important; }
     .category-row {
-      display: flex;
-      align-items: center;
-      background: #fff;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      margin-bottom: 0.5rem;
-      cursor: pointer;
-      transition: background 0.2s;
+      display:flex; align-items:center; background:#fff; padding:1rem;
+      border-radius:.5rem; margin-bottom:.5rem; cursor:pointer; transition:background .2s;
     }
-    .category-row:hover {
-      background: #f1f1f1;
-    }
-    .category-img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 0.5rem;
-      margin-right: 1rem;
-    }
-    .category-info h4 {
-      margin: 0;
-      font-weight: 500;
-    }
-    .category-info small {
-      color: #666;
-      display: block;
-    }
-    .category-extra {
-      margin-left: auto;
-      text-align: right;
-    }
-    .category-extra small {
-      color: #007bff;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    .winners-collapse {
-      display: none;
-      margin-bottom: 1rem;
-      background: #fff;
-      border-radius: 0.5rem;
-      padding: 1rem;
-    }
-    .winners-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .winner-box {
-      width: 120px;
-      text-align: center;
-    }
+    .category-row:hover { background:#f1f1f1; }
+    .category-img { width:80px; height:80px; object-fit:cover; border-radius:.5rem; margin-right:1rem; }
+    .category-info h4 { margin:0; font-weight:500; }
+    .category-info small { color:#666; display:block; }
+    .category-extra { margin-left:auto; text-align:right; }
+    .category-extra small { color:#007bff; text-decoration:underline; cursor:pointer; }
+    .winners-collapse { display:none; margin-bottom:1rem; background:#fff; border-radius:.5rem; padding:1rem; }
+    .winners-row { display:flex; flex-wrap:wrap; gap:1rem; }
+    .winner-box { width:120px; text-align:center; }
     .winner-img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 0.5rem;
+      width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:.5rem;
     }
-    .winner-name {
-      margin: 0;
-      font-weight: bold;
-    }
-    .winner-faculty {
-      margin: 0;
-      color: #666;
-      font-size: 0.9rem;
-    }
-    .winner-rank {
-      margin: 0;
-      color: #999;
-      font-size: 0.8rem;
-    }
+    .winner-name { margin:0; font-weight:bold; }
+    .winner-faculty { margin:0; color:#666; font-size:.9rem; }
+    .winner-rank { margin:0; color:#999; font-size:.8rem; }
     .action-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
+      position:fixed; bottom:20px; right:20px;
     }
     .btn-return {
-      background: #45748a !important;
-      color: #fff !important;
-      border: none !important;
-      padding: 0.5rem 1.25rem !important;
-      border-radius: 6px !important;
+      background:#45748a!important; color:#fff!important; border:none!important;
+      padding:.5rem 1.25rem!important; border-radius:6px!important;
     }
-    .btn-return:hover {
-      background: #365a6b !important;
-    }
+    .btn-return:hover { background:#365a6b!important; }
   </style>
 </head>
 <body>
 
   <?php 
-  // Include your navbar; adjust the path or remove if not needed
-  $backLink = "index.php"; 
-  $backLink = isset($_SESSION['previous_page']) && $_SESSION['previous_page'] === 'adminDashboard.php'
+    $backLink = isset($_SESSION['previous_page']) && $_SESSION['previous_page']==='adminDashboard.php'
       ? "adminDashboard.php"
       : "index.php";
-  
-  // Clear referrer after use
-  unset($_SESSION['previous_page']);
-  
-  
-  include 'navbar.php'; 
+    unset($_SESSION['previous_page']);
+    include 'navbar.php'; 
   ?>
+
   <div class="container">
     <h1>Award Winners</h1>
 
@@ -282,7 +168,7 @@ SQL
                      'YearID'
                    )[$selectedYearID]
                  )
-               : 'Select Year' ?>
+               : 'Select Year' ?>
         </button>
         <ul class="dropdown-menu">
           <?php foreach ($years as $y): ?>
@@ -296,16 +182,14 @@ SQL
           <?php endforeach; ?>
         </ul>
       </div>
-      <button type="submit" class="btn btn-custom">View Winners</button>
+      <button type="submit" class="btn btn-custom">View Winners</button>
     </form>
 
     <!-- WINNERS LIST -->
     <?php if ($selectedYearID && !empty($winnersByCat)): ?>
       <?php foreach ($catIDs as $catID):
           $info     = $winnersByCat[$catID];
-          $code     = $allCats[$catID]['code'];
           $desc     = $allCats[$catID]['desc'];
-          $displayDate = date('j F Y', strtotime($info['date']));
           $toggleID = "cat{$catID}";
       ?>
       <div class="category-row" data-toggle="<?= $toggleID ?>">
@@ -314,7 +198,7 @@ SQL
           <h4><?= htmlspecialchars($desc) ?></h4>
         </div>
         <div class="category-extra">
-          <small>See Winners</small>
+          <small>See Winners</small>
         </div>
       </div>
       <div id="<?= $toggleID ?>" class="winners-collapse">
@@ -341,8 +225,8 @@ SQL
 
   <!-- Return Button -->
   <div class="action-container">
-    <button class="btn-return" onclick="window.location.href='index.php'">
-      <i class="icon-arrow-left12"></i> Return to Main Menu
+    <button class="btn-return" onclick="window.location.href='<?= $backLink ?>'">
+      <i class="icon-arrow-left12"></i> Return to Main Menu
     </button>
   </div>
 
@@ -362,6 +246,21 @@ SQL
     $('.category-row').click(function(){
       const id = $(this).data('toggle');
       $('#' + id).slideToggle();
+    });
+
+    // manual dropdown show/hide
+    document.addEventListener('DOMContentLoaded', function(){
+      const toggle = document.getElementById('yearToggle');
+      const menu   = toggle.nextElementSibling;
+      toggle.addEventListener('click', function(e){
+        e.preventDefault();
+        menu.classList.toggle('show');
+      });
+      document.addEventListener('click', function(e){
+        if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.remove('show');
+        }
+      });
     });
   </script>
 </body>
