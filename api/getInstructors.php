@@ -6,7 +6,10 @@ header('Content-Type: application/json');
 
 init_session();
 
-$suNetUsername = $_SESSION['user'];
+$suNetUsername = (isset($_SESSION['impersonating']) && $_SESSION['impersonating']) 
+    ? $_SESSION['impersonated_user'] 
+    : $_SESSION['user'];
+
 $categoryCode = isset($_GET['category']) ? $_GET['category'] : null;
 
 if (!$categoryCode) {
