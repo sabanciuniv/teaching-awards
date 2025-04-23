@@ -242,7 +242,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
   </style>
 </head>
 <body>
-<?php include 'navbar.php'; ?>
+<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
 <div class="container">
   <h2 class="title">Mail Templates</h2>
@@ -337,6 +337,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <script>
   // Quill editor
   let quill = new Quill('#MailBodyEditor',{ theme:'snow' });
