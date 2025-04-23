@@ -207,7 +207,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'D'
 
     document.addEventListener("DOMContentLoaded", function () {
       const category = "<?= $category ?>";
-      const apiUrl = `http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getTAs.php?category=${category}`;
+      const apiUrl = `api/getTAs.php?category=${category}&term=${term}`;
 
       fetch(apiUrl, { credentials: "include" })
         .then(response => response.json())

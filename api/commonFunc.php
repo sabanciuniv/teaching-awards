@@ -287,6 +287,79 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
     }
 }
 
+function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode): array {
+    try {
+        // Use local function to get current academic year
+        $academicYear = getCurrentAcademicYear($pdo);
+        if (!$academicYear) {
+            return ['status' => 'error', 'message' => 'Current academic year not found'];
+        }
+
+        $validTerms = [$academicYear . '01', $academicYear . '02'];
+
+        // Get student ID
+        $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");
+        $stmtStudent->execute(['suNetUsername' => $suNetUsername]);
+        $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
+        if (!$student) return ['status' => 'error', 'message' => 'Student not found'];
+        $studentID = $student['id'];
+
+        // Get courses student is enrolled in
+        $stmtCourses = $pdo->prepare("SELECT CourseID FROM Student_Course_Relation WHERE `student.id` = :studentID AND EnrollmentStatus = 'enrolled'");
+        $stmtCourses->execute(['studentID' => $studentID]);
+        $courses = $stmtCourses->fetchAll(PDO::FETCH_COLUMN);
+        if (empty($courses)) return ['status' => 'error', 'message' => 'No enrolled courses found'];
+
+        // Get category ID
+        $stmtCategory = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :categoryCode");
+        $stmtCategory->execute(['categoryCode' => $categoryCode]);
+        $category = $stmtCategory->fetch(PDO::FETCH_ASSOC);
+        if (!$category) return ['status' => 'error', 'message' => 'Invalid category code'];
+        $categoryID = $category['CategoryID'];
+
+        // Build query with placeholders
+        $placeholders = implode(',', array_fill(0, count($courses), '?'));
+        $query = "
+            SELECT 
+                i.id AS TA_ID,
+                i.Name AS TA_Name,
+                i.Mail AS TA_Email,
+                i.Status,
+                c.CourseName,
+                c.Subject_Code,
+                c.Course_Number,
+                r.Term
+            FROM Candidate_Table i
+            INNER JOIN Candidate_Course_Relation r ON i.id = r.CandidateID
+            INNER JOIN Courses_Table c ON r.CourseID = c.CourseID
+            WHERE i.Role = 'TA' 
+              AND i.Status = 'Etkin' 
+              AND r.CategoryID = ?
+              AND r.Term IN (?, ?)
+              AND r.CourseID IN ($placeholders)
+              AND NOT EXISTS (
+                  SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
+              )
+        ";
+
+        $params = array_merge([$categoryID], $validTerms, $courses);
+        $stmt = $pdo->prepare($query);
+        $stmt->execute($params);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $results
+            ? ['status' => 'success', 'data' => $results]
+            : ['status' => 'error', 'message' => 'No TAs found for the given courses and category'];
+
+    } catch (PDOException $e) {
+        return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
+    }
+}
+
+
+
+
+
 
 
 ?>
