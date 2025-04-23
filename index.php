@@ -1,30 +1,20 @@
 <?php
 session_start();
+require_once 'api/commonFunc.php';
+require_once 'database/dbConnection.php'; 
 
-$apiUrl = 'http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php';
-$response = file_get_contents($apiUrl);
+$academicYear = fetchCurrentAcademicYear($pdo);
 
-if ($response === false) {
-    die('Error fetching API data.');
+if (!$academicYear) {
+    die('Academic year data not found.');
 }
 
-$academicYear = json_decode($response, true);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    die('JSON decode error: ' . json_last_error_msg());
-}
-
-if (isset($academicYear['yearID'], $academicYear['start_date'], $academicYear['end_date'])) {
-    $yearID = $academicYear['yearID']; // Corrected key
-    $startDate = date('F j, Y', strtotime($academicYear['start_date']));
-    $endDate = date('F j, Y', strtotime($academicYear['end_date']));
-} else {
-    $yearID = 'N/A';
-    $startDate = 'N/A';
-    $endDate = 'N/A';
-}
+$yearID    = $academicYear['YearID'] ?? 'N/A';
+$startDate = isset($academicYear['Start_date_time']) ? date('F j, Y', strtotime($academicYear['Start_date_time'])) : 'N/A';
+$endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime($academicYear['End_date_time']))   : 'N/A';
 
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
