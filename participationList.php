@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
 // If the user is not logged in, redirect to the login page
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
@@ -12,35 +13,17 @@ $user = $_SESSION['user'];
 
 // Fetch available academic years from DB
 try {
-    $stmtYears = $pdo->prepare("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
-    $stmtYears->execute();
-    $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
+    $academicYears = getAllAcademicYears($pdo);
+} catch (PDOException $e) {
     die("Error fetching academic years: " . $e->getMessage());
 }
 
 // -------------------------
 // BEGIN: Admin Access Check
 // -------------------------
-try {
-    // This query ensures the user exists in Admin_Table, is not marked as 'Removed',
-    // and that their Role is exactly 'IT_Admin'
-    $adminQuery = "SELECT 1 
-                     FROM Admin_Table 
-                    WHERE AdminSuUsername = :username 
-                      AND checkRole <> 'Removed'
-                      AND Role IN ('IT_Admin', 'Admin')
-                    LIMIT 1";
-    $adminStmt = $pdo->prepare($adminQuery);
-    $adminStmt->execute([':username' => $user]);
-    
-    // If no record is found, redirect to index.php
-    if (!$adminStmt->fetch()) {
-        header("Location: index.php");
-        exit();
-    }
-} catch (PDOException $e) {
-    die("Admin check failed: " . $e->getMessage());
+if (! checkIfUserIsAdmin($pdo, $user)) {
+    header("Location: index.php");
+    exit();
 }
 // -----------------------
 // END: Admin Access Check
@@ -90,13 +73,12 @@ try {
         }
 
         .dropdown-select {
-            background-color: white !important;
+            background: #fff !important;
             color: #333 !important;
             border: 1px solid #ccc !important;
             border-radius: 6px !important;
-            padding: 10px 20px;
+            padding: 10px 20px !important;
             min-width: 200px;
-            text-align: left;
         }
 
         .dropdown-menu {
@@ -137,8 +119,12 @@ try {
         }
 
         .table-container {
+            max-width: 900px;
             margin: 20px auto;
-            max-width: 90%;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
         }
 
         .error-message {
@@ -155,11 +141,63 @@ try {
             bottom: 20px;
             right: 20px;
         }
+
+        #participationTable {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            background-color: white !important;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #participationTable th,
+        #participationTable td {
+            font-size: 13px !important;
+            font-weight: normal !important;
+            padding: 10px 12px !important;
+            border: none !important;
+            border-bottom: 1px solid #eee !important;
+            color: #333 !important;
+            background-color: white !important;
+            text-align: center;
+        }
+
+        /* Header look - subtle, not bold */
+        #participationTable thead th {
+            background-color: #f5f5f5 !important;
+            color: #333 !important;
+        }
+        
+        .datatable-header,
+        .datatable-footer {
+            padding: 0 10px;
+            font-size: 13px;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .dataTables_wrapper {
+            padding: 10px;
+        }
+
+        .dataTables_filter input {
+            max-width: 250px;
+        }
+        /* Remove default DataTables styles (e.g., borders) */
+        table.dataTable.no-footer {
+            border-bottom: none !important;
+        }
+
+        .dataTables_info,
+        .dataTables_paginate {
+        font-size: 13px;
+        color: #555;
+        }
     </style>
 
 </head>
 <body>
-<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
+<?php $backLink = "reportPage.php"; include 'navbar.php'; ?>
 
 <div class="container">
     <div class="title">Voting Participation by Year</h2>
@@ -212,7 +250,6 @@ try {
         <i class="fa fa-arrow-left"></i> Return to Reports Page
     </button>
 </div>
-
 <!-- JS Libraries -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -287,17 +324,22 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             $('#participationTable').DataTable({
+                autoWidth: false,
+                scrollX: false,
                 dom: '<"datatable-header d-flex justify-content-between align-items-center mb-2"fB>t<"datatable-footer"ip>',
                 buttons: [
                     {
-                        extend: 'excelHtml5',
-                        title: 'Voting Participation Report',
-                        text: 'Export to Excel',
-                        className: 'btn btn-custom'
+                    extend: 'excelHtml5',
+                    text: 'Export to Excel',
+                    className: 'btn-custom',
+                    title: 'Voting Participation Report'
                     }
                 ],
                 pageLength: 8
             });
+
+
+
 
         } catch (error) {
             console.error("Fetch Error:", error);

@@ -72,6 +72,24 @@ function handleCandidateExclusion(PDO $pdo): void {
 }
 
 
+function getAllCategories(PDO $pdo): array {
+    $stmt = $pdo->query(
+        "SELECT CategoryID, CategoryDescription 
+           FROM Category_Table 
+          ORDER BY CategoryID ASC"
+    );
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getAllAcademicYears(PDO $pdo): array {
+    $stmt = $pdo->query(
+        "SELECT YearID, Academic_year 
+           FROM AcademicYear_Table 
+          ORDER BY YearID DESC"
+    );
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 //get the current academic year
 function getCurrentAcademicYear(PDO $pdo): ?string {
     $stmt = $pdo->query("
@@ -151,7 +169,7 @@ function checkIfUserIsAdmin(PDO $pdo, string $username): bool {
 }
 
 
-
+//get the instructors for each student
 function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode): array {
     try {
         $academicYearData = fetchCurrentAcademicYear($pdo);
@@ -233,5 +251,7 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
     }
 }
+
+
 
 ?>

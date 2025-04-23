@@ -1,34 +1,20 @@
 <?php
 session_start();
 require_once __DIR__ . '/database/dbConnection.php';
+require_once 'api/commonFunc.php';
 
 // Ensure category is provided
 if (!isset($_GET['category'])) {
     die("Error: No category selected.");
 }
-
 $categoryId = intval($_GET['category']);
 
-// Fetch the latest academic year dynamically
-$stmtAcademicYear = $pdo->prepare("
-    SELECT YearID, Academic_year
-    FROM AcademicYear_Table
-    WHERE YearID = (
-        SELECT MAX(AcademicYear) 
-        FROM Votes_Table
-        WHERE CategoryID = :category_id
-    )
-");
-$stmtAcademicYear->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
-$stmtAcademicYear->execute();
-$academicYearRow = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
 
-if (!$academicYearRow || !isset($academicYearRow['YearID'])) {
-    die("Error: Academic year not found.");
+$academicYearID = getCurrentAcademicYearID($pdo);
+if (!$academicYearID) {
+    die("Error: Unable to determine current academic year.");
 }
-
-$academicYearID = $academicYearRow['YearID'];
-$academicYear = $academicYearRow['Academic_year'];
+$academicYear = getCurrentAcademicYear($pdo);
 
 // Retrieve winners for the selected category and academic year
 $stmt = $pdo->prepare("

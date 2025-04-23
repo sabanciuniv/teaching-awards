@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
 // If the user is not logged in, redirect to the login page
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
@@ -15,45 +16,24 @@ $successMessage = null;
 
 $user = $_SESSION['user'];
 
-// Fetch available academic years & categories from the database
+// available academic years & categories from commonFunc 
 try {
     // 1) Academic Years
-    $stmtYears = $pdo->prepare("SELECT YearID, Academic_year FROM AcademicYear_Table ORDER BY YearID DESC");
-    $stmtYears->execute();
-    $academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
+    $academicYears = getAllAcademicYears($pdo);
 
     // 2) Categories
-    $stmtCats = $pdo->prepare("SELECT CategoryID, CategoryDescription FROM Category_Table ORDER BY CategoryID ASC");
-    $stmtCats->execute();
-    $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    die("Error fetching data: " . $e->getMessage());
+    $categories    = getAllCategories($pdo);
+} catch (PDOException $e) {
+    die("Error fetching lookup data: " . $e->getMessage());
 }
 
-// -------------------------
-// BEGIN: Admin Access Check
-// -------------------------
-try {
-    // Check if the username exists in Admin_Table and is not marked as 'Removed'
-    $adminQuery = "SELECT 1 
-                     FROM Admin_Table 
-                    WHERE AdminSuUsername = :username 
-                      AND checkRole <> 'Removed'
-                    LIMIT 1";
-    $adminStmt = $pdo->prepare($adminQuery);
-    $adminStmt->execute([':username' => $user]);
-    
-    // If no active record is found, redirect to index.php
-    if (!$adminStmt->fetch()) {
-        header("Location: index.php");
-        exit();
-    }
-} catch (PDOException $e) {
-    die("Admin check failed: " . $e->getMessage());
+// BEGIN: Admin Access Check --> using the commonFunc
+if (! checkIfUserIsAdmin($pdo, $user)) {
+    header("Location: index.php");
+    exit();
 }
-// -----------------------
 // END: Admin Access Check
-// -----------------------
+
 ?>
 
 <!DOCTYPE html>
@@ -174,7 +154,7 @@ try {
 </head>
 <body>
 
-<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
+<?php $backLink = "reportPage.php"; include 'navbar.php'; ?>
 
 <div class="container">
     <div class="title">All Faculty Scores by Category &amp; Year</div>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
@@ -9,31 +10,17 @@ require_once __DIR__ . '/database/dbConnection.php';
 $user = $_SESSION['user'];
 
 // Admin check
-try {
-    $adm = $pdo->prepare("
-      SELECT 1
-        FROM Admin_Table
-       WHERE AdminSuUsername = :u
-         AND checkRole <> 'Removed'
-         AND Role IN ('IT_Admin','Admin')
-       LIMIT 1
-    ");
-    $adm->execute([':u' => $user]);
-    if (!$adm->fetch()) {
-        header("Location: index.php");
-        exit();
-    }
-} catch (PDOException $e) {
-    die("Admin check failed: " . $e->getMessage());
+if (! checkIfUserIsAdmin($pdo, $user)) {
+  header("Location: index.php");
+  exit();
 }
 
-// Fetch academic years
-$stmtYears = $pdo->query("
-    SELECT YearID, Academic_year
-      FROM AcademicYear_Table
-  ORDER BY Academic_year DESC
-");
-$academicYears = $stmtYears->fetchAll(PDO::FETCH_ASSOC);
+//get all the academic years from common Function php
+try{
+  $academicYears = getAllAcademicYears($pdo);
+}catch (PDOException $e) {
+  die("Error fetching lookup data: " . $e->getMessage());
+}
 
 // If a year is selected, gather students + categories + vote flag
 $votedStudents    = [];
@@ -160,7 +147,7 @@ if (!empty($_GET['year'])) {
   </style>
 </head>
 <body>
-<?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
+<?php $backLink = "reportPage.php"; include 'navbar.php'; ?>
 
 <div class="container mt-4">
   <h3 class="title">Student Voting Status</h3>
