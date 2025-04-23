@@ -4,14 +4,7 @@
  require_once 'database/dbConnection.php';
  require_once 'api/commonFunc.php';
 
- // If not logged in, redirect 
- if (!isset($_SESSION['user'])) {
-     header("Location: login.php");
-     exit();
- }
- 
- error_reporting(E_ALL);
- ini_set('display_errors', 1);
+ init_session();
  
  
  $username = $_SESSION['user'];  // Current user
@@ -663,6 +656,11 @@
            const currentStatus = button.data("status");     // Get current status 
  
            const newStatus = currentStatus === "Etkin" ? "İşten ayrıldı" : "Etkin";  // Toggle status
+           const confirmationMessage = `Are you sure you want change the status to ${newStatus === "Etkin" ? "ON" : "OFF"} for this candidate?`;
+
+          if (!confirm(confirmationMessage)) {
+              return; // Stop if the user cancels
+          }
            const newClass = newStatus === "Etkin" ? "btn-success" : "btn-danger";   // Change button color
            const newText = newStatus === "Etkin" ? "On" : "Off";                    // Change button text
  
