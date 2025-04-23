@@ -119,22 +119,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finishWinnerList'])) 
 // -------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unpublishWinnerList'])) {
     try {
+        // get current YearID
         $stmtAcademicYear = $pdo->prepare("
-            SELECT YearID 
-            FROM AcademicYear_Table 
-            ORDER BY Start_date_time DESC
-            LIMIT 1
+            SELECT YearID
+              FROM AcademicYear_Table
+             ORDER BY Start_date_time DESC
+             LIMIT 1
         ");
         $stmtAcademicYear->execute();
         $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
+
         if ($academicYear) {
             $yearID = $academicYear['YearID'];
+
+            // reset readyDisplay for that year
             $stmtUnpublish = $pdo->prepare("
-                UPDATE Winners_Table 
-                SET readyDisplay = 'no', displayDate = NULL 
-                WHERE YearID = :yearID AND readyDisplay = 'yes'
+                UPDATE Winners_Table
+                   SET readyDisplay = 'no',
+                       displayDate  = NULL
+                 WHERE YearID      = :yearID
+                   AND readyDisplay = 'yes'
             ");
             $stmtUnpublish->execute([':yearID' => $yearID]);
+
             $message = "Winner list unpublished successfully.";
         } else {
             $error = "No academic year found.";
@@ -303,6 +310,21 @@ foreach ($allWinners as $row) {
             max-width: 900px;
             margin: auto;
         }
+
+        /* make both buttons the same width */
+.action-container form button {
+  min-width: 140px;
+  width: 100%;
+}
+/* wrap the two forms in a row and align to the right */
+.action-container {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 1rem;  /* give some breathing room under the preview */
+}
+
+
         .alert {
             margin-top: 20px;
         }
@@ -687,15 +709,20 @@ foreach ($allWinners as $row) {
             <?php endif; ?>
         </div>
     </div>
-    <div class="d-flex justify-content-center align-items-center gap-3 mb-4 flex-wrap">
-        <form action="setWinners.php" method="POST" class="d-inline-block">
-            <button type="submit" name="finishWinnerList" class="btn btn-secondary">Publish</button>
-        </form>
-        <form action="setWinners.php" method="POST" class="d-inline-block">
-            <button type="submit" name="unpublishWinnerList" class="btn btn-secondary">Unpublish</button>
-        </form>
-    </div>
+    <!-- immediately after the preview div -->
+<div class="action-container">
+  <form action="setWinners.php" method="POST">
+    <button type="submit" name="finishWinnerList" class="btn btn-secondary">
+      Publish
+    </button>
+  </form>
+  <form action="setWinners.php" method="POST">
+    <button type="submit" name="unpublishWinnerList" class="btn btn-secondary">
+      Unpublish
+    </button>
+  </form>
 </div>
+
 <!-- Include jQuery and Bootstrap Bundle JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="assets/js/bootstrap.bundle.min.js"></script>
