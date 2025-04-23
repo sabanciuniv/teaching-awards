@@ -1,10 +1,5 @@
 <?php
 // notifyStudents.php
-// ------------------
-// Reads JSON { students: […], year: N }, sends personalized “notify” emails
-// using the MailHeader as Subject and MailBody as the HTML body,
-// logs each send (including TemplateID), and returns { sent, total, failed }.
-
 session_start();
 require_once __DIR__ . '/api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
@@ -12,42 +7,52 @@ require_once __DIR__ . '/database/dbConnection.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Force JSON output
+// 1) JSON response
 header('Content-Type: application/json; charset=utf-8');
 
-// 1) Decode payload
+// 2) Decode payload
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
 if (!is_array($data) || !isset($data['students'], $data['year'])) {
     http_response_code(400);
-    echo json_encode(['error' => 'Missing students array or year']);
+    echo json_encode(['error'=>'Missing students array or year']);
     exit;
 }
 $students = $data['students'];
-$year     = (int)$data['year'];
 $sender   = $_SESSION['user'];
 
-// 2) Load TemplateID, MailHeader & MailBody from the “notify” template
+// 3) Load “notify” template (header + body + id)
 $stmt = $pdo->prepare("
   SELECT TemplateID, MailHeader, MailBody
     FROM MailTemplate_Table
    WHERE MailType = 'notify'
-     AND MailHeader IS NOT NULL
-     AND MailBody   IS NOT NULL
    LIMIT 1
 ");
 $stmt->execute();
-$template = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$template) {
+$tpl = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$tpl) {
     http_response_code(404);
-    echo json_encode(['error' => "No 'notify' template found"]);
+    echo json_encode(['error'=>"No 'notify' template found"]);
     exit;
 }
-$templateID     = (int)$template['TemplateID'];
-$templateHeader = $template['MailHeader'];
-$templateBody   = $template['MailBody'];
+$templateID     = $tpl['TemplateID'];
+$templateHeader = $tpl['MailHeader'];
+$templateBody   = $tpl['MailBody'];
 
-// 3) PHPMailer setup (persistent SMTP)
+// 4) Lookup current academic YearID
+$currentYearID = $pdo->query("
+    SELECT YearID
+      FROM AcademicYear_Table
+     ORDER BY Start_date_time DESC
+     LIMIT 1
+")->fetchColumn();
+if (!$currentYearID) {
+    http_response_code(500);
+    echo json_encode(['error'=>'No academic year found']);
+    exit;
+}
+
+// 5) Prepare one persistent PHPMailer instance
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/PHPMailer/src/SMTP.php';
 require_once __DIR__ . '/PHPMailer/src/Exception.php';
@@ -61,23 +66,23 @@ try {
     $mail->Password       = 'aycmatyxmxhphsvh';
     $mail->SMTPSecure     = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port           = 587;
-    $mail->setFrom('ens492odul@gmail.com', 'Teaching Awards System');
-    $mail->SMTPKeepAlive  = true;   // keep connection open
+    $mail->setFrom('ens492odul@gmail.com','Teaching Awards System');
+    $mail->SMTPKeepAlive  = true;
     $mail->isHTML(true);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => "SMTP setup failed: {$e->getMessage()}"]);
+    echo json_encode(['error'=>"SMTP setup failed: {$e->getMessage()}"]);
     exit;
 }
 
-// 4) Send loop & logging
+// 6) Send loop
 $sent   = 0;
 $failed = [];
 
 foreach ($students as $stu) {
     $email = $stu['Email'] ?? '';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $failed[] = ['email' => $email, 'reason' => 'Invalid email'];
+        $failed[] = ['email'=>$email,'reason'=>'Invalid email'];
         continue;
     }
 
@@ -85,17 +90,17 @@ foreach ($students as $stu) {
         $mail->clearAddresses();
         $mail->addAddress($email, $stu['StudentFullName']);
 
-        // Dynamic subject from MailHeader
+        // dynamic subject
         $mail->Subject = str_replace(
-            ['{year}', '{studentName}'],
-            [$year, $stu['StudentFullName']],
+            ['{studentName}','{year}'],
+            [$stu['StudentFullName'],$currentYearID],
             $templateHeader
         );
 
-        // Personalized body
+        // dynamic body
         $body = str_replace(
-            ['{year}', '{studentName}'],
-            [$year, $stu['StudentFullName']],
+            ['{studentName}','{year}'],
+            [$stu['StudentFullName'],$currentYearID],
             $templateBody
         );
         $mail->Body    = $body;
@@ -104,29 +109,29 @@ foreach ($students as $stu) {
         $mail->send();
         $sent++;
 
-        // Log into MailLog_Table (including TemplateID)
-        $log = $pdo->prepare("
-            INSERT INTO MailLog_Table
-                (Sender, StudentEmail, StudentName, TemplateID, MailContent)
-            VALUES
-                (:s, :e, :n, :tid, :c)
-        ");
-        $log->execute([
+        // log into MailLog_Table with TemplateID + YearID
+        $pdo->prepare("
+          INSERT INTO MailLog_Table
+            (Sender,StudentEmail,StudentName,TemplateID,MailContent,YearID)
+          VALUES
+            (:s,:e,:n,:tid,:c,:y)
+        ")->execute([
             ':s'   => $sender,
             ':e'   => $email,
             ':n'   => $stu['StudentFullName'],
             ':tid' => $templateID,
-            ':c'   => $body
+            ':c'   => $body,
+            ':y'   => $currentYearID
         ]);
 
     } catch (Exception $e) {
-        $failed[] = ['email' => $email, 'reason' => $mail->ErrorInfo];
+        $failed[] = ['email'=>$email,'reason'=>$e->getMessage()];
     }
 }
 
-// 5) Close SMTP connection and respond
 $mail->smtpClose();
 
+// 7) Return JSON
 echo json_encode([
     'sent'   => $sent,
     'total'  => count($students),
