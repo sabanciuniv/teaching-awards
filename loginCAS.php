@@ -4,7 +4,8 @@
 // -------------------------
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-session_start(); // Start session *before* CAS output
+session_start();
+
 
 // -------------------------
 // Include phpCAS and config
@@ -13,7 +14,6 @@ session_start(); // Start session *before* CAS output
 // Include phpCAS
 require './phpCAS/source/CAS.php';
 require_once 'api/commonFunc.php';
-
 
 // Include configuration
 $config = include 'config.php';
@@ -75,7 +75,7 @@ try {
     }
 
     // (2) Set cookies for the client, valid for 2 hours
-    $cookie_lifetime = 24 * 60 * 60; // 2 hours in seconds
+    $cookie_lifetime = 24 * 60 * 60; // 24 hours in seconds
     $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
     $httponly = true;
     
@@ -160,9 +160,7 @@ if (isset($_GET['redirect'])) {
         exit;
     }
 }
-
-
-
 // Default action if no redirect parameter is provided
 echo "Authentication successful for user: " . htmlspecialchars($user);
+
 ?>
