@@ -90,7 +90,7 @@ SQL
   <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { background: #f9f9f9; padding: 2rem 0; overflow-x: hidden;      overflow-y: auto;    
+    body { background: #f9f9f9; padding: 2rem 0; overflow-x: hidden;      overflow-y: auto;}    
     .container { max-width: 800px; margin: auto; }
     h1 { text-align: center; margin-bottom:1.5rem; font-weight:600; }
     .filter { display:flex; justify-content:center; align-items:center; gap:.5rem; margin-bottom:2rem; }
