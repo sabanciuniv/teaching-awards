@@ -1,10 +1,7 @@
 <?php
-session_start();
+require_once 'commonFunc.php';
+init_session();
 
-if (!isset($_SESSION['user'])) {
-    header("Location: loginCAS.php");
-    exit;
-}
 $config = require __DIR__ . '/../config.php';
 require_once '../database/dbConnection.php';
 require_once 'commonFunc.php';

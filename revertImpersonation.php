@@ -1,7 +1,10 @@
 <?php
-session_start();
+
 require_once 'database/dbConnection.php';
 require_once __DIR__ . '/api/impersonationLogger.php';
+require_once 'api/commonFunc.php';
+init_session();
+
 
 if (isset($_SESSION['impersonating']) && $_SESSION['impersonating']) {
 

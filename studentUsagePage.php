@@ -1,11 +1,9 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+
+init_session();
+
 require_once __DIR__ . '/database/dbConnection.php';
 $user = $_SESSION['user'];
 

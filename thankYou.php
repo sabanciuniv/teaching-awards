@@ -1,11 +1,9 @@
 <?php
-session_start();
+
 require_once 'api/authMiddleware.php';
 // If the user is not logged in, redirect to the login page
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+require_once 'api/commonFunc.php';
+init_session();
 
 // Determine context: "nominate" or "vote"
 $context = isset($_GET['context']) ? htmlspecialchars($_GET['context']) : 'vote'; // Default to "vote"

@@ -1,1 +1,0 @@
-//login page yapılacak bu sayfa direkt indexe gönderecek (token olmadığı zamana index sayfasına giriş yaparken sunet girişi istiyor).

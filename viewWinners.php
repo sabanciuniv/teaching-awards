@@ -1,6 +1,7 @@
 <?php
-session_start();
 require_once __DIR__ . '/database/dbConnection.php';
+require_once 'api/commonFunc.php';
+init_session();
 
 // 1) Fetch all academic years that actually have published winners
 $stmtYears = $pdo->prepare(<<<'SQL'

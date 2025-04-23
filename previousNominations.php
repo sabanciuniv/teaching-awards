@@ -1,12 +1,9 @@
 <?php
-session_start();
-require_once __DIR__ . '/database/dbConnection.php';
 
-// Redirect if not logged in
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+require_once __DIR__ . '/database/dbConnection.php';
+require_once 'api/commonFunc.php';
+init_session();
+
 
 $username = isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true
     ? $_SESSION['impersonated_user']

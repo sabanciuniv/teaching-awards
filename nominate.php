@@ -1,11 +1,8 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
+init_session();
 
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
 
 // Use impersonated username if impersonation is active
 $usernameToUse = isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true

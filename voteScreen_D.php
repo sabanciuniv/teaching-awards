@@ -1,12 +1,7 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
-
-if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
-    header("Location: login.php");
-    exit();
-}
+require_once 'api/commonFunc.php';
+init_session();
 
 // Get category from URL for D
 $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'D';

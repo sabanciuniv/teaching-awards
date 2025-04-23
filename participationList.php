@@ -1,12 +1,8 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
-// If the user is not logged in, redirect to the login page
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+
+init_session();
 require_once __DIR__ . '/database/dbConnection.php';
 
 $user = $_SESSION['user'];
@@ -21,7 +17,7 @@ try {
 // -------------------------
 // BEGIN: Admin Access Check
 // -------------------------
-if (! checkIfUserIsAdmin($pdo, $user)) {
+if (!checkIfUserIsAdmin($pdo, $user)) {
     header("Location: index.php");
     exit();
 }

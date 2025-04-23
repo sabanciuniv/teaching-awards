@@ -1,12 +1,8 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
+init_session();
 
-// Check if the user is logged in
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
 
 // Include the database connection
 require_once 'database/dbConnection.php';

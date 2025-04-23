@@ -2,13 +2,11 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start();
 require_once __DIR__ . '/database/dbConnection.php';
 
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+require_once 'api/commonFunc.php';
+init_session();
+
 $user = $_SESSION['user'];
 
 // Handle UPDATE request

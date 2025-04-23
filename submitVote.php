@@ -1,7 +1,7 @@
 <?php
-session_start();
 require_once __DIR__ . '/database/dbConnection.php'; // Ensure database connection
 require_once 'api/impersonationLogger.php';
+require_once 'api/commonFunc.php';
 
 header('Content-Type: application/json');
 error_reporting(E_ALL);
@@ -11,12 +11,9 @@ try {
     if (!isset($pdo) || !$pdo) {
         throw new Exception("Database connection not established.");
     }
-
-    if (!isset($_SESSION['user'])) {
-        header("Location: login.php");
-        exit();
-    }
-
+    
+    init_session();
+    
     // Check if impersonation is active
     if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true && isset($_SESSION['impersonated_user'])) {
         $impersonatedUsername = $_SESSION['impersonated_user'];

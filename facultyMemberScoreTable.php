@@ -1,12 +1,8 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
-// If the user is not logged in, redirect to the login page
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
+
+init_session();
 require_once __DIR__ . '/database/dbConnection.php';
 
 // Initialize variables to store results

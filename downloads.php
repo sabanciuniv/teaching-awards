@@ -4,17 +4,11 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-session_start();
-
 require_once 'api/authMiddleware.php'; // Ensure user authentication
 require_once '../ENS491-492/database/dbConnection.php'; 
+require_once 'api/commonFunc.php';
 
-if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
-    header("Location: login.php");
-    exit();
-}
-
+init_session();
 // Validate and retrieve NominationID from GET request
 if (!isset($_GET['nominationID']) || !is_numeric($_GET['nominationID'])) {
     http_response_code(400);

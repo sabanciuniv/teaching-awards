@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once 'api/authMiddleware.php';
 require_once 'config.php'; // Load config file
 
@@ -8,11 +7,8 @@ require_once __DIR__ . '/api/impersonationLogger.php';
 $config = require 'config.php'; // Fetch configuration
 $uploadDir = $config['upload_directory']; // Get the upload directory path
 
-if (!isset($_SESSION['user'])) {
-    // Redirect if the user is not logged in
-    header("Location: login.php");
-    exit();
-}
+require_once 'api/commonFunc.php';
+init_session();
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

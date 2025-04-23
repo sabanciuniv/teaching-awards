@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once 'api/commonFunc.php';
+init_session();
 ?>
 
 

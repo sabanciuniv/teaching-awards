@@ -1,12 +1,8 @@
 <?php
-session_start();
 require_once __DIR__ . '/database/dbConnection.php';
 require_once 'api/commonFunc.php';
 
-// Ensure category is provided
-if (!isset($_GET['category'])) {
-    die("Error: No category selected.");
-}
+init_session();
 $categoryId = intval($_GET['category']);
 
 

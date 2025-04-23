@@ -1,5 +1,4 @@
 <?php
- session_start();
  require_once 'api/authMiddleware.php';  
  require_once 'database/dbConnection.php';
  require_once 'api/commonFunc.php';

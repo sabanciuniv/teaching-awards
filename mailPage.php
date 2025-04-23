@@ -1,9 +1,11 @@
 <?php
 // mailPage.php
 
-session_start();
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
+//start session function
+require_once 'api/commonFunc.php';
+init_session();
 
 // PHPMailer
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -11,6 +13,8 @@ require_once __DIR__ . '/PHPMailer/src/SMTP.php';
 require_once __DIR__ . '/PHPMailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
+
 
 // ----------------------------------------------------
 // A) AJAX: Save template edits
@@ -158,10 +162,6 @@ if (
 // ----------------------------------------------------
 // C) Normal page: Auth + fetch templates + logs
 // ----------------------------------------------------
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit;
-}
 $check = $pdo->prepare("
   SELECT 1 FROM Admin_Table
    WHERE AdminSuUsername=:u
