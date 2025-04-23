@@ -2,7 +2,7 @@
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
 init_session();
-
+checkVotingWindow($pdo);
 
 // Use impersonated username if impersonation is active
 $usernameToUse = isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true

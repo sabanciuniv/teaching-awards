@@ -359,6 +359,37 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
 
 
 
+function checkVotingWindow(PDO $pdo) {
+    try {
+        $stmt = $pdo->query("
+            SELECT Start_date_time, End_date_time
+              FROM AcademicYear_Table
+             ORDER BY Start_date_time DESC
+             LIMIT 1
+        ");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            // No academic year defined at all → treat as closed
+            header("Location: votingClosed.php");
+            exit;
+        }
+
+        $now       = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
+        $start     = new DateTime($row['Start_date_time']);
+        $end       = new DateTime($row['End_date_time']);
+
+        if ($now < $start || $now > $end) {
+            header("Location: votingClosed.php");
+            exit;
+        }
+    } catch (PDOException $e) {
+        // logging, then redirect
+        error_log("Voting‐window check failed: " . $e->getMessage());
+        header("Location: votingClosed.php");
+        exit;
+    }
+}
 
 
 

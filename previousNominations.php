@@ -3,7 +3,7 @@
 require_once __DIR__ . '/database/dbConnection.php';
 require_once 'api/commonFunc.php';
 init_session();
-
+checkVotingWindow($pdo);
 
 $username = isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true
     ? $_SESSION['impersonated_user']

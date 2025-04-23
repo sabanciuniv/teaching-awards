@@ -2,7 +2,7 @@
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
 init_session();
-
+checkVotingWindow($pdo);
 
 $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B';
 ?>
