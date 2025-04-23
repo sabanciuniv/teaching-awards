@@ -547,6 +547,17 @@ foreach ($allWinners as $row) {
             line-height: 1.3;
             padding: 10px 15px;
         }
+        .dropdown-menu-up {
+            top: auto !important;
+            bottom: 100% !important;
+            transform: translateY(-0.5rem) !important;
+        }
+
+        .dropdown-menu-down {
+            top: 100% !important;
+            bottom: auto !important;
+            transform: translateY(0.5rem) !important;
+        }
         .dropdown-toggle {
             border-radius: 6px;
             padding: 0.5rem 1rem;
@@ -728,17 +739,28 @@ foreach ($allWinners as $row) {
 <script src="assets/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-
     document.addEventListener('DOMContentLoaded', function () {
         const dropdownToggle = document.getElementById('categoryDropdown');
         const dropdownMenu = document.querySelector('#categoryDropdown + .dropdown-menu');
 
-        dropdownToggle.addEventListener('shown.bs.dropdown', function () {
-            // Force Popper to reposition
-            const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
-            if (dropdown && window.Popper) {
-                Popper.forceUpdate(); // this line ensures Popper repositions the dropdown
-            }
+        dropdownToggle.addEventListener('click', function () {
+            // Wait for dropdown to render
+            setTimeout(() => {
+                const toggleRect = dropdownToggle.getBoundingClientRect();
+                const menuHeight = dropdownMenu.offsetHeight;
+                const spaceBelow = window.innerHeight - toggleRect.bottom;
+                const spaceAbove = toggleRect.top;
+
+                // Reset classes
+                dropdownMenu.classList.remove('dropdown-menu-up');
+                dropdownMenu.classList.remove('dropdown-menu-down');
+
+                if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+                    dropdownMenu.classList.add('dropdown-menu-up'); // Add custom upward class
+                } else {
+                    dropdownMenu.classList.add('dropdown-menu-down');
+                }
+            }, 10); // Let Bootstrap inject the dropdown first
         });
     });
 
