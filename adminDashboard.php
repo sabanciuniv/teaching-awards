@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
 
 /*
 if (isset($_SESSION['impersonated_user']) && $_SESSION['impersonating'] === true) {
@@ -29,30 +30,13 @@ $user = $username;
 
 
 // Default role 
-$role = null;
+$role = getUserAdminRole($pdo, $user);
 
-try {
-    // Fetch the user's most recent active row (i.e., checkRole != 'Removed')
-    // so if the user was removed and re-added with a different role,
-    // we only get the *current* role. 
-    $stmt = $pdo->prepare("
-        SELECT Role 
-        FROM Admin_Table 
-        WHERE AdminSuUsername = :username 
-          AND checkRole != 'Removed'
-        ORDER BY GrantedDate DESC 
-        LIMIT 1
-    ");
-    $stmt->execute([':username' => $username]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($row) {
-        // If found, set $role to the user's current role
-        $role = $row['Role']; 
-    }
-} catch (PDOException $e) {
-    die("Database error: " . $e->getMessage());
+if (!$role) {
+    header("Location: index.php");
+    exit();
 }
+
 
 
 // -------------------------
