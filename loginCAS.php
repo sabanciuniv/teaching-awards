@@ -1,6 +1,19 @@
 <?php
+// -------------------------
+// SECURE SESSION SETUP — DO THIS FIRST
+// -------------------------
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+session_start(); // Start session *before* CAS output
+
+// -------------------------
+// Include phpCAS and config
+// -------------------------
+
 // Include phpCAS
 require './phpCAS/source/CAS.php';
+require_once 'api/commonFunc.php';
+
 
 // Include configuration
 $config = include 'config.php';
@@ -21,11 +34,6 @@ phpCAS::forceAuthentication();
 
 // Retrieve the authenticated user's ID
 $user = phpCAS::getUser();
-
-
-
-// Start the session and store the username
-session_start();
 $_SESSION['user'] = $user;
 // -------------------------
 // BEGIN: Cookie & DB Logic
@@ -68,9 +76,12 @@ try {
 
     // (2) Set cookies for the client, valid for 2 hours
     $cookie_lifetime = 24 * 60 * 60; // 2 hours in seconds
-    setcookie("username", $user, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
-    setcookie("cookie_id", $cookie_id, time() + $cookie_lifetime, "/", "", isset($_SERVER['HTTPS']), true);
-
+    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    $httponly = true;
+    
+    setcookie("username", $user, time() + $cookie_lifetime, "/", "", $secure, $httponly);
+    setcookie("cookie_id", $cookie_id, time() + $cookie_lifetime, "/", "", $secure, $httponly);
+    
 } catch (PDOException $e) {
     die("Database operation failed: " . $e->getMessage());
 }
@@ -122,29 +133,16 @@ try {
 
 // If the user tries to go to adminDashboard.php, ensure they exist in Admin_Table
 // AND checkRole is not 'Removed'.
-if (isset($_GET['redirect']) && $_GET['redirect'] === 'adminDashboard.php') {
-    try {
-        // Check if the username exists in Admin_Table and has checkRole <> 'Removed'
-        $adminQuery = "SELECT Role
-                       FROM Admin_Table 
-                       WHERE AdminSuUsername = :username
-                         AND checkRole <> 'Removed'";
-        $adminStmt  = $pdo->prepare($adminQuery);
-        $adminStmt->execute([':username' => $user]);
-        
-        // If user is found, fetch the role and store it in the session
-        if ($adminRow = $adminStmt->fetch()) {
-            $role = $adminRow['Role']; // Get the 'Role' from the result
-            $_SESSION['role'] = $role; // Store the role in the session
-        } else {
-            // If not found or role is 'Removed', redirect to index.php
-            header("Location: index.php");
-            exit;
-        }
 
-    } catch (PDOException $e) {
-        die("Admin check failed: " . $e->getMessage());
+if (isset($_GET['redirect']) && $_GET['redirect'] === 'adminDashboard.php') {
+    if (!checkIfUserIsAdmin($pdo, $user)) {
+        header("Location: index.php");
+        exit;
     }
+
+    // Store the admin role (if needed)
+    $role = getUserAdminRole($pdo, $user);
+    $_SESSION['role'] = $role ?? 'Unknown';
 }
 
 // -----------------------
