@@ -248,6 +248,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
   <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     body { background:#f9f9f9; padding-top:70px; overflow:auto;}
     .container{ max-width:90%; margin:auto; }
