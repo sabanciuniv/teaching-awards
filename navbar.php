@@ -62,29 +62,6 @@
             }
         }
 
-        .dropdown-menu {
-        background-color: #112568 !important;
-        border: none !important;
-        box-shadow: none !important;
-        }
-
-        /* Text color inside dropdown */
-        .dropdown-item {
-        color: #ffffff !important;
-        }
-
-        /* Hover styling */
-        .dropdown-item:hover,
-        .dropdown-item:focus {
-        background-color: #0c1a4d !important;
-        color: #ffffff !important;
-        }
-
-        /* Divider line styling */
-        .dropdown-divider {
-        border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
-        }
-
     </style>
 
     <div class="container-fluid d-flex align-items-center position-relative">
