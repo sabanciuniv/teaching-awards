@@ -192,7 +192,7 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
             <div class="hero-overlay"></div>
                 <div class="content-wrapper">
                     <!-- Navbar -->
-                    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-secondary">
+                    <nav class="navbar navbar-dark navbar-expand-lg fixed-top" style="background-color: #112568;">
                             <div class="container-fluid">
                                 <div class="d-flex align-items-center">
                                 </div>
@@ -228,7 +228,6 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
 
                     <div class="login-container">
                         <!-- Header Section -->
-                        <img src="assets/images/screenshots/sabancilogo.png" alt="Logo" style="height: 60px; margin-bottom: 20px;">
                         <h1 class="login-title">
                             VOTE & <br>
                             CHOOSE YOUR <br>
