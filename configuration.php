@@ -300,13 +300,7 @@
        <?php else: ?>
            <div class="alert alert-danger">No Academic Year Found</div>
        <?php endif; ?>
- 
- 
-       <div class="card-header d-flex justify-content-between align-items-center bg-white text-dark">
-        <h5 class="mb-0"><i class="fa-solid fa-user-times"></i> Excluded Candidates Table</h5>
-       </div>
- 
- 
+  
        <ul class="nav nav-tabs" id="configTabs" role="tablist">
          <li class="nav-item">
            <button class="nav-link active" id="candidates-tab" data-bs-toggle="tab" data-bs-target="#candidatesTab">Candidates</button>
