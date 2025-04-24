@@ -72,10 +72,14 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
     }
 
     .course-history-scroll {
-      max-height: 70px;
+      max-height: 100px;
       overflow-y: auto;
       overflow-x: hidden;
       width: 100%;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       text-align: center;
       padding: 0 10px;
       margin-top: 5px;
@@ -157,13 +161,6 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
     #confirmModal .btn-close:hover::before,
     #confirmModal .btn-close:focus::before {
       opacity: 0.8;
-    }
-    .course-history-scroll {
-      max-height: 100px;
-      overflow-y: auto;
-      width: 100%;
-      text-align: left;
-      padding: 0 10px;
     }
 
   </style>
@@ -258,7 +255,7 @@ $category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B'
             <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
             <h6>${instructor.InstructorName || 'Unknown'}</h6>
             <div class="course-history-scroll">
-             <strong>Courses:</strong> ${instructor.Courses || 'No courses found'}
+              ${instructor.Courses || 'No courses found'}
             </div>
 
 
