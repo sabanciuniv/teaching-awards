@@ -3,7 +3,7 @@
 
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
-//start session function
+// start session & enforce login
 require_once 'api/commonFunc.php';
 init_session();
 
@@ -14,7 +14,34 @@ require_once __DIR__ . '/PHPMailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// ----------------------------------------------------
+// A0) AJAX: Get count of students for Opening Mail
+// ----------------------------------------------------
+if (
+  $_SERVER['REQUEST_METHOD'] === 'GET'
+&& isset($_GET['action']) && $_GET['action'] === 'openingMailCount'
+) {
+  header('Content-Type: application/json; charset=utf-8');
+  // current year
+  $yearID = (int)$pdo->query("
+    SELECT YearID 
+      FROM AcademicYear_Table 
+     ORDER BY Start_date_time DESC 
+     LIMIT 1
+  ")->fetchColumn();
+  if (!$yearID) {
+      echo json_encode(['total'=>0]);
+      exit;
+  }
 
+  // **FIXED COUNT LOGIC** – prepare & execute, then fetchColumn()
+  $stmt = $pdo->prepare("SELECT COUNT(*) FROM Student_Table WHERE YearID = :y");
+  $stmt->execute([':y' => $yearID]);
+  $count = (int)$stmt->fetchColumn();
+
+  echo json_encode(['total' => $count]);
+  exit;
+}
 
 // ----------------------------------------------------
 // A) AJAX: Save template edits
@@ -239,6 +266,31 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
       line-height: 1;
       cursor: pointer;
     }
+
+    /* Make all .btn-close into a red “×” */
+    .btn-close {
+      background: none !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      width: 1em;
+      height: 1em;
+      padding: 0;
+      position: relative;
+    }
+    .btn-close::before {
+      content: "×";
+      color: #ff0000;
+      font-size: 1.4rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .btn-close:hover::before,
+    .btn-close:focus::before {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -259,7 +311,6 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
         data-body="<?= htmlspecialchars($t['MailBody'],ENT_QUOTES) ?>"
       >
         <td><?= htmlspecialchars($t['MailHeader']) ?></td>
-        <!-- strip_tags() removes all <p> … </p> etc. -->
         <td><?= htmlspecialchars(strip_tags($t['MailBody'])) ?></td>
         <td><button class="btn btn-custom edit-btn"><i class="fa fa-edit"></i> Edit</button></td>
       </tr>
@@ -337,7 +388,6 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <script>
   // Quill editor
   let quill = new Quill('#MailBodyEditor',{ theme:'snow' });
@@ -370,12 +420,25 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     },'json');
   });
 
-  // Send Opening Mail
+  // Send Opening Mail with confirmation
   $('#sendOpeningBtn').click(async ()=>{
-    const resp = await fetch('mailPage.php?action=sendOpeningMail',{method:'POST'});
-    const j    = await resp.json();
-    if(resp.ok) alert(`Sent ${j.sent}/${j.total}\nFailed: ${j.failed.length}`);
-    else alert('Error: '+(j.error||resp.statusText));
+    // fetch how many
+    let rc = await fetch('mailPage.php?action=openingMailCount');
+    let jc = await rc.json();
+    if (!rc.ok) {
+      return alert('Error getting count');
+    }
+    if (!confirm(
+      `Are you sure you want to send Opening Mail to ${jc.total} students?`
+    )) return;
+    // then actually send
+    let rs = await fetch('mailPage.php?action=sendOpeningMail',{method:'POST'});
+    let js = await rs.json();
+    if (rs.ok) {
+      alert(`Sent ${js.sent}/${js.total}\nFailed: ${js.failed.length}`);
+    } else {
+      alert('Error: '+(js.error||rs.statusText));
+    }
   });
 
   // View Mail Log
