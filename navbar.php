@@ -1,5 +1,5 @@
 <!-- Navbar -->
-<nav class="navbar navbar-dark navbar-expand-lg fixed-top" style = "background-color:#112568;">
+<nav class="navbar navbar-dark navbar-expand-lg fixed-top" style = "background-color:#01236a;">
     <style>
        
         .navbar-brand img {
