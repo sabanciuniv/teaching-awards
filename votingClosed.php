@@ -1,5 +1,18 @@
 <?php
-session_start();
+// votingClosed.php
+
+require_once __DIR__ . '/database/dbConnection.php';
+require_once __DIR__ . '/api/commonFunc.php';
+init_session();
+
+// Fetch the current academic year record (includes Start_date_time and End_date_time)
+$currentAY = fetchCurrentAcademicYear($pdo);
+$start = $currentAY
+  ? (new DateTime($currentAY['Start_date_time']))->format('j F Y H:i')
+  : null;
+$end   = $currentAY
+  ? (new DateTime($currentAY['End_date_time']))->format('j F Y H:i')
+  : null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,6 +59,11 @@ session_start();
       margin-bottom: 2rem;
       color: #555;
     }
+    .dates {
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      color: #666;
+    }
     .btn-custom {
       background-color: #45748a !important;
       color: #fff !important;
@@ -65,8 +83,14 @@ session_start();
 
   <div class="message-box">
     <h1>Voting Is Currently Closed</h1>
-    <p>The voting period is not active right now.<br>
-       Please return when voting is open.</p>
+    <p class="dates">
+      <?php if ($start && $end): ?>
+        Voting is open from <strong><?= $start ?></strong><br>
+        until <strong><?= $end ?></strong>.
+      <?php else: ?>
+        Voting dates are not available at this time.
+      <?php endif ?>
+    </p>
     <a href="index.php" class="btn btn-custom">
       <i class="fa fa-home"></i> Return to Main Page
     </a>
