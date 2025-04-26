@@ -193,7 +193,7 @@ checkVotingWindow($pdo);
           if (parseInt(category.isVoted) === 1) {
             showVotePopup(category.CategoryCode);
           } else {
-            window.location.href = `voteScreen_${category.CategoryCode}.php`;
+            window.location.href = `voteScreen.php?category=${category.CategoryCode}`;
           }
         };
 

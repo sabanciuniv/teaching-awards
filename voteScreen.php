@@ -2,13 +2,35 @@
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
 init_session();
+
 checkVotingWindow($pdo);
 
-$category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : 'B';
+// Get category and term
+$category = isset($_GET['category']) ? htmlspecialchars($_GET['category']) : null;
+if (!$category) {
+  die('No category specified.');
+}
 // Get instructors directly using the function
-$user = $_SESSION['user'] ?? null;  // Assuming 'user' is SuNET username
-$instructorsResult = $user ? getInstructorsForStudent($pdo, $user, $category) : ['status' => 'error', 'message' => 'User not logged in'];
+$user = (isset($_SESSION['impersonating']) && $_SESSION['impersonating']) 
+    ? $_SESSION['impersonated_user'] 
+    : $_SESSION['user'];
 
+
+if ($category === 'D') {
+  $instructorsResult = $user ? getTAsForStudent($pdo, $user, $category) : ['status' => 'error', 'message' => 'User not logged in'];
+} else {
+  $instructorsResult = $user ? getInstructorsForStudent($pdo, $user, $category) : ['status' => 'error', 'message' => 'User not logged in'];
+}
+
+// Normalize if TA
+if ($category === 'D' && $instructorsResult['status'] === 'success') {
+  foreach ($instructorsResult['data'] as &$ta) {
+      $ta['InstructorName'] = $ta['TA_Name'] ?? 'Unknown';
+      $ta['InstructorID'] = $ta['TA_ID'] ?? null;
+      $ta['Courses'] = ($ta['Subject_Code'] ?? '') . ' ' . ($ta['Course_Number'] ?? '');
+  }
+  unset($ta);
+}
 $instructorsJSON = json_encode($instructorsResult);
 
 //get the current year
@@ -16,7 +38,10 @@ $academicYearData = fetchCurrentAcademicYear($pdo);
 $academicYear = $academicYearData['Academic_year'] ?? null;
 $academicYearJS = json_encode($academicYear);
 
-
+$stmt = $pdo->prepare("SELECT CategoryDescription FROM Category_Table WHERE CategoryCode = :category");
+$stmt->execute(['category' => $category]);
+$categoryData = $stmt->fetch(PDO::FETCH_ASSOC);
+$categoryDescription = $categoryData['CategoryDescription'] ?? $category;
 ?>
 
 <!DOCTYPE html>
@@ -188,7 +213,7 @@ $academicYearJS = json_encode($academicYear);
   <div class="content container">
     <!-- Award Category Header -->
     <div class="award-category bg-secondary text-white">
-      Yılın Mezunları Ödülü
+      <?= htmlspecialchars($categoryDescription) ?>
     </div>
     <div class="row justify-content-center mt-4" id="instructors-list">
       <p class="text-muted">Loading instructors...</p>
@@ -219,23 +244,26 @@ $academicYearJS = json_encode($academicYear);
     </div>
   </div>
 
-  <!-- JavaScript (Bootstrap) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Custom JavaScript for Dropdown Ranking and Vote Submission -->
+  <!-- Custom JavaScript for Ranking & Vote Submission -->
   <script>
-    // Object to track selected ranks (mapping instructor index to rank number as a string)
+    // Read category from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('category');
+    
+    // Track selected ranks: { "instructorIndex": "1"|"2"|"3" }
     let selectedRanks = {};
 
     document.addEventListener("DOMContentLoaded", function () {
       const instructorsResult = <?= $instructorsJSON ?>;
-  
       if (instructorsResult.status === "success") {
         displayInstructors(instructorsResult.data);
       } else {
         document.getElementById("instructors-list").innerHTML = `<p class="text-danger">${instructorsResult.message}</p>`;
       }
-      // Attach the confirm button's click event listener only once
+      // Attach the "I Accept" click event listener only once
       document.getElementById('confirmSubmit').addEventListener('click', function () {
         var confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
         confirmModal.hide();
@@ -253,37 +281,35 @@ $academicYearJS = json_encode($academicYear);
       }
 
       instructors.forEach((instructor, index) => {
-      const cardHTML = `
-        <div class="d-flex justify-content-center mb-4">
-          <div class="card">
-            <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-            <h6>${instructor.InstructorName || 'Unknown'}</h6>
-            <div class="course-history-scroll">
-              ${instructor.Courses || 'No courses found'}
-            </div>
-            <div class="dropdown mt-2">
-              <button class="btn btn-secondary dropdown-toggle rank-btn"
-                      type="button"
-                      data-bs-toggle="dropdown"
-                      id="rank-btn-${index}"
-                      data-candidate-id="${instructor.InstructorID}">
-                Rank here
-              </button>
-              <div class="dropdown-menu">
-                <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
-                <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
-                <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+        container.innerHTML += `
+          <div class="col-md-3">
+            <div class="card">
+              <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
+                <h6>${instructor.InstructorName || 'Unknown'}</h6>
+                <div class="course-history-scroll">
+                  ${instructor.Courses || 'No courses found'}
+                </div>
+                <div class="dropdown mt-2">
+                  <button class="btn btn-secondary dropdown-toggle rank-btn"
+                          type="button"
+                          data-bs-toggle="dropdown"
+                          id="rank-btn-${index}"
+                          data-candidate-id="${instructor.InstructorID}">
+                    Rank here
+                  </button>
+                  <div class="dropdown-menu">
+                    <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                    <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                    <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                  </div>
+                </div>
+                <div id="selected-rank-${index}" class="mt-2"></div>
               </div>
             </div>
-            <div id="selected-rank-${index}" class="mt-2"></div>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML += cardHTML;
+        `;
       });
 
-      // Add event listeners for each dropdown rank option
+      // Attach event listeners for rank selections
       document.querySelectorAll('.rank-option').forEach(item => {
         item.addEventListener('click', function (e) {
           e.preventDefault();
@@ -358,16 +384,13 @@ $academicYearJS = json_encode($academicYear);
     }
 
     const academicYear = <?= $academicYearJS ?>;
-
-    // Function to build a summary of the selected votes
+    // Build the summary of selected votes from the candidate names
     function updateConfirmModalSummary() {
-      // Get all candidate name elements from the displayed cards.
-      // We assume the candidate name is in the h6 element within each card.
+      // Get candidate names from the card h6 elements
       const candidateElements = document.querySelectorAll('#instructors-list .card h6');
       let summaryHTML = '<ul>';
-      // Loop through possible ranks 1 to 3 in order
+      // Loop through possible ranks 1 to 3
       for (let r = 1; r <= 3; r++) {
-        // Look for an entry in selectedRanks with this rank
         for (const [index, rank] of Object.entries(selectedRanks)) {
           if (parseInt(rank) === r) {
             const candidateName = candidateElements[index] ? candidateElements[index].textContent : 'Unknown';
@@ -379,7 +402,7 @@ $academicYearJS = json_encode($academicYear);
       return summaryHTML;
     }
 
-    // When the user clicks submit, update the modal summary then show the confirmation modal.
+    // When user clicks Submit, update modal summary then show confirmation modal
     function submitVote() {
       const summaryHTML = updateConfirmModalSummary();
       document.getElementById("confirmSummary").innerHTML = summaryHTML;
@@ -391,17 +414,23 @@ $academicYearJS = json_encode($academicYear);
     async function doSubmitVote() {
       console.log("Selected Ranks:", selectedRanks);
 
-      const categoryId = 'B';
       if (!academicYear) {
         alert("Failed to get the academic year.");
         return;
       }
+      
+      if (!categoryId) {
+        alert("Category not found.");
+        return;
+      }
+
       let votes = [];
 
       Object.entries(selectedRanks).forEach(([index, rank]) => {
         let candidateButton = document.querySelector(`#rank-btn-${index}`);
         if (candidateButton) {
           let candidateID = candidateButton.getAttribute("data-candidate-id");
+          console.log(`CandidateID for index ${index}:`, candidateID);
           if (candidateID && candidateID.trim() !== "") {
             votes.push({ candidateID, rank });
           }
@@ -433,6 +462,7 @@ $academicYearJS = json_encode($academicYear);
         }
       })
       .then(data => {
+        console.log("Parsed Response from Server:", data);
         if (data.status === "success") {
           window.location.href = `thankYou.php?context=vote&completedCategoryId=${categoryId}`;
         } else {
