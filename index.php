@@ -69,20 +69,23 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
             color: white; 
         }
 
-
         .hero-section {
-            height: 100vh;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: url('assets/images/sabancı\ university.png'); 
+            height: 100vh;
+            overflow: hidden;
             border-radius: 40px;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
             margin-left: -20px;
             margin-right: -20px;
+        }
+
+        .bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            z-index: 0;
         }
 
         .hero-overlay {
@@ -91,7 +94,7 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.75); 
+            background: rgba(255, 255, 255, 0.65); 
             z-index: 1;
         }
 
@@ -189,6 +192,10 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
     <!-- Page Content -->
      <div class= "page content">
         <div class="hero-section">
+            <video autoplay muted loop playsinline class="bg-video">
+                <source src="additionalImages/Öğretim Ödülleri Giriş Sayfası.mp4" type="video/mp4">
+                Your browser does not support HTML5 video.
+             </video>
             <div class="hero-overlay"></div>
                 <div class="content-wrapper">
                     <!-- Navbar -->
