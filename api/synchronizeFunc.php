@@ -7,6 +7,8 @@ require_once '../database/dbConnection.php';
 require_once 'commonFunc.php';
 header('Content-Type: application/json');
 
+
+//2024 yılındaki öğrencileri al, hepsinde parametre olarak academic year gelsin
 //sync Students
 function synchronizeStudents(PDO $pdo): array {
     $response = [
@@ -938,8 +940,10 @@ function synchronizeCandidateCourses(PDO $pdo): array {
     }
 }
 
-
+//parametre default year için çalışcak
 function runFullSynchronization(PDO $pdo, string $logDirBase): array {
+//kontorl vote date--> burda error yaz kaçak olmasın, sunucu tarafında kontrol lazım
+
     $response = [
         "success" => true,
         "logs" => [],
@@ -955,6 +959,7 @@ function runFullSynchronization(PDO $pdo, string $logDirBase): array {
             "message" => "Unable to determine current academic year."
         ];
     }
+
 
     // Create log directory and file
     $timestamp = date("Ymd_His");
@@ -979,6 +984,28 @@ function runFullSynchronization(PDO $pdo, string $logDirBase): array {
     };
 
     try {
+
+        $academicYearData = fetchCurrentAcademicYear($pdo);
+
+        if (!$academicYearData) {
+            return [
+                "success" => false,
+                "message" => "Unable to determine current academic year."
+            ];
+        }
+
+        $academicYear = $academicYearData['Academic_year'];
+        $startDate = new DateTime($academicYearData['Start_date_time']);
+        $endDate = new DateTime($academicYearData['End_date_time']);
+        $today = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
+
+        // Block synchronization during active window
+        if ($today >= $startDate && $today <= $endDate) {
+            return [
+                "success" => false,
+                "message" => "Synchronization is disabled during active voting period."
+            ];
+        }
         // List of sync operations
         $syncTasks = [
             ["Courses", "synchronizeCourses"],
@@ -1015,12 +1042,14 @@ function runFullSynchronization(PDO $pdo, string $logDirBase): array {
         if (isset($_SESSION['user'])) {
             $username = $_SESSION['user'];
             $filename = basename($logFile);
+            $ipAddress = getClientIP();
 
-            $stmt = $pdo->prepare("INSERT INTO Sync_Logs (user, filename, academicYear) VALUES (:user, :filename, :year)");
+            $stmt = $pdo->prepare("INSERT INTO Sync_Logs (user, filename, academicYear, ip_address) VALUES (:user, :filename, :year, :ip_address)");
             $stmt->execute([
                 ':user' => $username,
                 ':filename' => $filename,
-                ':year' => $academicYear
+                ':year' => $academicYear,
+                ':ip_address' => $ipAddress
             ]);
         }
 
