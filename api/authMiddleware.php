@@ -40,7 +40,7 @@ try {
         setcookie("cookie_id", "", time() - 3600, "/"); // Expire the cookie_id cookie
         session_unset();
         session_destroy(); // Destroy the session
-        phpCAS::logoutWithRedirectService($app_base_url . "/ENS491-492");
+        phpCAS::logoutWithRedirectService($app_base_url . "odul/ENS491-492/");
         header("Location: index.php");
         exit();
     }
