@@ -85,8 +85,8 @@ $end   = $currentAY
     <h1>Voting Is Currently Closed</h1>
     <p class="dates">
       <?php if ($start && $end): ?>
-        Voting is open from <strong><?= $start ?></strong><br>
-        until <strong><?= $end ?></strong>.
+        Voting is open from<br> <strong><?= $start ?></strong><br>
+        until<br> <strong><?= $end ?></strong>.
       <?php else: ?>
         Voting dates are not available at this time.
       <?php endif ?>
