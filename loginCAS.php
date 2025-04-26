@@ -1,9 +1,15 @@
 <?php
 // -------------------------
-// SECURE SESSION SETUP — DO THIS FIRST
+// SECURE SESSION SETUP 
 // -------------------------
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+// Set cookie parameters BEFORE session_start()
+session_set_cookie_params([
+    'lifetime' => 3600, // 1 hour or you can keep 24*60*60 for 24h
+    'path' => '/odul/ENS491-492', // <-- only under this subfolder
+    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 session_start();
 
 
