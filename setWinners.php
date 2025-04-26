@@ -1,4 +1,20 @@
 <?php
+require_once 'api/commonFunc.php';
+require_once 'api/authMiddleware.php';
+require_once __DIR__ . '/database/dbConnection.php';
+
+init_session();
+$user = $_SESSION['user'];
+
+//Admin access check
+$role = getUserAdminRole($pdo, $user);
+if (!in_array($role, ['Admin', 'IT_Admin'])) {
+    header("Location: index.php");
+    exit();
+}
+
+$error   = '';
+
 // Integrated removal API: if action=removeCandidate is provided in the URL and a POST winnerID exists, process removal and exit.
 if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['winnerID'])) {
     require_once __DIR__ . '/database/dbConnection.php';
@@ -18,54 +34,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate' && $_SERVER[
     exit;
 }
 
-// Normal setWinners.php code starts here
-
-// Include authentication middleware
-require_once 'api/authMiddleware.php';
-
-require_once 'api/commonFunc.php';//for login  check of user
-init_session();
-
-require_once __DIR__ . '/database/dbConnection.php';
-$user = $_SESSION['user'];
-
 $message = '';
 if (isset($_GET['success']) && $_GET['success'] == '1') {
     $message = "Winner successfully set for the selected category.";
 }
 
-$error   = '';
-
-//Admin access check
-try {
-    $adminQuery = "SELECT 1 
-                     FROM Admin_Table 
-                    WHERE AdminSuUsername = :username 
-                      AND checkRole <> 'Removed'
-                      AND Role IN ('IT_Admin', 'Admin')
-                    LIMIT 1";
-    $adminStmt = $pdo->prepare($adminQuery);
-    $adminStmt->execute([':username' => $user]);
-    if (!$adminStmt->fetch()) {
-        header("Location: index.php");
-        exit();
-    }
-} catch (PDOException $e) {
-    die("Admin check failed: " . $e->getMessage());
-}
-
-//Category fetching
-try {
-    $stmtCats = $pdo->prepare("
-        SELECT CategoryID, CategoryCode, CategoryDescription 
-        FROM Category_Table 
-        ORDER BY CategoryID ASC
-    ");
-    $stmtCats->execute();
-    $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("Error fetching categories: " . $e->getMessage());
-}
+$categories = getAllCategories($pdo);
 
 
 // -------------------------
@@ -73,23 +47,13 @@ try {
 // -------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finishWinnerList'])) {
     // Retrieve current academic year
-    try {
-        $stmtAcademicYear = $pdo->prepare("
-            SELECT YearID, Academic_year, Start_date_time, End_date_time 
-            FROM AcademicYear_Table 
-            ORDER BY Start_date_time DESC
-            LIMIT 1
-        ");
-        $stmtAcademicYear->execute();
-        $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
-        if (!$academicYear) {
-            $error = "No academic year found.";
-        } else {
-            $yearID = $academicYear['YearID'];
-        }
-    } catch (PDOException $e) {
-        $error = "Database error retrieving academic year: " . $e->getMessage();
+    $academicYearData = fetchCurrentAcademicYear($pdo);
+    if (!$academicYearData) {
+        $error = "No academic year found.";
+    } else {
+        $yearID = $academicYearData['YearID'];
     }
+    
     
     if (empty($error)) {
         // Update winners for the current academic year only
@@ -114,16 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finishWinnerList'])) 
 // -------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unpublishWinnerList'])) {
     try {
-        // get current YearID
-        $stmtAcademicYear = $pdo->prepare("
-            SELECT YearID
-              FROM AcademicYear_Table
-             ORDER BY Start_date_time DESC
-             LIMIT 1
-        ");
-        $stmtAcademicYear->execute();
-        $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
-
+        $academicYear = fetchCurrentAcademicYear($pdo);
         if ($academicYear) {
             $yearID = $academicYear['YearID'];
 
@@ -161,22 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['finishWinnerList']))
     } elseif (!isset($_FILES['winnerImage']) || $_FILES['winnerImage']['error'] !== UPLOAD_ERR_OK) {
         $error = "Please upload a valid winner image (error code: " . ($_FILES['winnerImage']['error'] ?? 'null') . ").";
     } else {
-        try {
-            $stmtAcademicYear = $pdo->prepare("
-                SELECT YearID, Academic_year, Start_date_time, End_date_time 
-                FROM AcademicYear_Table 
-                ORDER BY Start_date_time DESC
-                LIMIT 1
-            ");
-            $stmtAcademicYear->execute();
-            $academicYear = $stmtAcademicYear->fetch(PDO::FETCH_ASSOC);
-            if (!$academicYear) {
-                $error = "No academic year found.";
-            } else {
-                $yearID = $academicYear['YearID'];
-            }
-        } catch (PDOException $e) {
-            $error = "Database error retrieving academic year: " . $e->getMessage();
+        $academicYear = fetchCurrentAcademicYear($pdo);
+        if (!$academicYear) {
+            $error = "No academic year found.";
+        } else {
+            $yearID = $academicYear['YearID'];
         }
     }
     
@@ -236,21 +180,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['finishWinnerList']))
 // 3) Fetch winners for the CURRENT ACADEMIC YEAR (only those with readyDisplay = 'yes') for preview
 // -------------------------
 $currentYearID = 0;
-try {
-    $stmtCurrentYear = $pdo->prepare("
-        SELECT YearID 
-        FROM AcademicYear_Table 
-        ORDER BY Start_date_time DESC
-        LIMIT 1
-    ");
-    $stmtCurrentYear->execute();
-    $currentYearRow = $stmtCurrentYear->fetch(PDO::FETCH_ASSOC);
-    if ($currentYearRow) {
-        $currentYearID = $currentYearRow['YearID'];
-    }
-} catch (PDOException $e) {
-    $currentYearID = 0;
-}
+
+$academicYearData = fetchCurrentAcademicYear($pdo);
+$currentYearID = $academicYearData['YearID'] ?? 0;
+
 
 $allWinners = [];
 try {
