@@ -6,7 +6,7 @@ function logImpersonationAction($pdo, $action, $details = null, $documentUpload 
 
     $adminUser = $_SESSION['admin_user'] ?? 'unknown';
     $impersonatedUser = $_SESSION['impersonated_user'] ?? 'unknown';
-    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+    $ipAddress = getClientIP(); 
 
     $detailsJson = is_array($details) ? json_encode($details, JSON_UNESCAPED_UNICODE) : $details;
 
