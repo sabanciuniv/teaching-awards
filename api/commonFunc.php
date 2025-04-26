@@ -1,9 +1,19 @@
 <?php
-
 // commonFunc.php
+
+//FOR SECURITY REAONS MAKE SURE THE USER IS ADMIN 
+function enforceAdminAccess(PDO $pdo): void {
+    if (!isset($_SESSION['user']) || !checkIfUserIsAdmin($pdo, $_SESSION['user'])) {
+        http_response_code(403); // Forbidden
+        echo json_encode(['success' => false, 'error' => 'Access denied. Admins only.']);
+        exit();
+    }
+}
+
 
 //starting session function
 function init_session(): void {
+    //TO DO: session cookie 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -22,7 +32,9 @@ function init_session(): void {
 
 
 
+
 function deleteExcludedCandidate(PDO $pdo, int $candidateID): array {
+    enforceAdminAccess($pdo);
     try {
         $stmt = $pdo->prepare("DELETE FROM Exception_Table WHERE CandidateID = :candidateID");
         $stmt->execute(['candidateID' => $candidateID]);
@@ -38,6 +50,7 @@ function deleteExcludedCandidate(PDO $pdo, int $candidateID): array {
 
 //add to excluded candidate
 function addExcludedCandidate(PDO $pdo, int $candidateID, string $excludedBy): array {
+    enforceAdminAccess($pdo);
     try {
         // Check if candidate exists
         $checkStmt = $pdo->prepare("SELECT id FROM Candidate_Table WHERE id = :id");
@@ -73,6 +86,7 @@ function addExcludedCandidate(PDO $pdo, int $candidateID, string $excludedBy): a
 
 //add or remove system into the exception table
 function handleCandidateExclusion(PDO $pdo): void {
+    enforceAdminAccess($pdo);
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidateID'], $_POST['action'])) {
         $candidateID = intval($_POST['candidateID']);
         $username = $_SESSION['user'] ?? 'system';
@@ -90,10 +104,28 @@ function handleCandidateExclusion(PDO $pdo): void {
     }
 }
 
+function getClientIP(): string {
+    // Check for shared internet/ISP IP
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    }
+
+    // Check for IPs passing through proxies
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        // If multiple IPs, take the first one (real user's IP)
+        $ipList = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($ipList[0]);
+    }
+
+    // Default: REMOTE_ADDR
+    return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+}
+
+
 
 function getAllCategories(PDO $pdo): array {
     $stmt = $pdo->query(
-        "SELECT CategoryID, CategoryDescription 
+        "SELECT CategoryID,CategoryCode, CategoryDescription 
            FROM Category_Table 
           ORDER BY CategoryID ASC"
     );
