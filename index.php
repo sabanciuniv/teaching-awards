@@ -52,20 +52,20 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
        
         .dropdown-menu {
             transform: translateX(-70px);
-            background-color: #45748A; 
+            background-color: #01236a; 
             border: none; 
         }
 
     
         .dropdown-menu .dropdown-item {
             color: white;
-            background-color: #45748A; 
+            background-color: #01236a; 
         }
 
        
         .dropdown-menu .dropdown-item:hover,
         .dropdown-menu .dropdown-item:focus {
-            background-color: #45748A; 
+            background-color: #01236a; 
             color: white; 
         }
 
