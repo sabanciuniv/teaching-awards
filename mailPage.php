@@ -3,9 +3,12 @@
 
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
+
 // start session & enforce login
 require_once 'api/commonFunc.php';
 init_session();
+// only admins may proceed
+enforceAdminAccess($pdo);
 
 // PHPMailer
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -22,24 +25,11 @@ if (
  && isset($_GET['action']) && $_GET['action'] === 'openingMailCount'
 ) {
   header('Content-Type: application/json; charset=utf-8');
-  // current year
-  $yearID = (int)$pdo->query("
-    SELECT YearID 
-      FROM AcademicYear_Table 
-     ORDER BY Start_date_time DESC 
-     LIMIT 1
-  ")->fetchColumn();
-  if (!$yearID) {
-      echo json_encode(['total'=>0]);
-      exit;
-  }
-
-  // fixed count logic
-  $stmt = $pdo->prepare("SELECT COUNT(*) FROM Student_Table WHERE YearID = :y");
-  $stmt->execute([':y' => $yearID]);
-  $count = (int)$stmt->fetchColumn();
-
-  echo json_encode(['total' => $count]);
+  // safe: always uses the current year ID
+  $yearID = getCurrentAcademicYearID($pdo) ?: 0;
+  $stmt   = $pdo->prepare("SELECT COUNT(*) FROM Student_Table WHERE YearID = :y");
+  $stmt->execute([':y'=>$yearID]);
+  echo json_encode(['total'=>(int)$stmt->fetchColumn()]);
   exit;
 }
 
@@ -47,15 +37,15 @@ if (
 // A) AJAX: Save template edits
 // ----------------------------------------------------
 if (
-    $_SERVER['REQUEST_METHOD'] === 'POST'
+    $_SERVER['REQUEST_METHOD']==='POST'
  && isset($_GET['action']) && $_GET['action']==='saveTemplate'
- && isset($_POST['templateID'], $_POST['MailHeader'], $_POST['MailBody'])
+ && isset($_POST['templateID'],$_POST['MailHeader'],$_POST['MailBody'])
 ) {
     header('Content-Type: application/json; charset=utf-8');
     $id   = (int)$_POST['templateID'];
     $hdr  = trim($_POST['MailHeader']);
     $body = $_POST['MailBody'];
-    if (!$id || $hdr === '') {
+    if (!$id || $hdr==='') {
         echo json_encode(['success'=>false,'error'=>'Missing fields']);
         exit;
     }
@@ -66,7 +56,7 @@ if (
                , MailBody   = :body
            WHERE TemplateID = :id
         ")->execute([
-            ':hdr'=>$hdr, ':body'=>$body, ':id'=>$id
+            ':hdr'=>$hdr,':body'=>$body,':id'=>$id
         ]);
         echo json_encode(['success'=>true]);
     } catch(Exception $e) {
@@ -79,37 +69,27 @@ if (
 // B) AJAX: Send Opening Mail
 // ----------------------------------------------------
 if (
-  $_SERVER['REQUEST_METHOD'] === 'POST'
+  $_SERVER['REQUEST_METHOD']==='POST'
  && isset($_GET['action']) && $_GET['action']==='sendOpeningMail'
 ) {
   header('Content-Type: application/json; charset=utf-8');
-  // 1) current YearID
-  $yearID = $pdo->query("
-    SELECT YearID 
-      FROM AcademicYear_Table 
-     ORDER BY Start_date_time DESC 
-     LIMIT 1
-  ")->fetchColumn();
-  if (!$yearID) {
+
+  // grab both the YearID and the Academic_year
+  $yearInfo = fetchCurrentAcademicYear($pdo);
+  if (!$yearInfo) {
       http_response_code(500);
       echo json_encode(['error'=>'No academic year found']);
       exit;
   }
+  $yearID    = (int)$yearInfo['YearID'];
+  $startYear = (int)$yearInfo['Academic_year'];
+  $yearLabel = $startYear . '-' . ($startYear+1);
 
-  // 1.5) fetch the numeric Academic_year so we can build "2024-2025"
-  $startYear = (int)$pdo->query("
-    SELECT Academic_year 
-      FROM AcademicYear_Table 
-     ORDER BY Start_date_time DESC 
-     LIMIT 1
-  ")->fetchColumn();
-  $yearLabel = $startYear . '-' . ($startYear + 1);
-
-  // 2) load OpeningMail template
+  // load OpeningMail template
   $tpl = $pdo->prepare("
-    SELECT TemplateID, MailHeader, MailBody
+    SELECT TemplateID,MailHeader,MailBody
       FROM MailTemplate_Table
-     WHERE MailType = 'OpeningMail'
+     WHERE MailType='OpeningMail'
      LIMIT 1
   ");
   $tpl->execute();
@@ -120,84 +100,84 @@ if (
       exit;
   }
 
-  // 3) fetch students in that year
+  // fetch students
   $students = $pdo->prepare("
-    SELECT StudentFullName, Mail 
-      FROM Student_Table 
-     WHERE YearID = :y
+    SELECT StudentFullName,Mail
+      FROM Student_Table
+     WHERE YearID=:y
   ");
   $students->execute([':y'=>$yearID]);
   $students = $students->fetchAll(PDO::FETCH_ASSOC);
 
-  // 4) PHPMailer setup
+  // PHPMailer setup
   try {
-      $mail = new PHPMailer(true);
-      $mail->isSMTP();
-      $mail->Host           = 'smtp.gmail.com';
-      $mail->SMTPAuth       = true;
-      $mail->Username       = 'ens492odul@gmail.com';
-      $mail->Password       = 'aycmatyxmxhphsvh';
-      $mail->SMTPSecure     = PHPMailer::ENCRYPTION_STARTTLS;
-      $mail->Port           = 587;
-      $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
-      $mail->SMTPKeepAlive  = true;
-      $mail->isHTML(true);
+    $mail = new PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host          = 'smtp.gmail.com';
+    $mail->SMTPAuth      = true;
+    $mail->Username      = 'ens492odul@gmail.com';
+    $mail->Password      = 'aycmatyxmxhphsvh';
+    $mail->SMTPSecure    = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port          = 587;
+    $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
+    $mail->SMTPKeepAlive = true;
+    $mail->isHTML(true);
   } catch (Exception $e) {
-      http_response_code(500);
-      echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
-      exit;
+    http_response_code(500);
+    echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
+    exit;
   }
 
-  // 5) loop & send + log
-  $sent   = 0;
+  // send loop
+  $sent = 0;
   $failed = [];
   foreach ($students as $stu) {
-      $addr = $stu['Mail'] ?? '';
-      if (!filter_var($addr, FILTER_VALIDATE_EMAIL)) {
-          $failed[] = ['email'=>$addr,'reason'=>'Invalid email'];
-          continue;
-      }
-      try {
-          $mail->clearAddresses();
-          $mail->addAddress($addr, $stu['StudentFullName']);
-          $mail->Subject = $tpl['MailHeader'];
+    $addr = $stu['Mail'] ?? '';
+    if (!filter_var($addr, FILTER_VALIDATE_EMAIL)) {
+      $failed[] = ['email'=>$addr,'reason'=>'Invalid email'];
+      continue;
+    }
+    try {
+      $mail->clearAddresses();
+      $mail->addAddress($addr,$stu['StudentFullName']);
+      $mail->Subject = $tpl['MailHeader'];
 
-          // personalization: replace @name_surname and our new @yearLabel
-          $body = str_replace(
-              ['@name_surname','@year'],
-              [$stu['StudentFullName'], $yearLabel],
-              $tpl['MailBody']
-          );
-          $mail->Body    = $body;
-          $mail->AltBody = strip_tags($body);
+      // personalization tokens
+      $body = str_replace(
+        ['@name_surname','@year'],
+        [$stu['StudentFullName'],$yearLabel],
+        $tpl['MailBody']
+      );
+      $mail->Body    = $body;
+      $mail->AltBody = strip_tags($body);
 
-          $mail->send();
-          $sent++;
+      $mail->send();
+      $sent++;
 
-          // log into MailLog_Table
-          $pdo->prepare("
-            INSERT INTO MailLog_Table
-              (Sender, StudentEmail, StudentName, TemplateID, MailContent, YearID)
-            VALUES
-              (:s,:e,:n,:tid,:c,:y)
-          ")->execute([
-              ':s'=>$_SESSION['user'],
-              ':e'=>$addr,
-              ':n'=>$stu['StudentFullName'],
-              ':tid'=>$tpl['TemplateID'],
-              ':c'=>$body,
-              ':y'=>$yearID
-          ]);
-      } catch(Exception $e) {
-          $failed[] = ['email'=>$addr,'reason'=>$e->getMessage()];
-      }
+      // log it
+      $pdo->prepare("
+        INSERT INTO MailLog_Table
+          (Sender,StudentEmail,StudentName,TemplateID,MailContent,YearID)
+        VALUES
+          (:s,:e,:n,:tid,:c,:y)
+      ")->execute([
+        ':s'=>$_SESSION['user'],
+        ':e'=>$addr,
+        ':n'=>$stu['StudentFullName'],
+        ':tid'=>$tpl['TemplateID'],
+        ':c'=>$body,
+        ':y'=>$yearID
+      ]);
+    } catch(Exception $e) {
+      $failed[] = ['email'=>$addr,'reason'=>$e->getMessage()];
+    }
   }
 
   $mail->smtpClose();
   echo json_encode([
-    'sent'   => $sent,
-    'total'  => count($students),
-    'failed' => $failed
+    'sent'=>$sent,
+    'total'=>count($students),
+    'failed'=>$failed
   ]);
   exit;
 }
@@ -206,7 +186,8 @@ if (
 // C) Normal page: Auth + fetch templates + logs
 // ----------------------------------------------------
 $check = $pdo->prepare("
-  SELECT 1 FROM Admin_Table
+  SELECT 1
+    FROM Admin_Table
    WHERE AdminSuUsername=:u
      AND checkRole<>'Removed'
      AND Role IN('IT_Admin','Admin')
@@ -214,8 +195,8 @@ $check = $pdo->prepare("
 ");
 $check->execute([':u'=>$_SESSION['user']]);
 if (!$check->fetch()) {
-    header("Location: index.php");
-    exit;
+  header("Location:index.php");
+  exit;
 }
 
 // fetch templates
@@ -223,14 +204,10 @@ $mailTemplates = $pdo
   ->query("SELECT TemplateID,MailType,MailHeader,MailBody FROM MailTemplate_Table ORDER BY TemplateID")
   ->fetchAll(PDO::FETCH_ASSOC);
 
-// current year
-$currentYearID = $pdo->query("
-  SELECT YearID FROM AcademicYear_Table
-  ORDER BY Start_date_time DESC
-  LIMIT 1
-")->fetchColumn();
+// current year ID (for display in the log modal)
+$currentYearID = getCurrentAcademicYearID($pdo) ?: 0;
 
-// fetch logs for this year, newest first
+// fetch logs
 $mailLogs = $pdo->prepare("
   SELECT 
     l.LogID,
