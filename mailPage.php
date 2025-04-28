@@ -19,7 +19,7 @@ use PHPMailer\PHPMailer\Exception;
 // ----------------------------------------------------
 if (
   $_SERVER['REQUEST_METHOD'] === 'GET'
-&& isset($_GET['action']) && $_GET['action'] === 'openingMailCount'
+ && isset($_GET['action']) && $_GET['action'] === 'openingMailCount'
 ) {
   header('Content-Type: application/json; charset=utf-8');
   // current year
@@ -34,7 +34,7 @@ if (
       exit;
   }
 
-  // **FIXED COUNT LOGIC** – prepare & execute, then fetchColumn()
+  // fixed count logic
   $stmt = $pdo->prepare("SELECT COUNT(*) FROM Student_Table WHERE YearID = :y");
   $stmt->execute([':y' => $yearID]);
   $count = (int)$stmt->fetchColumn();
@@ -66,7 +66,7 @@ if (
                , MailBody   = :body
            WHERE TemplateID = :id
         ")->execute([
-            ':hdr'=>$hdr,':body'=>$body,':id'=>$id
+            ':hdr'=>$hdr, ':body'=>$body, ':id'=>$id
         ]);
         echo json_encode(['success'=>true]);
     } catch(Exception $e) {
@@ -79,111 +79,127 @@ if (
 // B) AJAX: Send Opening Mail
 // ----------------------------------------------------
 if (
-    $_SERVER['REQUEST_METHOD'] === 'POST'
+  $_SERVER['REQUEST_METHOD'] === 'POST'
  && isset($_GET['action']) && $_GET['action']==='sendOpeningMail'
 ) {
-    header('Content-Type: application/json; charset=utf-8');
-    // 1) current YearID
-    $yearID = $pdo->query("
-      SELECT YearID 
-        FROM AcademicYear_Table 
-       ORDER BY Start_date_time DESC 
-       LIMIT 1
-    ")->fetchColumn();
-    if (!$yearID) {
-        http_response_code(500);
-        echo json_encode(['error'=>'No academic year found']);
-        exit;
-    }
+  header('Content-Type: application/json; charset=utf-8');
+  // 1) current YearID
+  $yearID = $pdo->query("
+    SELECT YearID 
+      FROM AcademicYear_Table 
+     ORDER BY Start_date_time DESC 
+     LIMIT 1
+  ")->fetchColumn();
+  if (!$yearID) {
+      http_response_code(500);
+      echo json_encode(['error'=>'No academic year found']);
+      exit;
+  }
 
-    // 2) load OpeningMail template
-    $tpl = $pdo->prepare("
-      SELECT TemplateID, MailHeader, MailBody
-        FROM MailTemplate_Table
-       WHERE MailType = 'OpeningMail'
-       LIMIT 1
-    ");
-    $tpl->execute();
-    $tpl = $tpl->fetch(PDO::FETCH_ASSOC);
-    if (!$tpl) {
-        http_response_code(404);
-        echo json_encode(['error'=>"No 'OpeningMail' template found"]);
-        exit;
-    }
+  // 1.5) fetch the numeric Academic_year so we can build "2024-2025"
+  $startYear = (int)$pdo->query("
+    SELECT Academic_year 
+      FROM AcademicYear_Table 
+     ORDER BY Start_date_time DESC 
+     LIMIT 1
+  ")->fetchColumn();
+  $yearLabel = $startYear . '-' . ($startYear + 1);
 
-    // 3) fetch students in that year
-    $students = $pdo->prepare("
-      SELECT StudentFullName, Mail 
-        FROM Student_Table 
-       WHERE YearID = :y
-    ");
-    $students->execute([':y'=>$yearID]);
-    $students = $students->fetchAll(PDO::FETCH_ASSOC);
-    $total    = count($students);
+  // 2) load OpeningMail template
+  $tpl = $pdo->prepare("
+    SELECT TemplateID, MailHeader, MailBody
+      FROM MailTemplate_Table
+     WHERE MailType = 'OpeningMail'
+     LIMIT 1
+  ");
+  $tpl->execute();
+  $tpl = $tpl->fetch(PDO::FETCH_ASSOC);
+  if (!$tpl) {
+      http_response_code(404);
+      echo json_encode(['error'=>"No 'OpeningMail' template found"]);
+      exit;
+  }
 
-    // 4) PHPMailer setup
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host           = 'smtp.gmail.com';
-        $mail->SMTPAuth       = true;
-        $mail->Username       = 'ens492odul@gmail.com';
-        $mail->Password       = 'aycmatyxmxhphsvh';
-        $mail->SMTPSecure     = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port           = 587;
-        $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
-        $mail->SMTPKeepAlive  = true;
-        $mail->isHTML(true);
-    } catch(Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
-        exit;
-    }
+  // 3) fetch students in that year
+  $students = $pdo->prepare("
+    SELECT StudentFullName, Mail 
+      FROM Student_Table 
+     WHERE YearID = :y
+  ");
+  $students->execute([':y'=>$yearID]);
+  $students = $students->fetchAll(PDO::FETCH_ASSOC);
 
-    // 5) loop & send + log
-    $sent   = 0;
-    $failed = [];
-    foreach ($students as $stu) {
-        $addr = $stu['Mail'] ?? '';
-        if (!filter_var($addr, FILTER_VALIDATE_EMAIL)) {
-            $failed[] = ['email'=>$addr,'reason'=>'Invalid email'];
-            continue;
-        }
-        try {
-            $mail->clearAddresses();
-            $mail->addAddress($addr, $stu['StudentFullName']);
-            $mail->Subject = $tpl['MailHeader'];
-            $body = str_replace(
-                ['{studentName}','{year}'],
-                [$stu['StudentFullName'], date('Y')],
-                $tpl['MailBody']
-            );
-            $mail->Body    = $body;
-            $mail->AltBody = strip_tags($body);
-            $mail->send();
-            $sent++;
+  // 4) PHPMailer setup
+  try {
+      $mail = new PHPMailer(true);
+      $mail->isSMTP();
+      $mail->Host           = 'smtp.gmail.com';
+      $mail->SMTPAuth       = true;
+      $mail->Username       = 'ens492odul@gmail.com';
+      $mail->Password       = 'aycmatyxmxhphsvh';
+      $mail->SMTPSecure     = PHPMailer::ENCRYPTION_STARTTLS;
+      $mail->Port           = 587;
+      $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
+      $mail->SMTPKeepAlive  = true;
+      $mail->isHTML(true);
+  } catch (Exception $e) {
+      http_response_code(500);
+      echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
+      exit;
+  }
 
-            // log into MailLog_Table
-            $pdo->prepare("
-              INSERT INTO MailLog_Table
-                (Sender, StudentEmail, StudentName, TemplateID, MailContent, YearID)
-              VALUES
-                (:s,:e,:n,:tid,:c,:y)
-            ")->execute([
-                ':s'=>$_SESSION['user'],
-                ':e'=>$addr,
-                ':n'=>$stu['StudentFullName'],
-                ':tid'=>$tpl['TemplateID'],
-                ':c'=>$body,
-                ':y'=>$yearID
-            ]);
-        } catch(Exception $e) {
-            $failed[] = ['email'=>$addr,'reason'=>$e->getMessage()];
-        }
-    }
-    $mail->smtpClose();
-    echo json_encode(['sent'=>$sent,'total'=>$total,'failed'=>$failed]);
-    exit;
+  // 5) loop & send + log
+  $sent   = 0;
+  $failed = [];
+  foreach ($students as $stu) {
+      $addr = $stu['Mail'] ?? '';
+      if (!filter_var($addr, FILTER_VALIDATE_EMAIL)) {
+          $failed[] = ['email'=>$addr,'reason'=>'Invalid email'];
+          continue;
+      }
+      try {
+          $mail->clearAddresses();
+          $mail->addAddress($addr, $stu['StudentFullName']);
+          $mail->Subject = $tpl['MailHeader'];
+
+          // personalization: replace @name_surname and our new @yearLabel
+          $body = str_replace(
+              ['@name_surname','@year'],
+              [$stu['StudentFullName'], $yearLabel],
+              $tpl['MailBody']
+          );
+          $mail->Body    = $body;
+          $mail->AltBody = strip_tags($body);
+
+          $mail->send();
+          $sent++;
+
+          // log into MailLog_Table
+          $pdo->prepare("
+            INSERT INTO MailLog_Table
+              (Sender, StudentEmail, StudentName, TemplateID, MailContent, YearID)
+            VALUES
+              (:s,:e,:n,:tid,:c,:y)
+          ")->execute([
+              ':s'=>$_SESSION['user'],
+              ':e'=>$addr,
+              ':n'=>$stu['StudentFullName'],
+              ':tid'=>$tpl['TemplateID'],
+              ':c'=>$body,
+              ':y'=>$yearID
+          ]);
+      } catch(Exception $e) {
+          $failed[] = ['email'=>$addr,'reason'=>$e->getMessage()];
+      }
+  }
+
+  $mail->smtpClose();
+  echo json_encode([
+    'sent'   => $sent,
+    'total'  => count($students),
+    'failed' => $failed
+  ]);
+  exit;
 }
 
 // ----------------------------------------------------
@@ -267,8 +283,6 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
       line-height: 1;
       cursor: pointer;
     }
-
-    /* Make all .btn-close into a red “×” */
     .btn-close {
       background: none !important;
       background-image: none !important;
@@ -340,6 +354,9 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
       <div class="mb-3">
         <label class="form-label">Mail Body</label>
         <div id="MailBodyEditor" style="height:200px;background:#fff;"></div>
+        <small class="form-text text-muted">
+          Use <code>@name_surname</code> and <code>@year</code> in your template.
+        </small>
       </div>
     </form>
   </div>
@@ -421,25 +438,37 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     },'json');
   });
 
-  // Send Opening Mail with confirmation
-  $('#sendOpeningBtn').click(async ()=>{
+  // Send Opening Mail with count & confirmation
+  $('#sendOpeningBtn').click(async () => {
     // fetch how many
     let rc = await fetch('mailPage.php?action=openingMailCount');
-    let jc = await rc.json();
+    let tc = await rc.text();
+    let jc;
+    try {
+      jc = JSON.parse(tc);
+    } catch (e) {
+      console.error('Bad JSON for count:', tc);
+      return alert('Server error fetching student count. Check console.');
+    }
     if (!rc.ok) {
-      return alert('Error getting count');
+      return alert('Error fetching student count: ' + (jc.error||rc.status));
     }
-    if (!confirm(
-      `Are you sure you want to send Opening Mail to ${jc.total} students?`
-    )) return;
-    // then actually send
+    if (!confirm(`Are you sure you want to send Opening Mail to ${jc.total} students?`)) return;
+
+    // actually send
     let rs = await fetch('mailPage.php?action=sendOpeningMail',{method:'POST'});
-    let js = await rs.json();
-    if (rs.ok) {
-      alert(`Sent ${js.sent}/${js.total}\nFailed: ${js.failed.length}`);
-    } else {
-      alert('Error: '+(js.error||rs.statusText));
+    let ts = await rs.text();
+    let js;
+    try {
+      js = JSON.parse(ts);
+    } catch (e) {
+      console.error('Bad JSON from sendOpeningMail:', ts);
+      return alert('Server error sending mails. Check console.');
     }
+    if (!rs.ok) {
+      return alert('Error sending mails: ' + (js.error||rs.statusText));
+    }
+    alert(`Sent ${js.sent}/${js.total}\nFailed: ${js.failed.length}`);
   });
 
   // View Mail Log

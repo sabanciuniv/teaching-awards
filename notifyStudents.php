@@ -14,9 +14,9 @@ header('Content-Type: application/json; charset=utf-8');
 // 2) Decode payload
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
-if (!is_array($data) || !isset($data['students'], $data['year'])) {
+if (!is_array($data) || !isset($data['students'])) {
     http_response_code(400);
-    echo json_encode(['error'=>'Missing students array or year']);
+    echo json_encode(['error'=>'Missing students array']);
     exit;
 }
 $students = $data['students'];
@@ -40,18 +40,22 @@ $templateID     = $tpl['TemplateID'];
 $templateHeader = $tpl['MailHeader'];
 $templateBody   = $tpl['MailBody'];
 
-// 4) Lookup current academic YearID
-$currentYearID = $pdo->query("
-    SELECT YearID
+// 4) Lookup current academic YearID and Academic_year number
+$currentYearRow = $pdo->query("
+    SELECT YearID, Academic_year
       FROM AcademicYear_Table
      ORDER BY Start_date_time DESC
      LIMIT 1
-")->fetchColumn();
-if (!$currentYearID) {
+")->fetch(PDO::FETCH_ASSOC);
+if (!$currentYearRow) {
     http_response_code(500);
     echo json_encode(['error'=>'No academic year found']);
     exit;
 }
+$currentYearID     = (int)$currentYearRow['YearID'];
+$academicYearStart = (int)$currentYearRow['Academic_year'];
+// build label "2024-2025"
+$yearLabel = $academicYearStart . '-' . ($academicYearStart + 1);
 
 // 5) Prepare one persistent PHPMailer instance
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -91,17 +95,17 @@ foreach ($students as $stu) {
         $mail->clearAddresses();
         $mail->addAddress($email, $stu['StudentFullName']);
 
-        // dynamic subject
+        // Subject: replace both {studentName},{year} and @name_surname,@year
         $mail->Subject = str_replace(
-            ['{studentName}','{year}'],
-            [$stu['StudentFullName'],$currentYearID],
+            ['{studentName}','{year}','@name_surname','@year'],
+            [$stu['StudentFullName'],$yearLabel,$stu['StudentFullName'],$yearLabel],
             $templateHeader
         );
 
-        // dynamic body
+        // Body: same replacements
         $body = str_replace(
-            ['{studentName}','{year}'],
-            [$stu['StudentFullName'],$currentYearID],
+            ['{studentName}','{year}','@name_surname','@year'],
+            [$stu['StudentFullName'],$yearLabel,$stu['StudentFullName'],$yearLabel],
             $templateBody
         );
         $mail->Body    = $body;
@@ -110,7 +114,7 @@ foreach ($students as $stu) {
         $mail->send();
         $sent++;
 
-        // log into MailLog_Table with TemplateID + YearID
+        // log into MailLog_Table
         $pdo->prepare("
           INSERT INTO MailLog_Table
             (Sender,StudentEmail,StudentName,TemplateID,MailContent,YearID)
