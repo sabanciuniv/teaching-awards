@@ -242,6 +242,31 @@ function getUserAdminRole(PDO $pdo, string $username): ?string {
     return $row['Role'] ?? null;
 }
 
+function getAllAdmins(PDO $pdo): array {
+    try {
+        $stmt = $pdo->query("
+            SELECT AdminSuUsername,
+                   Role,
+                   GrantedBy,
+                   GrantedDate,
+                   RemovedBy,
+                   RemovedDate
+            FROM Admin_Table
+            ORDER BY AdminSuUsername ASC
+        ");
+        return [
+            'status' => 'success',
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)
+        ];
+    } catch (PDOException $e) {
+        return [
+            'status' => 'error',
+            'message' => "Database error: " . $e->getMessage()
+        ];
+    }
+}
+
+
 
 //get the instructors for each student
 function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode): array {

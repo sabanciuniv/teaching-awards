@@ -17,6 +17,9 @@ if ($role !== 'IT_Admin') {
     header("Location: index.php");
     exit();
 }
+
+$adminsData = getAllAdmins($pdo);
+$adminsJson = json_encode($adminsData['data']);
 ?>
 
 
@@ -175,46 +178,42 @@ if ($role !== 'IT_Admin') {
     </div>
 </div>
 
+<script>
+    const allAdmins = <?php echo $adminsJson; ?>;
+</script>
+
 <!-- Main Script -->
 <script>
 $(document).ready(function () {
     // Global variables for pagination and sorting
-    let allAdmins = [];
     let currentPage = 1;
     const pageSize = 9; // 9 admins per page
     let currentSortField = null;
     let currentSortDirection = "asc"; // default ascending for clicked column
 
-    // 1) Fetch Admins from API
+    // 1) Initialize Admins
     function fetchAdmins() {
-        $.ajax({
-            url: "api/getAdmins.php",
-            method: "GET",
-            dataType: "json",
-            success: function (data) {
-                allAdmins = data || [];
-                // If no column sort is chosen, use default sort:
-                // Active admins first (RemovedDate empty), then descending by GrantedDate.
-                if (!currentSortField) {
-                    allAdmins.sort(function(a, b) {
-                        let aStatus = a.RemovedDate ? 1 : 0;
-                        let bStatus = b.RemovedDate ? 1 : 0;
-                        if (aStatus !== bStatus) {
-                            return aStatus - bStatus; // active (0) comes first
-                        }
-                        return new Date(b.GrantedDate) - new Date(a.GrantedDate);
-                    });
-                } else {
-                    // Otherwise, sort using the chosen column criteria
-                    sortAdminsByField(currentSortField, currentSortDirection);
+        if (!Array.isArray(allAdmins)) {
+            allAdmins = [];
+        }
+
+        // If no column sort is chosen, use default sort
+        if (!currentSortField) {
+            allAdmins.sort(function(a, b) {
+                let aStatus = a.RemovedDate ? 1 : 0;
+                let bStatus = b.RemovedDate ? 1 : 0;
+                if (aStatus !== bStatus) {
+                    return aStatus - bStatus; // active (0) comes first
                 }
-                renderPage(1);
-            },
-            error: function (xhr, status, error) {
-                console.error("Error fetching admins:", error);
-            }
-        });
+                return new Date(b.GrantedDate) - new Date(a.GrantedDate);
+            });
+        } else {
+            sortAdminsByField(currentSortField, currentSortDirection);
+        }
+
+        renderPage(1);
     }
+
 
     // 2) Sorting function by chosen column
     function sortAdminsByField(field, direction) {
