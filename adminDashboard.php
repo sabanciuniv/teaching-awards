@@ -4,22 +4,22 @@ require_once 'api/commonFunc.php';
 require_once 'database/dbConnection.php';
 init_session();
 
-// Fetch the username from session
-// Determine if impersonation is active
-if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true && isset($_SESSION['impersonated_user'])) {
-    $username = $_SESSION['impersonated_user']; // use impersonated user
-} else {
-    $username = $_SESSION['user'];
-}
-$user = $username;
+// Determine the username (handle impersonation)
+$username = isset($_SESSION['impersonating'], $_SESSION['impersonated_user']) && $_SESSION['impersonating'] === true
+    ? $_SESSION['impersonated_user']
+    : $_SESSION['user'];
 
-// Admin access check with logging
-if (!checkIfUserIsAdmin($pdo, $username)) {
+// Get role once (based on actual session user, not impersonated user!)
+$role = getUserAdminRole($pdo, $_SESSION['user']);
+
+// Check role existence
+if (!$role || !in_array($role, ['Admin', 'IT_Admin'])) {
     logUnauthorizedAccess($pdo, $username, basename(__FILE__));
     header("Location: index.php");
     exit();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
