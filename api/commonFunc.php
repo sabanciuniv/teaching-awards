@@ -423,6 +423,23 @@ function checkVotingWindow(PDO $pdo) {
     }
 }
 
+function logUnauthorizedAccess(PDO $pdo, string $username, string $page): void {
+    $ip = getClientIP();
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO Unauthorized_Access_Logs (Username, Page, IP_Address, AccessTime)
+            VALUES (:username, :page, :ip, NOW())
+        ");
+        $stmt->execute([
+            ':username' => $username,
+            ':page' => $page,
+            ':ip' => $ip
+        ]);
+    } catch (PDOException $e) {
+        error_log("Failed to log unauthorized access: " . $e->getMessage());
+    }
+}
+
 
 
 ?>

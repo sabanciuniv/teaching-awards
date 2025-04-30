@@ -20,20 +20,11 @@
 
   //admin access check, if not valid, user will be logged as unauthorized log in
   if (!checkIfUserIsAdmin($pdo, $user)) {
-    $ip = getClientIP();
-    $stmt = $pdo->prepare("
-        INSERT INTO Unauthorized_Access_Logs (Username, Page, IP_Address, AccessTime)
-        VALUES (:username, :page, :ip, NOW())
-    ");
-    $stmt->execute([
-        ':username' => $user,
-        ':page' => basename(__FILE__),
-        ':ip' => $ip
-    ]);
-
+    logUnauthorizedAccess($pdo, $user, basename(__FILE__));
     header("Location: index.php");
     exit();
   }
+
 
 } catch (Exception $e) {
   die("Error: " . $e->getMessage());
