@@ -28,6 +28,15 @@ function synchronizeStudents(PDO $pdo): array {
             'SO' => 'Sophomore'
         ];
 
+        // Fetch current year and previous year
+        $currentYearRow = fetchCurrentAcademicYear($pdo);
+        if (!$currentYearRow) {
+            return ['status' => 'error', 'message' => 'Current academic year not found.'];
+        }
+
+        $currentYear = (int)$currentYearRow['Academic_year'];
+        $validYears = [$currentYear, $currentYear - 1];
+
         // Year mapping
         $stmt = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table");
         $academicYears = [];
@@ -40,6 +49,10 @@ function synchronizeStudents(PDO $pdo): array {
         $apiStudents = [];
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $termYear = (int)substr($row['TERM_CODE'], 0, 4);
+
+            if (!in_array($termYear, $validYears)) continue;
+
             $row['STU_CLASS_CODE'] = $classMapping[$row['STU_CLASS_CODE']] ?? 'Unknown';
             $fullName = trim($row['STU_FIRST_NAME'] . ' ' . ($row['STU_MI_NAME'] ?? '') . ' ' . $row['STU_LAST_NAME']);
 
@@ -50,9 +63,8 @@ function synchronizeStudents(PDO $pdo): array {
             $row['Faculty'] = $row['STU_FACULTY_CODE'] ?? null;
             $row['Department'] = $row['STU_PROGRAM_CODE'] ?? null;
             $row['CGPA'] = $row['STU_CUM_GPA_SU'] !== null ? (float) $row['STU_CUM_GPA_SU'] : null;
-            $row['TermYear'] = (int)substr($row['TERM_CODE'], 0, 4);
-            $row['YearID'] = $academicYears[$row['TermYear']] ?? null;
-
+            $row['TermYear'] = $termYear;
+            $row['YearID'] = $academicYears[$termYear] ?? null;
             $apiStudents[$row['STU_ID']] = $row;
         }
 
@@ -223,7 +235,17 @@ function synchronizeCourses(PDO $pdo): array {
         'deletedRows' => []
     ];
 
-    try {
+    try {        
+        
+        // Get current and previous year
+        $currentYearRow = fetchCurrentAcademicYear($pdo);
+        if (!$currentYearRow) {
+            return ['status' => 'error', 'message' => 'Current academic year not found.'];
+        }
+
+        $currentYear = (int)$currentYearRow['Academic_year'];
+        $validYears = [$currentYear, $currentYear - 1];
+        
         // Load Academic Year Map
         $stmt = $pdo->query("SELECT YearID, Academic_year FROM AcademicYear_Table");
         $academicYears = [];
@@ -235,9 +257,14 @@ function synchronizeCourses(PDO $pdo): array {
         $stmt = $pdo->query("SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, SEQ_NUMB, CRSE_TITLE FROM API_COURSES");
         $apiCourses = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $termYear = (int)substr($row['TERM_CODE'], 0, 4);
+
+            if (!in_array($termYear, $validYears)) continue;
+
             $key = $row['CRN'] . '_' . $row['TERM_CODE'] . '_' . $row['SUBJ_CODE'] . '_' . $row['CRSE_NUMB'];
             $apiCourses[$key] = $row;
         }
+
 
         // Load DB courses
         $stmt = $pdo->query("SELECT * FROM Courses_Table");
@@ -265,9 +292,11 @@ function synchronizeCourses(PDO $pdo): array {
             $course['CRSE_NUMB'] = $course['CRSE_NUMB'] ?? '000';
             $course['SEQ_NUMB'] = $course['SEQ_NUMB'] ?? '';
             $course['TERM_CODE'] = $course['TERM_CODE'] ?? '';
+            $termYear = (int)substr($course['TERM_CODE'], 0, 4);
+            
+            if (!in_array($termYear, $validYears)) continue;
 
-            $yearCode = substr($course['TERM_CODE'], 0, 4);
-            $yearID = $academicYears[$yearCode] ?? null;
+            $yearID = $academicYears[$termYear] ?? null;
             if (!$yearID) continue;
 
             $fullCourse = [
@@ -303,6 +332,9 @@ function synchronizeCourses(PDO $pdo): array {
 
         // Delete missing ones
         foreach ($existingCourses as $key => $course) {
+            $termYear = (int)substr($course['Term'], 0, 4);
+            if (!in_array($termYear, $validYears)) continue; 
+        
             if (!isset($apiCourses[$key])) {
                 $deleteStmt->execute([':CRN' => $course['CRN'], ':Term' => $course['Term']]);
                 $response['deleted']++;
@@ -340,22 +372,38 @@ function synchronizeStudentCourses(PDO $pdo): array {
         'updatedToDroppedRows' => []
     ];
 
-    try {
-        // Fetch students
-        $stmt = $pdo->query("SELECT id, StudentID FROM Student_Table");
+    try {     
+        
+        // Get current and previous year
+        $currentYearRow = fetchCurrentAcademicYear($pdo);
+        if (!$currentYearRow) {
+            return ['status' => 'error', 'message' => 'Current academic year not found.'];
+        }
+
+        $currentYear = (int)$currentYearRow['Academic_year'];
+        $validYears = [$currentYear, $currentYear - 1];
+        
+        // Fetch valid students
+        $stmt = $pdo->prepare("SELECT id, StudentID FROM Student_Table WHERE YearID IN (
+            SELECT YearID FROM AcademicYear_Table WHERE Academic_year IN (?, ?)
+        )");
+        $stmt->execute($validYears);
         $students = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $students[$row['StudentID']] = $row['id'];
         }
 
-        // Fetch courses
-        $stmt = $pdo->query("SELECT CourseID, CRN FROM Courses_Table");
+        // Fetch valid courses
+        $stmt = $pdo->prepare("SELECT CourseID, CRN FROM Courses_Table WHERE YearID IN (
+            SELECT YearID FROM AcademicYear_Table WHERE Academic_year IN (?, ?)
+        )");
+        $stmt->execute($validYears);
         $courses = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $courses[$row['CRN']] = $row['CourseID'];
         }
 
-        // Fetch current API data
+        // Load student-course enrollments from API
         $stmt = $pdo->query("SELECT STU_ID, CRN FROM API_STUDENT_COURSES WHERE STU_ID IS NOT NULL");
         $apiRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -447,8 +495,17 @@ function synchronizeStudentCategories(PDO $pdo): array {
         'deletedRows' => []
     ];
 
-    try {
-        // Step 1: Fetch existing student-category relations
+    try {        
+        // Get current and previous year
+        $currentYearRow = fetchCurrentAcademicYear($pdo);
+        if (!$currentYearRow) {
+            return ['status' => 'error', 'message' => 'Current academic year not found.'];
+        }
+
+        $currentYear = (int)$currentYearRow['Academic_year'];
+        $validYears = [$currentYear, $currentYear - 1];
+
+        // Fetch existing student-category relations
         $stmt = $pdo->query("SELECT scr.student_id, scr.categoryID, s.StudentID 
                              FROM Student_Category_Relation scr 
                              JOIN Student_Table s ON scr.student_id = s.id");
@@ -463,19 +520,25 @@ function synchronizeStudentCategories(PDO $pdo): array {
             ];
         }
 
-        // Step 2: Get Category Map
+        //  Get Category Map
         $stmt = $pdo->query("SELECT CategoryID, CategoryCode FROM Category_Table");
         $categoryMap = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $categoryMap[(int)$row['CategoryID']] = $row['CategoryCode'];
         }
 
-        // Step 3: Desired Relations
-        $stmt = $pdo->query("SELECT DISTINCT s.id AS student_id, s.StudentID, s.Class, s.CGPA,
-                                   CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code
-                            FROM Student_Course_Relation scr
-                            JOIN Courses_Table c ON scr.CourseID = c.CourseID
-                            JOIN Student_Table s ON scr.`student.id` = s.id");
+        // Desired Relations — only for current and previous academic years
+        $stmt = $pdo->prepare("
+            SELECT s.id AS student_id, s.StudentID, s.Class, s.CGPA,
+                   CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code
+            FROM Student_Course_Relation scr
+            JOIN Courses_Table c ON scr.CourseID = c.CourseID
+            JOIN Student_Table s ON scr.`student.id` = s.id
+            WHERE s.YearID IN (
+                SELECT YearID FROM AcademicYear_Table WHERE Academic_year IN (?, ?)
+            )
+        ");
+        $stmt->execute($validYears);
 
         $desiredRelations = [];
 
@@ -514,11 +577,11 @@ function synchronizeStudentCategories(PDO $pdo): array {
             }
         }
 
-        // Step 4: Prepare insert and delete statements
+        //Prepare insert and delete statements
         $insertStmt = $pdo->prepare("INSERT INTO Student_Category_Relation (student_id, categoryID) VALUES (:student_id, :categoryID)");
         $deleteStmt = $pdo->prepare("DELETE FROM Student_Category_Relation WHERE student_id = :student_id AND categoryID = :categoryID");
 
-        // Step 5: Insert missing
+        //Insert missing
         foreach ($desiredRelations as $key => $info) {
             if (!isset($existingRelations[$key])) {
                 try {
@@ -549,7 +612,7 @@ function synchronizeStudentCategories(PDO $pdo): array {
             } 
         }
 
-        // Step 6: Delete outdated
+        // Delete outdated
         foreach ($existingRelations as $key => $relation) {
             if (!isset($desiredRelations[$key])) {
                 $deleteStmt->execute([
@@ -594,15 +657,46 @@ function synchronizeCandidates(PDO $pdo): array {
         ];
 
         $candidates = [];
+        
+        // Get current and previous academic years
+        $currentYearRow = fetchCurrentAcademicYear($pdo);
+        if (!$currentYearRow) {
+            return ['status' => 'error', 'message' => 'Current academic year not found.'];
+        }
+        $currentYear = (int)$currentYearRow['Academic_year'];
+        $validYears = [$currentYear, $currentYear - 1];
 
-        // TA data
+
+        // Build valid SU_IDs from TERM_CODE filtering
+        $validSuIds = [];
+
+        $stmt = $pdo->query("SELECT DISTINCT TA_ID, TERM_CODE FROM API_TAS WHERE TA_ID IS NOT NULL");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $termYear = (int)substr($row['TERM_CODE'], 0, 4);
+            if (in_array($termYear, $validYears)) {
+                $validSuIds[$row['TA_ID']] = 'TA';
+            }
+        }
+
+        $stmt = $pdo->query("SELECT DISTINCT INST_ID, TERM_CODE FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $termYear = (int)substr($row['TERM_CODE'], 0, 4);
+            if (in_array($termYear, $validYears)) {
+                $validSuIds[$row['INST_ID']] = 'Instructor';
+            }
+        }
+
+        // Fetch TA data
         $stmt = $pdo->query("SELECT TA_ID, TA_FIRST_NAME, TA_MI_NAME, TA_LAST_NAME, TA_EMAIL, EMPL_STATUS FROM API_TAS");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $su_id = $row['TA_ID'];
+            if (!isset($validSuIds[$su_id]) || $validSuIds[$su_id] !== 'TA') continue;
+
             $fullName = trim($row['TA_FIRST_NAME'] . ' ' . ($row['TA_MI_NAME'] ?? '') . ' ' . $row['TA_LAST_NAME']);
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
-            $candidates[$row['TA_ID']] = [
-                'SU_ID' => $row['TA_ID'],
+            $candidates[$su_id] = [
+                'SU_ID' => $su_id,
                 'Name' => $fullName,
                 'Mail' => $row['TA_EMAIL'] ?: null,
                 'Role' => 'TA',
@@ -610,14 +704,17 @@ function synchronizeCandidates(PDO $pdo): array {
             ];
         }
 
-        // Instructor data
+        // Fetch Instructor data
         $stmt = $pdo->query("SELECT INST_ID, INST_FIRST_NAME, INST_MI_NAME, INST_LAST_NAME, INST_EMAIL, EMPL_STATUS FROM API_INSTRUCTORS");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $su_id = $row['INST_ID'];
+            if (!isset($validSuIds[$su_id]) || $validSuIds[$su_id] !== 'Instructor') continue;
+
             $fullName = trim($row['INST_FIRST_NAME'] . ' ' . ($row['INST_MI_NAME'] ?? '') . ' ' . $row['INST_LAST_NAME']);
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
-            $candidates[$row['INST_ID']] = [
-                'SU_ID' => $row['INST_ID'],
+            $candidates[$su_id] = [
+                'SU_ID' => $su_id,
                 'Name' => $fullName,
                 'Mail' => $row['INST_EMAIL'] ?: null,
                 'Role' => 'Instructor',
@@ -625,7 +722,7 @@ function synchronizeCandidates(PDO $pdo): array {
             ];
         }
 
-        // Fetch exceptions
+        // Handle Exceptions
         $exceptionStmt = $pdo->query("SELECT CandidateID FROM Exception_Table");
         $exceptionList = $exceptionStmt->fetchAll(PDO::FETCH_COLUMN);
         $exceptionSUIds = [];
@@ -707,14 +804,12 @@ function synchronizeCandidates(PDO $pdo): array {
             }
         }
 
-        // Step: Fully delete candidates no longer in API_TAS or API_INSTRUCTORS
+        // Delete removed candidates (not in current or previous year TERM_CODE)
         $suIdsFromAPI = array_keys($candidates);
         $suIdsInDB = array_keys($existingCandidates);
-
         $toDeleteSuIds = array_diff($suIdsInDB, $suIdsFromAPI);
 
         if (!empty($toDeleteSuIds)) {
-            // Step 1: Get their internal IDs
             $placeholders = rtrim(str_repeat('?,', count($toDeleteSuIds)), ',');
             $stmt = $pdo->prepare("SELECT id, SU_ID FROM Candidate_Table WHERE SU_ID IN ($placeholders)");
             $stmt->execute($toDeleteSuIds);
@@ -725,7 +820,7 @@ function synchronizeCandidates(PDO $pdo): array {
                 $suIdMap[$row['id']] = $row['SU_ID'];
             }
 
-            // Step 2: Delete from related tables
+            //Delete from related tables
             if (!empty($internalIds)) {
                 $internalPlaceholder = rtrim(str_repeat('?,', count($internalIds)), ',');
 
@@ -737,12 +832,11 @@ function synchronizeCandidates(PDO $pdo): array {
                 foreach ($internalIds as $id) {
                     $response['deletedRows'][] = [
                         'SU_ID' => $suIdMap[$id],
-                        'reason' => 'Does not exist anymore in the real database'
+                        'reason' => 'No longer associated with valid TERM_CODE'
                     ];
                 }
             }
         }
-
 
         return array_merge(['status' => 'success'], $response);
 
@@ -780,7 +874,16 @@ function synchronizeCandidateCourses(PDO $pdo): array {
         }
         return null;
     };
-    try {
+    try {        
+        
+        // Get current and previous academic years
+        $currentYearRow = fetchCurrentAcademicYear($pdo);
+        if (!$currentYearRow) {
+            return ['status' => 'error', 'message' => 'Current academic year not found.'];
+        }
+        $currentYear = (int)$currentYearRow['Academic_year'];
+        $validYears = [$currentYear, $currentYear - 1];
+
         // Load academic year mapping
         $stmt = $pdo->query("SELECT Academic_year, YearID FROM AcademicYear_Table");
         $yearMap = [];
@@ -788,7 +891,7 @@ function synchronizeCandidateCourses(PDO $pdo): array {
             $yearMap[$row['Academic_year']] = $row['YearID'];
         }
 
-        // Load all courses
+        // Load courses
         $stmt = $pdo->query("SELECT * FROM Courses_Table");
         $courses = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -820,27 +923,30 @@ function synchronizeCandidateCourses(PDO $pdo): array {
                         OR Academic_Year != :Academic_Year OR CategoryID != :CategoryID OR Term != :Term)");
 
         $validKeys = [];
-        $sources = ['API_INSTRUCTORS' => 'INST_ID', 'API_TAS' => 'TA_ID'];
 
+        // Process API_INSTRUCTORS and API_TAS
+        $sources = ['API_INSTRUCTORS' => 'INST_ID', 'API_TAS' => 'TA_ID'];
         foreach ($sources as $table => $idField) {
             $stmt = $pdo->query("SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, $idField AS SU_ID FROM $table WHERE $idField IS NOT NULL");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $termYear = (int)substr($row['TERM_CODE'], 0, 4);
+                if (!in_array($termYear, $validYears)) continue;
 
-            foreach ($rows as $row) {
                 $term = $row['TERM_CODE'];
                 $crn = $row['CRN'];
                 $suId = $row['SU_ID'];
                 $subject = $row['SUBJ_CODE'];
                 $course = $row['CRSE_NUMB'];
 
-                $yearCode = substr($term, 0, 4);
-                $academicYear = $yearMap[$yearCode] ?? null;
+                $yearID = $yearMap[$termYear] ?? null;
+                if (!$yearID) continue;
+
                 $courseKey = "{$term}_{$subject}_{$course}_{$crn}";
                 $courseData = $courses[$courseKey] ?? null;
+                $candidateData = $candidates[$suId] ?? null;
 
-                if (!$academicYear || !$courseData || !isset($candidates[$suId])) continue;
+                if (!$courseData || !$candidateData) continue;
 
-                $candidateData = $candidates[$suId];
                 $key = "{$candidateData['id']}_{$courseData['CourseID']}";
                 $validKeys[$key] = true;
 
@@ -860,7 +966,7 @@ function synchronizeCandidateCourses(PDO $pdo): array {
                     $insertStmt->execute([
                         ':CourseID' => $courseData['CourseID'],
                         ':CandidateID' => $candidateData['id'],
-                        ':Academic_Year' => $academicYear,
+                        ':Academic_Year' => $yearID,
                         ':CategoryID' => $categoryID,
                         ':Term' => $term
                     ]);
@@ -868,7 +974,7 @@ function synchronizeCandidateCourses(PDO $pdo): array {
                     $response['insertedRows'][] = $logRow;
                 } else {
                     $updateStmt->execute([
-                        ':Academic_Year' => $academicYear,
+                        ':Academic_Year' => $yearID,
                         ':CategoryID' => $categoryID,
                         ':Term' => $term,
                         ':CandidateID' => $candidateData['id'],
@@ -904,8 +1010,7 @@ function synchronizeCandidateCourses(PDO $pdo): array {
                 }
             }
         }
-
-        // Delete orphan relations not found in API
+        // Delete orphan relations not found in API_TAS/API_INSTRUCTORS for valid years
         $stmt = $pdo->query("
             SELECT ccr.CandidateID, ccr.CourseID, ct.SU_ID, c.Subject_Code, c.Course_Number, c.CRN, c.Term
             FROM Candidate_Course_Relation ccr
@@ -915,7 +1020,8 @@ function synchronizeCandidateCourses(PDO $pdo): array {
         $deleteOrphanStmt = $pdo->prepare("DELETE FROM Candidate_Course_Relation WHERE CandidateID = :CandidateID AND CourseID = :CourseID");
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $key = "{$row['CandidateID']}_{$row['CourseID']}";
-            if (!isset($validKeys[$key])) {
+            $termYear = (int)substr($row['Term'], 0, 4);
+            if (!isset($validKeys[$key]) && in_array($termYear, $validYears)) {
                 $deleteOrphanStmt->execute([
                     ':CandidateID' => $row['CandidateID'],
                     ':CourseID' => $row['CourseID']
@@ -924,7 +1030,7 @@ function synchronizeCandidateCourses(PDO $pdo): array {
                 $response['deletedRows'][] = [
                     'SU_ID' => $row['SU_ID'],
                     'CourseID' => $row['CourseID'],
-                    'reason' => 'Not found in API_INSTRUCTORS or API_TAS'
+                    'reason' => 'Not found in valid API_TAS/API_INSTRUCTORS'
                 ];
             }
         }
