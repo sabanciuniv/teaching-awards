@@ -1,14 +1,18 @@
 <?php
 // notifyStudents.php
+
 require_once __DIR__ . '/api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
 require_once 'api/commonFunc.php';
+
 init_session();
+// only admins may send notifications
+enforceAdminAccess($pdo);
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// 1) JSON response
+// 1) JSON response header
 header('Content-Type: application/json; charset=utf-8');
 
 // 2) Decode payload
@@ -22,7 +26,7 @@ if (!is_array($data) || !isset($data['students'])) {
 $students = $data['students'];
 $sender   = $_SESSION['user'];
 
-// 3) Load “notify” template (header + body + id)
+// 3) Load “notify” template
 $stmt = $pdo->prepare("
   SELECT TemplateID, MailHeader, MailBody
     FROM MailTemplate_Table
@@ -40,24 +44,18 @@ $templateID     = $tpl['TemplateID'];
 $templateHeader = $tpl['MailHeader'];
 $templateBody   = $tpl['MailBody'];
 
-// 4) Lookup current academic YearID and Academic_year number
-$currentYearRow = $pdo->query("
-    SELECT YearID, Academic_year
-      FROM AcademicYear_Table
-     ORDER BY Start_date_time DESC
-     LIMIT 1
-")->fetch(PDO::FETCH_ASSOC);
-if (!$currentYearRow) {
+// 4) Fetch current academic year info
+$yearInfo = fetchCurrentAcademicYear($pdo);
+if (!$yearInfo) {
     http_response_code(500);
     echo json_encode(['error'=>'No academic year found']);
     exit;
 }
-$currentYearID     = (int)$currentYearRow['YearID'];
-$academicYearStart = (int)$currentYearRow['Academic_year'];
-// build label "2024-2025"
-$yearLabel = $academicYearStart . '-' . ($academicYearStart + 1);
+$currentYearID     = (int)$yearInfo['YearID'];
+$startYear         = (int)$yearInfo['Academic_year'];
+$yearLabel         = $startYear . '-' . ($startYear + 1);
 
-// 5) Prepare one persistent PHPMailer instance
+// 5) PHPMailer setup
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/PHPMailer/src/SMTP.php';
 require_once __DIR__ . '/PHPMailer/src/Exception.php';
@@ -95,19 +93,17 @@ foreach ($students as $stu) {
         $mail->clearAddresses();
         $mail->addAddress($email, $stu['StudentFullName']);
 
-        // Subject: replace both {studentName},{year} and @name_surname,@year
-        $mail->Subject = str_replace(
-            ['{studentName}','{year}','@name_surname','@year'],
-            [$stu['StudentFullName'],$yearLabel,$stu['StudentFullName'],$yearLabel],
-            $templateHeader
-        );
+        // personalize both header and body
+        $search  = ['{studentName}','{year}','@name_surname','@year'];
+        $replace = [
+            $stu['StudentFullName'],
+            $yearLabel,
+            $stu['StudentFullName'],
+            $yearLabel
+        ];
 
-        // Body: same replacements
-        $body = str_replace(
-            ['{studentName}','{year}','@name_surname','@year'],
-            [$stu['StudentFullName'],$yearLabel,$stu['StudentFullName'],$yearLabel],
-            $templateBody
-        );
+        $mail->Subject = str_replace($search, $replace, $templateHeader);
+        $body         = str_replace($search, $replace, $templateBody);
         $mail->Body    = $body;
         $mail->AltBody = strip_tags($body);
 
@@ -117,7 +113,7 @@ foreach ($students as $stu) {
         // log into MailLog_Table
         $pdo->prepare("
           INSERT INTO MailLog_Table
-            (Sender,StudentEmail,StudentName,TemplateID,MailContent,YearID)
+            (Sender, StudentEmail, StudentName, TemplateID, MailContent, YearID)
           VALUES
             (:s,:e,:n,:tid,:c,:y)
         ")->execute([
@@ -134,9 +130,10 @@ foreach ($students as $stu) {
     }
 }
 
+// close SMTP connection
 $mail->smtpClose();
 
-// 7) Return JSON
+// 7) Return JSON summary
 echo json_encode([
     'sent'   => $sent,
     'total'  => count($students),
