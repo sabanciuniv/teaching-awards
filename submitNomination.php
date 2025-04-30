@@ -13,15 +13,13 @@ init_session();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$apiUrl = 'http://pro2-dev.sabanciuniv.edu/odul/ENS491-492/api/getAcademicYear.php';
-$response = file_get_contents($apiUrl);
-$data = json_decode($response, true);
+require_once __DIR__ . '/database/dbConnection.php'; // ensure $pdo is available
 
-if ($data['status'] !== 'success') {
-    die("Error: Could not fetch academic year.");
+$academicYear = getCurrentAcademicYear($pdo);
+
+if (!$academicYear) {
+    die("Error: Could not fetch academic year from the database.");
 }
-
-$academicYear = $data['academicYear']; 
 
 // Define the directory path for this academic year
 $yearlyUploadDir = $uploadDir . $academicYear . '/'; // Path in config + '2024/'
@@ -111,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     throw new Exception("Invalid file type: " . $originalName);
                 }
 
-                // Up to 20MB
-                if ($_FILES['ReferenceLetterFiles']['size'][$key] > 20 * 1024 * 1024) {
+                // Up to 50MB
+                if ($_FILES['ReferenceLetterFiles']['size'][$key] > 50 * 1024 * 1024) {
                     throw new Exception("File size exceeds limit for: " . $originalName);
                 }
 
