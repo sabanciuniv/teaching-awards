@@ -164,6 +164,13 @@ function fetchCurrentAcademicYear(PDO $pdo): ?array {
     return $row ?: null;
 }
 
+//match the year with the ID
+function getAcademicYearFromID(PDO $pdo, int $yearID): ?string {
+    $stmt = $pdo->prepare("SELECT Academic_year FROM AcademicYear_Table WHERE YearID = ?");
+    $stmt->execute([$yearID]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ? $row['Academic_year'] : null;
+}
 
 
 //get the current year's ID
@@ -440,6 +447,6 @@ function logUnauthorizedAccess(PDO $pdo, string $username, string $page): void {
     }
 }
 
-
+//getAdmins.php
 
 ?>
