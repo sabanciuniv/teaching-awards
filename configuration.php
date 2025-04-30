@@ -4,14 +4,10 @@
  require_once 'api/commonFunc.php';
 
  init_session();
- 
- 
  $username = $_SESSION['user'];  // Current user
  $user = $_SESSION['user'];
 
- handleCandidateExclusion($pdo);
 
- 
  try {
   $currentYear = fetchCurrentAcademicYear($pdo);
   $currentYearID = $currentYear['YearID'];
@@ -22,38 +18,29 @@
   $candidates = getCandidatesForYear($pdo, $currentYearID);
   $students = getStudentsForYear($pdo, $currentYearID);
 
+  //admin access check, if not valid, user will be logged as unauthorized log in
   if (!checkIfUserIsAdmin($pdo, $user)) {
-      header("Location: index.php");
-      exit();
+    $ip = getClientIP();
+    $stmt = $pdo->prepare("
+        INSERT INTO Unauthorized_Access_Logs (Username, Page, IP_Address, AccessTime)
+        VALUES (:username, :page, :ip, NOW())
+    ");
+    $stmt->execute([
+        ':username' => $user,
+        ':page' => basename(__FILE__),
+        ':ip' => $ip
+    ]);
+
+    header("Location: index.php");
+    exit();
   }
+
 } catch (Exception $e) {
   die("Error: " . $e->getMessage());
 }
-
- // -------------------------
- // BEGIN: Admin Access Check
- // -------------------------
- try {
-   // Check if the username exists in Admin_Table and is not marked as 'Removed'
-   $adminQuery = "SELECT 1 
-                    FROM Admin_Table 
-                   WHERE AdminSuUsername = :username 
-                     AND checkRole <> 'Removed'
-                   LIMIT 1";
-   $adminStmt = $pdo->prepare($adminQuery);
-   $adminStmt->execute([':username' => $user]);
  
-   // If no active record is found, redirect to index.php
-   if (!$adminStmt->fetch()) {
-       header("Location: index.php");
-       exit();
-   }
- } catch (PDOException $e) {
-   die("Admin check failed: " . $e->getMessage());
- }
- // -----------------------
- // END: Admin Access Check
- // -----------------------
+ handleCandidateExclusion($pdo);
+
  
  ?>
  <script>
