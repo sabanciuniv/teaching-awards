@@ -6,7 +6,7 @@ require_once __DIR__ . '/database/dbConnection.php';
 init_session();
 $user = $_SESSION['user'];
 
-//Admin access check
+// Admin access check
 $role = getUserAdminRole($pdo, $user);
 if (!in_array($role, ['Admin', 'IT_Admin'])) {
     header("Location: index.php");
@@ -40,7 +40,13 @@ if (isset($_GET['success']) && $_GET['success'] == '1') {
 }
 
 $categories = getAllCategories($pdo);
-
+$academicYearsStmt = $pdo->prepare("
+    SELECT YearID, Academic_year
+      FROM AcademicYear_Table
+  ORDER BY Academic_year DESC
+");
+$academicYearsStmt->execute();
+$academicYears = $academicYearsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // -------------------------
 // A) Handle "Finish Winner List" Button
@@ -110,17 +116,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['finishWinnerList']))
     $winnerName = trim($_POST['winnerName'] ?? '');
     $faculty    = trim($_POST['faculty'] ?? '');
     $rank       = trim($_POST['rank'] ?? '');
+    $points     = isset($_POST['candidate_points']) ? (int)$_POST['candidate_points'] : 0;
     
     if ($categoryID <= 0 || empty($winnerName) || empty($faculty) || empty($rank)) {
         $error = "All fields (category, winner name, faculty, and rank) are required.";
     } elseif (!isset($_FILES['winnerImage']) || $_FILES['winnerImage']['error'] !== UPLOAD_ERR_OK) {
         $error = "Please upload a valid winner image (error code: " . ($_FILES['winnerImage']['error'] ?? 'null') . ").";
     } else {
-        $academicYear = fetchCurrentAcademicYear($pdo);
-        if (!$academicYear) {
-            $error = "No academic year found.";
+        if (isset($_POST['YearID']) && (int)$_POST['YearID'] > 0) {
+            $yearID = (int)$_POST['YearID'];
         } else {
-            $yearID = $academicYear['YearID'];
+            $error = "Please select an academic year.";
         }
     }
     
@@ -149,8 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['finishWinnerList']))
                     } else {
                         try {
                             $stmtInsert = $pdo->prepare("
-                                INSERT INTO Winners_Table (CategoryID, YearID, WinnerName, Faculty, Rank, ImagePath, SuNET_Username, SU_ID, Email)
-                                VALUES (:categoryID, :yearID, :winnerName, :faculty, :rank, :imagePath, :suNET_Username, :su_ID, :email)
+                                INSERT INTO Winners_Table (CategoryID, YearID, WinnerName, Faculty, `Rank`, ImagePath, SuNET_Username, SU_ID, Email, candidate_points)
+                                VALUES (:categoryID, :yearID, :winnerName, :faculty, :rank, :imagePath, :suNET_Username, :su_ID, :email, :candidate_points)
                             ");
                             $stmtInsert->execute([
                                 ':categoryID' => $categoryID,
@@ -161,11 +167,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['finishWinnerList']))
                                 ':imagePath'  => 'winnerImages/' . $newFileName,
                                 ':suNET_Username' => trim($_POST['username']),
                                 ':su_ID' => ($_POST['suid']),
-                                ':email' => ($_POST['email']),
+                                ':email' => trim($_POST['email']),
+                                ':candidate_points' => $points,
                             ]);
                             header("Location: setWinners.php?success=1");
                             exit;
-
                         } catch (PDOException $e) {
                             $error = "Database error: " . $e->getMessage();
                         }
@@ -188,13 +194,13 @@ $currentYearID = $academicYearData['YearID'] ?? 0;
 $allWinners = [];
 try {
     $stmtWinners = $pdo->prepare("
-        SELECT w.WinnerID, w.WinnerName, w.Faculty, w.Rank, w.ImagePath, 
-               c.CategoryCode, c.CategoryDescription
+        SELECT w.WinnerID, w.WinnerName, w.Faculty, w.`Rank`, w.ImagePath, 
+        w.candidate_points, c.CategoryCode, c.CategoryDescription
         FROM Winners_Table w
         JOIN Category_Table c ON w.CategoryID = c.CategoryID
         WHERE w.YearID = :yearID
         ORDER BY 
-            CASE w.Rank
+            CASE w.`Rank`
                 WHEN 'Rank-1' THEN 1
                 WHEN 'Rank-2' THEN 2
                 WHEN 'Rank-3' THEN 3
@@ -531,14 +537,23 @@ foreach ($allWinners as $row) {
                     <!-- Step 1 -->
                     <div class="form-step active" data-step="1">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                        <label>Current Term:</label>
-                        <input type="text" class="form-control" placeholder="e.g. 202402" required>
+                    <div class="col-md-6 mb-3">
+                        <label for="YearID">Academic Year:</label>
+                        <select name="YearID" id="YearID" class="form-control" required>
+                            <option value="" disabled selected>Choose year…</option>
+                            <?php foreach ($academicYears as $ay): ?>
+                            <option value="<?= $ay['YearID'] ?>">
+                                <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                         </div>
+
                         <div class="col-md-6 mb-3">
                         <label>Email address:</label>
-                        <input type="email" class="form-control" placeholder="your@sabanciuniv.edu" required>
+                        <input type="email" name="email" class="form-control" placeholder="your@sabanciuniv.edu" required>
                         </div>
+
                         <div class="col-md-6 mb-3">
                         <label>Name and Surname:</label>
                         <input type="text" name="winnerName" class="form-control" placeholder="Hüsnü Yenigün" required>
@@ -573,6 +588,13 @@ foreach ($allWinners as $row) {
                                 <input type="hidden" name="categoryID" id="categoryID" required>
                             </div>
                         </div>
+                     </div>
+                <!-- ─── NEW: Candidate Points Input ─────────────────── -->
+                <div class="mb-3">
+                  <label for="candidatePoints" class="form-label">Points:</label>
+                  <input type="number" name="candidate_points" id="candidatePoints"
+                         class="form-control" placeholder="e.g. 85" required>
+               </div>
                     </div>
                 </div>
 
@@ -637,6 +659,7 @@ foreach ($allWinners as $row) {
                                     <p><strong><?= htmlspecialchars($w['WinnerName']) ?></strong></p>
                                     <p class="faculty"><?= htmlspecialchars($w['Faculty']) ?></p>
                                     <p class="rank"><?= htmlspecialchars($w['Rank']) ?></p>
+                                    <p class="points"><strong>Points:</strong> <?= htmlspecialchars($w['candidate_points']) ?></p>
                                     <button type="button" class="remove-candidate" data-id="<?= htmlspecialchars($w['WinnerID']) ?>" title="Remove Candidate">
                                         <i class="ph ph-x"></i>
                                     </button>
