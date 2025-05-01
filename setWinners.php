@@ -537,39 +537,18 @@ foreach ($allWinners as $row) {
                     <!-- Step 1 -->
                     <div class="form-step active" data-step="1">
                     <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="YearID">Academic Year:</label>
-                        <select name="YearID" id="YearID" class="form-control" required>
-                            <option value="" disabled selected>Choose year…</option>
-                            <?php foreach ($academicYears as $ay): ?>
-                            <option value="<?= $ay['YearID'] ?>">
-                                <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="col-md-6 mb-3">
+                            <label for="YearID">Academic Year:</label>
+                            <select name="YearID" id="YearID" class="form-control" required>
+                                <option value="" disabled selected>Choose year…</option>
+                                <?php foreach ($academicYears as $ay): ?>
+                                <option value="<?= $ay['YearID'] ?>">
+                                    <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                        <label>Email address:</label>
-                        <input type="email" name="email" class="form-control" placeholder="your@sabanciuniv.edu" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                        <label>Name and Surname:</label>
-                        <input type="text" name="winnerName" class="form-control" placeholder="Hüsnü Yenigün" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                        <label>SuNET Username:</label>
-                        <input type="text" name="username" class="form-control" placeholder="husnu.yenigun" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                        <label>Faculty:</label>
-                        <input type="text" name="faculty" class="form-control" placeholder="FENS" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                        <label>SU ID:</label>
-                        <input type="text" name= "suid" class="form-control" placeholder="e.g. 00031099" required>
-                        </div>
                         <div class="col-md-6 mb-3">
                             <label for="categoryDropdown" class="form-label">Category:</label>
                             <div class="dropdown">
@@ -588,13 +567,32 @@ foreach ($allWinners as $row) {
                                 <input type="hidden" name="categoryID" id="categoryID" required>
                             </div>
                         </div>
-                     </div>
-                <!-- ─── NEW: Candidate Points Input ─────────────────── -->
-                <div class="mb-3">
-                  <label for="candidatePoints" class="form-label">Points:</label>
-                  <input type="number" name="candidate_points" id="candidatePoints"
-                         class="form-control" placeholder="e.g. 85" required>
-               </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label>Email address:</label>
+                            <input type="email" name="email" class="form-control" placeholder="your@sabanciuniv.edu" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label>Name and Surname:</label>
+                            <input type="text" name="winnerName" class="form-control" placeholder="Hüsnü Yenigün" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>SuNET Username:</label>
+                            <input type="text" name="username" class="form-control" placeholder="husnu.yenigun" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Faculty:</label>
+                            <input type="text" name="faculty" class="form-control" placeholder="FENS" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>SU ID:</label>
+                            <input type="text" name= "suid" class="form-control" placeholder="e.g. 00031099" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="candidatePoints" class="form-label">Points:</label>
+                            <input type="number" name="candidate_points" id="candidatePoints" class="form-control" placeholder="e.g. 85" required>
+                        </div>
                     </div>
                 </div>
 
