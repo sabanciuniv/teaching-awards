@@ -3,6 +3,7 @@
 
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
+$config = require __DIR__ . '/config.php';
 
 // start session & enforce login
 require_once 'api/commonFunc.php';
@@ -115,20 +116,28 @@ if (
   try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
-    $mail->Host          = 'smtp.gmail.com';
-    $mail->SMTPAuth      = true;
-    $mail->Username      = 'ens492odul@gmail.com';
-    $mail->Password      = 'aycmatyxmxhphsvh';
-    $mail->SMTPSecure    = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port          = 587;
-    $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
+    $mail->Host       = $config['mail']['host'];
+    $mail->SMTPAuth   = true;
+    $mail->Username   = $config['mail']['username'];
+    $mail->Password   = $config['mail']['password'];
+    // map encryption setting
+    if ($config['mail']['encryption'] === 'ssl') {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    } else {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    }
+    $mail->Port         = $config['mail']['port'];
+    $mail->setFrom(
+        $config['mail']['from_address'], 
+        $config['mail']['from_name']
+    );
     $mail->SMTPKeepAlive = true;
     $mail->isHTML(true);
-  } catch (Exception $e) {
+} catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
+    echo json_encode(['error' => 'SMTP init failed: ' . $e->getMessage()]);
     exit;
-  }
+}
 
   // send loop
   $sent = 0;
