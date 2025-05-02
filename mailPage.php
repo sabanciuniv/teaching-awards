@@ -9,6 +9,8 @@ require_once 'api/commonFunc.php';
 init_session();
 // only admins may proceed
 enforceAdminAccess($pdo);
+set_time_limit(0);
+ignore_user_abort(true);
 
 // PHPMailer
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -251,7 +253,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     .btn-custom:hover{ background:#365a6b!important; }
     .action-container{ position:fixed; bottom:20px; right:20px;
                        display:flex; flex-direction:column; gap:8px; }
-    #sendOpeningBtn{ display: block; margin: 20px auto; position:static; }
+    #sendOpeningBtn{ position:fixed; bottom:20px; left:20px; z-index:1000; }
     .close-modal-btn {
       color: red;
       background: none;
@@ -309,10 +311,6 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     <?php endforeach; ?>
     </tbody>
   </table>
-  <!-- Send Opening Mail -->
-  <button id="sendOpeningBtn" class="btn btn-custom">
-    <i class="fa fa-paper-plane"></i> Send Opening Mail
-  </button>
 </div>
 
 <!-- Edit Modal -->
@@ -346,6 +344,11 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     <button id="saveBtn" class="btn btn-custom">Save</button>
   </div>
 </div></div></div>
+
+<!-- Send Opening Mail -->
+<button id="sendOpeningBtn" class="btn btn-custom">
+  <i class="fa fa-paper-plane"></i> Send Opening Mail
+</button>
 
 <!-- Action Buttons -->
 <div class="action-container">

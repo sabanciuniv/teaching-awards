@@ -8,6 +8,8 @@ require_once 'api/commonFunc.php';
 init_session();
 // only admins may send notifications
 enforceAdminAccess($pdo);
+set_time_limit(0);
+ignore_user_abort(true);
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
