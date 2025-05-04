@@ -5,6 +5,8 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/database/dbConnection.php';
 
 require_once 'api/commonFunc.php';
+$pageTitle= "Manage Academic Year";
+require_once 'api/header.php';
 init_session();
 
 $user = $_SESSION['user'];
@@ -177,37 +179,16 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Academic Year</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-
-    <!-- Bootstrap JS Bundle (includes Popper.js) -->
-
-    <!--FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Custom Styles -->
-    <style>
-        body {
-            background-color: #f9f9f9;
-            margin: 0;
-            padding-top: 70px;
-            overflow-y: auto;
-            display: flex;
-        }
-    </style>
-</head>
+<!-- Custom Styles -->
+<style>
+    body {
+        background-color: #f9f9f9;
+        margin: 0;
+        padding-top: 70px;
+        overflow-y: auto;
+        display: flex;
+    }
+</style>
 <body>
         
     <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>

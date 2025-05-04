@@ -2,6 +2,8 @@
 session_start();
 require_once 'api/commonFunc.php';
 require_once 'database/dbConnection.php'; 
+$pageTitle= "Teaching Awards";
+require_once 'api/header.php';
 
 $academicYear = fetchCurrentAcademicYear($pdo);
 
@@ -18,176 +20,160 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teaching Awards</title>
+<link href="assets/fonts/inter/inter.css" rel="stylesheet" type="text/css">
+<link href="assets/icons/phosphor/styles.min.css" rel="stylesheet" type="text/css">
+<link href="assets/css/ltr/all.min.css" id="stylesheet" rel="stylesheet" type="text/css">
 
-    <link href="assets/fonts/inter/inter.css" rel="stylesheet" type="text/css">
-	<link href="assets/icons/phosphor/styles.min.css" rel="stylesheet" type="text/css">
-	<link href="assets/css/ltr/all.min.css" id="stylesheet" rel="stylesheet" type="text/css">
+<style>
+    body {
+        background-color: #f9f9f9;
+        margin: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+    }
+    .navbar .nav-item .nav-link {
+        margin-right: -30px; 
+    }
+    
+    .dropdown-menu {
+        transform: translateX(-70px);
+        background-color: #01236a; 
+        border: none; 
+    }
 
-    <!-- Limitless Theme CSS -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-    <style>
-        
-        body {
-            background-color: #f9f9f9;
-            margin: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            font-family: Arial, sans-serif;
-        }
-        .navbar .nav-item .nav-link {
-            margin-right: -30px; 
-        }
-       
-        .dropdown-menu {
-            transform: translateX(-70px);
-            background-color: #01236a; 
-            border: none; 
-        }
+    .dropdown-menu .dropdown-item {
+        color: white;
+        background-color: #01236a; 
+    }
 
     
-        .dropdown-menu .dropdown-item {
-            color: white;
-            background-color: #01236a; 
-        }
+    .dropdown-menu .dropdown-item:hover,
+    .dropdown-menu .dropdown-item:focus {
+        background-color: #01236a; 
+        color: white; 
+    }
 
-       
-        .dropdown-menu .dropdown-item:hover,
-        .dropdown-menu .dropdown-item:focus {
-            background-color: #01236a; 
-            color: white; 
-        }
+    .hero-section {
+        position: relative;
+        height: 100vh;
+        overflow: hidden;
+        border-radius: 40px;
+        margin-left: -20px;
+        margin-right: -20px;
+    }
 
-        .hero-section {
-            position: relative;
-            height: 100vh;
-            overflow: hidden;
-            border-radius: 40px;
-            margin-left: -20px;
-            margin-right: -20px;
-        }
+    .bg-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        min-width: 100%;
+        min-height: 100%;
+        object-fit: cover;
+        z-index: 0;
+    }
 
-        .bg-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            min-width: 100%;
-            min-height: 100%;
-            object-fit: cover;
-            z-index: 0;
-        }
+    .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.65); 
+        z-index: 1;
+    }
 
-        .hero-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.65); 
-            z-index: 1;
-        }
+    .content-wrapper {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 20px;
+        color: #333;
+    }
+    .login-title {
+        font-size: 4.5rem; 
+        font-weight: 800; 
+        color: #004f9e; 
+        text-transform: uppercase; 
+        line-height: 1; 
+        text-align: left; 
+        margin-top: 5px; 
+        word-spacing: 40px; 
+        letter-spacing: 5px; 
+    }
 
-        .content-wrapper {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            padding: 20px;
-            color: #333;
-        }
-        .login-title {
-            font-size: 4.5rem; 
-            font-weight: 800; 
-            color: #004f9e; 
-            text-transform: uppercase; 
-            line-height: 1; 
-            text-align: left; 
-            margin-top: 5px; 
-            word-spacing: 40px; 
-            letter-spacing: 5px; 
-        }
+    .login-container {
+        text-align: center;
+        margin-top: 80px;
+    }
 
-        .login-container {
-            text-align: center;
-            margin-top: 80px;
-        }
+    .login-subtitle {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        font-weight: 1000;
+        color:rgb(54, 56, 70);
+    }
+    .action-buttons .btn {
+        margin: 10px;
+        font-size: 1rem;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
 
-        .login-subtitle {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            font-weight: 1000;
-            color:rgb(54, 56, 70);
-        }
-        .action-buttons .btn {
-            margin: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
+    .btn-nominate {
+        background-color: #ffcccc;
+        color: #333;
+    }
 
-        .btn-nominate {
-            background-color: #ffcccc;
-            color: #333;
-        }
+    .btn-nominate:hover {
+        background-color: #ff9999;
+    }
 
-        .btn-nominate:hover {
-            background-color: #ff9999;
-        }
+    .btn-login {
+        background-color: #f4b4b4;
+        color: #333;
+    }
 
-        .btn-login {
-            background-color: #f4b4b4;
-            color: #333;
-        }
+    .btn-login:hover {
+        background-color: #e49a9a;
+    }
 
-        .btn-login:hover {
-            background-color: #e49a9a;
-        }
+    .footer-text {
+        font-size: 1rem;
+        margin-top: 20px;
+        color: #666;
+        color:rgb(54, 56, 70);
+        font-weight: bold;
+    }
 
-        .footer-text {
-            font-size: 1rem;
-            margin-top: 20px;
-            color: #666;
-            color:rgb(54, 56, 70);
-            font-weight: bold;
-        }
+    .unified-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-top: 30px;
+    }
 
-        .unified-buttons {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .unified-button {
-            width: 260px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            padding: 12px 0;
-            border-radius: 8px;
-            text-align: center;
-        }
+    .unified-button {
+        width: 260px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        padding: 12px 0;
+        border-radius: 8px;
+        text-align: center;
+    }
 
 
-        .unified-button:hover {
-            background-color: #7d97e0;
-            color: white;
-        }
+    .unified-button:hover {
+        background-color: #7d97e0;
+        color: white;
+    }
 
-    </style>
-</head>
+</style>
 
     <!-- Page Content -->
      <div class= "page content">

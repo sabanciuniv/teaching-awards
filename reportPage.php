@@ -2,6 +2,8 @@
 require_once 'api/authMiddleware.php';
 
 require_once 'api/commonFunc.php';
+$pageTitle= "Report Category";
+require_once 'api/header.php';
 init_session();
 
 
@@ -42,113 +44,98 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Category</title>
+<style>
+    body {
+        background-color: #f9f9f9;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin-top: 200px;
+    }
 
-    <!-- Limitless Theme Styles -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
-    <link href="assets/css/components.min.css" rel="stylesheet">
-    <link href="assets/css/layout.min.css" rel="stylesheet">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    .content-wrapper {
+        text-align: center;
+    }
 
+    .title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #000;
+    }
 
-    <style>
-        body {
-            background-color: #f9f9f9;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin-top: 200px;
-        }
+    .categories-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        max-width: 800px;
+        margin: 0 auto;
+    }
 
-        .content-wrapper {
-            text-align: center;
-        }
+    .category-card {
+        cursor: pointer;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, border-color 0.2s;
+        position: relative;
+        color: #fff;
+        font-size: large;
+        background-color: var(--bs-secondary-bg);
+        border: 3px solid transparent;
+        height: 75px; /* Fix height for uniform size */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
 
-        .title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #000;
-        }
+    .category-card.completed {
+        border-color: #4caf50;
+    }
 
-        .categories-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-            max-width: 800px;
-            margin: 0 auto;
-        }
+    .category-card:hover {
+        transform: translateY(-5px);
+    }
 
-        .category-card {
-            cursor: pointer;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, border-color 0.2s;
-            position: relative;
-            color: #fff;
-            font-size: large;
-            background-color: var(--bs-secondary-bg);
-            border: 3px solid transparent;
-            height: 75px; /* Fix height for uniform size */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
+    .category-card.completed .checkmark {
+        display: block;
+    }
 
-        .category-card.completed {
-            border-color: #4caf50;
-        }
+    .checkmark {
+        display: none;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        font-size: 1.5rem;
+        color: #4caf50;
+    }
 
-        .category-card:hover {
-            transform: translateY(-5px);
-        }
+    .card-body {
+        padding: 15px;
+    }
 
-        .category-card.completed .checkmark {
-            display: block;
-        }
+    
+    .return-button {
+        grid-column: 2 / 3; /* Place below the second button */
+        margin-top: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
 
-        .checkmark {
-            display: none;
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            font-size: 1.5rem;
-            color: #4caf50;
-        }
-
-        .card-body {
-            padding: 15px;
-        }
-
-        
-        .return-button {
-            grid-column: 2 / 3; /* Place below the second button */
-            margin-top: 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .return-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
+    .return-button:hover {
+        background-color: #0056b3;
+    }
+</style>
 <body>
 
     <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>

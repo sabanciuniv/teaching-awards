@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/database/dbConnection.php';
 require_once 'api/commonFunc.php';
+$pageTitle= "Previous Nominations";
+require_once 'api/header.php';
 init_session();
 checkVotingWindow($pdo);
 
@@ -33,122 +35,104 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previous Nominations</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<!-- Scripts -->
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/app.js"></script>
 
-    <!-- Limitless Theme CSS -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    body {
+        background-color: #f9f9f9;
+        margin: 0;
+        padding-top: 70px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
 
-    <!-- Scripts -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/app.js"></script>
+    .container {
+        width: 80%;
+        max-width: 800px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    /* Ensure the accordion button background is always secondary */
+    .accordion-button {
+        color: white !important;
+        border-radius: 5px;
+        padding: 15px;
+        font-size: 1.1rem;
+        width: 100%;
+        text-align: left;
+    }
 
-    <style>
-        body {
-            background-color: #f9f9f9;
-            margin: 0;
-            padding-top: 70px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
+    /* Remove Bootstrap's default white background on collapsed state */
+    .accordion-button.collapsed {
+        
+        color: white !important;
+        border: none;
+    }
 
-        .container {
-            width: 80%;
-            max-width: 800px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
+    /* Prevent unwanted hover/focus changes */
+    .accordion-button:hover, 
+    .accordion-button:focus {
+        
+        color: white !important;
+        box-shadow: none !important;
+    }
 
-        /* Ensure the accordion button background is always secondary */
-        .accordion-button {
-            color: white !important;
-            border-radius: 5px;
-            padding: 15px;
-            font-size: 1.1rem;
-            width: 100%;
-            text-align: left;
-        }
+    /* Ensure the entire accordion item stays bg-secondary */
+    .accordion-item {
+        background-color: var(--bs-secondary) !important;
+        color: white !important;
+        border: none;
+    }
 
-        /* Remove Bootstrap's default white background on collapsed state */
-        .accordion-button.collapsed {
-            
-            color: white !important;
-            border: none;
-        }
+    /* Make sure the expanded section is also visible */
+    .accordion-collapse {
+        border-top: none !important;
+    }
 
-        /* Prevent unwanted hover/focus changes */
-        .accordion-button:hover, 
-        .accordion-button:focus {
-            
-            color: white !important;
-            box-shadow: none !important;
-        }
+    /* Keep the accordion body a lighter color for contrast */
+    .accordion-body {
+        background-color: #f8f9fa;
+        color: black;
+    }
 
-        /* Ensure the entire accordion item stays bg-secondary */
-        .accordion-item {
-            background-color: var(--bs-secondary) !important;
-            color: white !important;
-            border: none;
-        }
+    .back-button {
+        margin-top: 20px;
+    }
 
-        /* Make sure the expanded section is also visible */
-        .accordion-collapse {
-            border-top: none !important;
-        }
+    .nominations-container {
+        max-height: 500px; /* Adjust height as needed */
+        overflow-y: auto; /* Enable vertical scrolling */
+        overflow-x: hidden; /* Hide horizontal scrolling */
+        padding-right: 10px; /* Prevent scrollbar cutoff */
+        margin-bottom: 20px; /* Add spacing below */
+    }
 
-        /* Keep the accordion body a lighter color for contrast */
-        .accordion-body {
-            background-color: #f8f9fa;
-            color: black;
-        }
+    /* Optional: Style the scrollbar */
+    .nominations-container::-webkit-scrollbar {
+        width: 8px;
+    }
 
-        .back-button {
-            margin-top: 20px;
-        }
+    .nominations-container::-webkit-scrollbar-thumb {
+        background-color: #6c757d; /* Secondary color */
+        border-radius: 5px;
+    }
 
-        .nominations-container {
-            max-height: 500px; /* Adjust height as needed */
-            overflow-y: auto; /* Enable vertical scrolling */
-            overflow-x: hidden; /* Hide horizontal scrolling */
-            padding-right: 10px; /* Prevent scrollbar cutoff */
-            margin-bottom: 20px; /* Add spacing below */
-        }
-
-        /* Optional: Style the scrollbar */
-        .nominations-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .nominations-container::-webkit-scrollbar-thumb {
-            background-color: #6c757d; /* Secondary color */
-            border-radius: 5px;
-        }
-
-        .nominations-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
+    .nominations-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
 
 
-    </style>
-</head>
+</style>
 <body>
 
     <?php $backLink = "nominate.php"; include 'navbar.php'; ?>

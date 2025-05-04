@@ -1,6 +1,8 @@
 <?php
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
+$pageTitle= "Student Voting Status";
+require_once 'api/header.php';
 
 init_session();
 
@@ -70,80 +72,65 @@ if (!empty($_GET['year'])) {
 }
 ?><!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Student Voting Status</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <!-- CSS -->
-  <link href="assets/css/bootstrap.min.css"           rel="stylesheet">
-  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
-  <link href="assets/css/components.min.css"          rel="stylesheet">
-  <link href="assets/css/layout.min.css"              rel="stylesheet">
-  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <style>
-    body {
-      background:#f9f9f9;
-      padding-top:70px;
-    }
-    .container {
-      max-width:900px;
-      margin:auto;
-    }
-    h3.title {
-      text-align:center;
-      margin-bottom:1.5rem;
-    }
-    .form-section {
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      align-items:center;
-      gap:1rem;
-      margin-bottom:20px;
-    }
-    .dropdown-select {
-      background:#fff!important;
-      color:#333!important;
-      border:1px solid #ccc!important;
-      border-radius:6px!important;
-      padding:10px 20px!important;
-      min-width:200px;
-    }
-    .btn-custom {
-      background:#45748a!important;
-      color:#fff!important;
-      border:none!important;
-      padding:10px 20px!important;
-      font-size:14px;
-      border-radius:5px!important;
-      display:flex;
-      align-items:center;
-      gap:5px;
-    }
-    .btn-custom:hover { background:#365a6b!important; }
-    .action-container {
-      position:fixed;
-      bottom:20px;
-      right:20px;
-      display:flex;
-      gap:10px;
-    }
-    .return-button {
-      background:#45748a!important;
-      color:#fff!important;
-      border:none!important;
-      padding:10px 20px!important;
-      font-size:14px;
-      border-radius:5px!important;
-    }
-    .return-button:hover { background:#365a6b!important; }
-    /* remove manual table-body scroll overrides */
-  </style>
-</head>
+<style>
+  body {
+    background:#f9f9f9;
+    padding-top:70px;
+  }
+  .container {
+    max-width:900px;
+    margin:auto;
+  }
+  h3.title {
+    text-align:center;
+    margin-bottom:1.5rem;
+  }
+  .form-section {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    gap:1rem;
+    margin-bottom:20px;
+  }
+  .dropdown-select {
+    background:#fff!important;
+    color:#333!important;
+    border:1px solid #ccc!important;
+    border-radius:6px!important;
+    padding:10px 20px!important;
+    min-width:200px;
+  }
+  .btn-custom {
+    background:#45748a!important;
+    color:#fff!important;
+    border:none!important;
+    padding:10px 20px!important;
+    font-size:14px;
+    border-radius:5px!important;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .btn-custom:hover { background:#365a6b!important; }
+  .action-container {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    display:flex;
+    gap:10px;
+  }
+  .return-button {
+    background:#45748a!important;
+    color:#fff!important;
+    border:none!important;
+    padding:10px 20px!important;
+    font-size:14px;
+    border-radius:5px!important;
+  }
+  .return-button:hover { background:#365a6b!important; }
+  /* remove manual table-body scroll overrides */
+</style>
 <body>
 <?php $backLink = "reportPage.php"; include 'navbar.php'; ?>
 

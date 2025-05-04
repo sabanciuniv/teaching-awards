@@ -2,6 +2,8 @@
 require_once __DIR__ . '/database/dbConnection.php';
 require_once 'api/commonFunc.php';
 init_session();
+$pageTitle= "Award Winners";
+require_once 'api/header.php';
 
 // 1) Fetch all academic years that actually have published winners
 $stmtYears = $pdo->prepare(<<<'SQL'
@@ -79,65 +81,54 @@ SQL
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Award Winners</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <style>
-    body { background: #f9f9f9; padding: 2rem 0; overflow-x: hidden;      overflow-y: auto;}    
-    .container { max-width: 800px; margin: auto; }
-    h1 { text-align: center; margin-bottom:1.5rem; font-weight:600; }
-    .filter { display:flex; justify-content:center; align-items:center; gap:.5rem; margin-bottom:2rem; }
-    .btn.dropdown-toggle {
-      background:#fff!important; color:#333!important; border:1px solid #ccc!important;
-      border-radius:6px!important; padding:.5rem 1rem; min-width:140px; text-align:left;
-    }
-    .btn-custom {
-      background:#45748a!important; color:#fff!important; border:none!important;
-      padding:.5rem 1.25rem!important; border-radius:6px!important; margin-left:.5rem;
-    }
-    .btn-custom:hover { background:#365a6b!important; }
-    .dropdown-menu { display:none; background:#fff!important; border:1px solid #ccc!important;
-      border-radius:6px!important; box-shadow:0 4px 6px rgba(0,0,0,0.1)!important;
-    }
-    .dropdown-menu.show { display:block!important; }
-    .dropdown-item { color:#333!important; padding:.5rem 1rem!important; }
-    .dropdown-item:hover { background:#f1f1f1!important; }
-    .category-row {
-      display:flex; align-items:center; background:#fff; padding:1rem;
-      border-radius:.5rem; margin-bottom:.5rem; cursor:pointer; transition:background .2s;
-    }
-    .category-row:hover { background:#f1f1f1; }
-    .category-img { width:80px; height:80px; object-fit:cover; border-radius:.5rem; margin-right:1rem; }
-    .category-info h4 { margin:0; font-weight:500; }
-    .category-info small { color:#666; display:block; }
-    .category-extra { margin-left:auto; text-align:right; }
-    .category-extra small { color:#007bff; text-decoration:underline; cursor:pointer; }
-    .winners-collapse { display:none; margin-bottom:1rem; background:#fff; border-radius:.5rem; padding:1rem; }
-    .winners-row { display:flex; flex-wrap:wrap; gap:1rem; }
-    .winner-box { width:120px; text-align:center; }
-    .winner-img {
-      width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:.5rem;
-    }
-    .winner-name { margin:0; font-weight:bold; }
-    .winner-faculty { margin:0; color:#666; font-size:.9rem; }
-    .winner-rank { margin:0; color:#999; font-size:.8rem; }
-    .action-container {
-      position:fixed; bottom:20px; right:20px;
-    }
-    .btn-return {
-      background:#45748a!important; color:#fff!important; border:none!important;
-      padding:.5rem 1.25rem!important; border-radius:6px!important;
-    }
-    .btn-return:hover { background:#365a6b!important; }
-  </style>
-</head>
+<style>
+  body { background: #f9f9f9; padding: 2rem 0; overflow-x: hidden;      overflow-y: auto;}    
+  .container { max-width: 800px; margin: auto; }
+  h1 { text-align: center; margin-bottom:1.5rem; font-weight:600; }
+  .filter { display:flex; justify-content:center; align-items:center; gap:.5rem; margin-bottom:2rem; }
+  .btn.dropdown-toggle {
+    background:#fff!important; color:#333!important; border:1px solid #ccc!important;
+    border-radius:6px!important; padding:.5rem 1rem; min-width:140px; text-align:left;
+  }
+  .btn-custom {
+    background:#45748a!important; color:#fff!important; border:none!important;
+    padding:.5rem 1.25rem!important; border-radius:6px!important; margin-left:.5rem;
+  }
+  .btn-custom:hover { background:#365a6b!important; }
+  .dropdown-menu { display:none; background:#fff!important; border:1px solid #ccc!important;
+    border-radius:6px!important; box-shadow:0 4px 6px rgba(0,0,0,0.1)!important;
+  }
+  .dropdown-menu.show { display:block!important; }
+  .dropdown-item { color:#333!important; padding:.5rem 1rem!important; }
+  .dropdown-item:hover { background:#f1f1f1!important; }
+  .category-row {
+    display:flex; align-items:center; background:#fff; padding:1rem;
+    border-radius:.5rem; margin-bottom:.5rem; cursor:pointer; transition:background .2s;
+  }
+  .category-row:hover { background:#f1f1f1; }
+  .category-img { width:80px; height:80px; object-fit:cover; border-radius:.5rem; margin-right:1rem; }
+  .category-info h4 { margin:0; font-weight:500; }
+  .category-info small { color:#666; display:block; }
+  .category-extra { margin-left:auto; text-align:right; }
+  .category-extra small { color:#007bff; text-decoration:underline; cursor:pointer; }
+  .winners-collapse { display:none; margin-bottom:1rem; background:#fff; border-radius:.5rem; padding:1rem; }
+  .winners-row { display:flex; flex-wrap:wrap; gap:1rem; }
+  .winner-box { width:120px; text-align:center; }
+  .winner-img {
+    width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:.5rem;
+  }
+  .winner-name { margin:0; font-weight:bold; }
+  .winner-faculty { margin:0; color:#666; font-size:.9rem; }
+  .winner-rank { margin:0; color:#999; font-size:.8rem; }
+  .action-container {
+    position:fixed; bottom:20px; right:20px;
+  }
+  .btn-return {
+    background:#45748a!important; color:#fff!important; border:none!important;
+    padding:.5rem 1.25rem!important; border-radius:6px!important;
+  }
+  .btn-return:hover { background:#365a6b!important; }
+</style>
 <body>
 
   <?php 

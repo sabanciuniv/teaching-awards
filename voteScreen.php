@@ -1,6 +1,8 @@
 <?php
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
+$pageTitle= "Vote Screen";
+require_once 'api/header.php';
 init_session();
 
 checkVotingWindow($pdo);
@@ -48,162 +50,148 @@ enforceCategoryVotingAccess($pdo, $user, $category);
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Teaching Awards - Sabancı University</title>
+<style>
+  /* General Page Styles */
+  html, body {
+    height: 100%;
+    margin: 0;
+    overflow-y: auto; /* Enables vertical scrolling */
+    overflow-x: hidden; /* Prevents horizontal scrolling */
+  }
+  body {
+    margin: 0;
+    background-color: #f5f7fa;
+    padding-top: 80px;
+  }
 
-  <!-- Limitless Theme CSS -->
-  <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  /* Navbar */
+  .navbar-brand img {
+    height: 40px;
+  }
+  .navbar-brand span {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: white !important;
+    margin-left: 10px;
+  }
 
-  <style>
-    /* General Page Styles */
-    html, body {
-      height: 100%;
-      margin: 0;
-      overflow-y: auto; /* Enables vertical scrolling */
-      overflow-x: hidden; /* Prevents horizontal scrolling */
-    }
-    body {
-      margin: 0;
-      background-color: #f5f7fa;
-      padding-top: 80px;
-    }
+  /* Content Section */
+  .content {
+    padding: 20px;
+  }
 
-    /* Navbar */
-    .navbar-brand img {
-      height: 40px;
-    }
-    .navbar-brand span {
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: white !important;
-      margin-left: 10px;
-    }
-
-    /* Content Section */
-    .content {
-      padding: 20px;
-    }
-
-    /* Instructor Card Styles */
-   /* Instructor Card Styles */
+  /* Instructor Card Styles */
+  /* Instructor Card Styles */
   .card {
-      height: 300px; /* or any height that fits your content well */
-      width: 270px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      text-align: center;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
-      background-color: #fff;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 20px;
-      margin: 10px;
-    }
+    height: 300px; /* or any height that fits your content well */
+    width: 270px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    margin: 10px;
+  }
 
-    .course-history-scroll {
-      max-height: 100px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      width: 100%;
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 0 10px;
-      margin-top: 5px;
-    }
-    .card img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 50%;
-      margin-bottom: 10px;
-    }
+  .course-history-scroll {
+    max-height: 100px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0 10px;
+    margin-top: 5px;
+  }
+  .card img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
 
-    /* Award Category Header */
-    .award-category {
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 20px 0;
-    }
+  /* Award Category Header */
+  .award-category {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
 
-    /* Submit Button */
-    .submit-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 30px;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    .submit-btn:hover {
-      cursor: pointer;
-    }
+  /* Submit Button */
+  .submit-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  .submit-btn:hover {
+    cursor: pointer;
+  }
 
-    /* Background Placeholder Fix */
-    .background-placeholder {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 25px;
-      background-color: #3f51b5;
-      z-index: -1;
-    }
+  /* Background Placeholder Fix */
+  .background-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    background-color: #3f51b5;
+    z-index: -1;
+  }
 
-    /* Disabled option style */
-    .dropdown-item.disabled {
-      pointer-events: none;
-      opacity: 0.5;
-    }
+  /* Disabled option style */
+  .dropdown-item.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
 
-    /* Custom close button style for the confirmation modal */
-    #confirmModal .btn-close {
-      background: none !important;
-      background-image: none !important; /* Remove default icon */
-      border: none !important;
-      box-shadow: none !important;
-      appearance: none;
-      width: 1em;
-      height: 1em;
-      padding: 0;
-      opacity: 1; /* Always fully visible */
-      position: relative;
-    }
-    #confirmModal .btn-close::before {
-      content: "×";         /* The 'X' character */
-      color: #ff0000;       /* Red color */
-      font-size: 1.4rem;    /* Adjust as needed */
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    #confirmModal .btn-close:hover::before,
-    #confirmModal .btn-close:focus::before {
-      opacity: 0.8;
-    }
+  /* Custom close button style for the confirmation modal */
+  #confirmModal .btn-close {
+    background: none !important;
+    background-image: none !important; /* Remove default icon */
+    border: none !important;
+    box-shadow: none !important;
+    appearance: none;
+    width: 1em;
+    height: 1em;
+    padding: 0;
+    opacity: 1; /* Always fully visible */
+    position: relative;
+  }
+  #confirmModal .btn-close::before {
+    content: "×";         /* The 'X' character */
+    color: #ff0000;       /* Red color */
+    font-size: 1.4rem;    /* Adjust as needed */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  #confirmModal .btn-close:hover::before,
+  #confirmModal .btn-close:focus::before {
+    opacity: 0.8;
+  }
 
-  </style>
-</head>
+</style>
 
 <body>
   <!-- Background Placeholder -->

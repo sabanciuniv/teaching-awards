@@ -1,6 +1,8 @@
 <?php
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
+$pageTitle= "Voting Participation by Year";
+require_once 'api/header.php';
 
 init_session();
 require_once __DIR__ . '/database/dbConnection.php';
@@ -28,170 +30,155 @@ if (!checkIfUserIsAdmin($pdo, $user)) {
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Voting Participation by Year</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- DataTables & Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 
-    <!-- Limitless Theme Styles -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
-    <link href="assets/css/components.min.css" rel="stylesheet">
-    <link href="assets/css/layout.min.css" rel="stylesheet">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    body {
+        background-color: #f9f9f9;
+        padding-top: 70px;
+    }
 
-    <!-- DataTables & Buttons CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    .title {
+        text-align: center;
+        margin: 40px 0 20px;
+        font-size: 24px;
+        font-weight: bold;
+        color: black;
+    }
 
-    <style>
-        body {
-            background-color: #f9f9f9;
-            padding-top: 70px;
-        }
+    .form-section {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
 
-        .title {
-            text-align: center;
-            margin: 40px 0 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: black;
-        }
+    .dropdown-select {
+        background: #fff !important;
+        color: #333 !important;
+        border: 1px solid #ccc !important;
+        border-radius: 6px !important;
+        padding: 10px 20px !important;
+        min-width: 200px;
+    }
 
-        .form-section {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
+    .dropdown-menu {
+        background-color: white !important;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-        .dropdown-select {
-            background: #fff !important;
-            color: #333 !important;
-            border: 1px solid #ccc !important;
-            border-radius: 6px !important;
-            padding: 10px 20px !important;
-            min-width: 200px;
-        }
+    .dropdown-item {
+        color: #333;
+        padding: 10px 20px;
+        font-size: 14px;
+        background-color: white !important;
+        transition: background-color 0.2s ease;
+    }
 
-        .dropdown-menu {
-            background-color: white !important;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+    .dropdown-item:hover {
+        background-color: #f1f1f1 !important;
+        color: #000;
+    }
 
-        .dropdown-item {
-            color: #333;
-            padding: 10px 20px;
-            font-size: 14px;
-            background-color: white !important;
-            transition: background-color 0.2s ease;
-        }
+    .btn-custom, .return-button {
+        background-color: #45748a !important;
+        color: white !important;
+        border: none !important;
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 200px;
+        text-align: center;
+        transition: 0.3s ease;
+    }
 
-        .dropdown-item:hover {
-            background-color: #f1f1f1 !important;
-            color: #000;
-        }
+    .btn-custom:hover, .return-button:hover {
+        background-color: #365a6b !important;
+    }
 
-        .btn-custom, .return-button {
-            background-color: #45748a !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 200px;
-            text-align: center;
-            transition: 0.3s ease;
-        }
+    .table-container {
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+    }
 
-        .btn-custom:hover, .return-button:hover {
-            background-color: #365a6b !important;
-        }
+    .error-message {
+        display: none;
+        text-align: center;
+        color: #dc3545;
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 15px;
+    }
 
-        .table-container {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
-        }
+    .action-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+    }
 
-        .error-message {
-            display: none;
-            text-align: center;
-            color: #dc3545;
-            font-size: 16px;
-            font-weight: bold;
-            margin-top: 15px;
-        }
+    #participationTable {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        background-color: white !important;
+        border-radius: 8px;
+        overflow: hidden;
+    }
 
-        .action-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-        }
+    #participationTable th,
+    #participationTable td {
+        font-size: 13px !important;
+        font-weight: normal !important;
+        padding: 10px 12px !important;
+        border: none !important;
+        border-bottom: 1px solid #eee !important;
+        color: #333 !important;
+        background-color: white !important;
+        text-align: center;
+    }
 
-        #participationTable {
-            border-collapse: separate !important;
-            border-spacing: 0 !important;
-            background-color: white !important;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        #participationTable th,
-        #participationTable td {
-            font-size: 13px !important;
-            font-weight: normal !important;
-            padding: 10px 12px !important;
-            border: none !important;
-            border-bottom: 1px solid #eee !important;
-            color: #333 !important;
-            background-color: white !important;
-            text-align: center;
-        }
-
-        /* Header look - subtle, not bold */
-        #participationTable thead th {
-            background-color: #f5f5f5 !important;
-            color: #333 !important;
-        }
-        
-        .datatable-header,
-        .datatable-footer {
-            padding: 0 10px;
-            font-size: 13px;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .dataTables_wrapper {
-            padding: 10px;
-        }
-
-        .dataTables_filter input {
-            max-width: 250px;
-        }
-        /* Remove default DataTables styles (e.g., borders) */
-        table.dataTable.no-footer {
-            border-bottom: none !important;
-        }
-
-        .dataTables_info,
-        .dataTables_paginate {
+    /* Header look - subtle, not bold */
+    #participationTable thead th {
+        background-color: #f5f5f5 !important;
+        color: #333 !important;
+    }
+    
+    .datatable-header,
+    .datatable-footer {
+        padding: 0 10px;
         font-size: 13px;
-        color: #555;
-        }
-    </style>
+        justify-content: center;
+        gap: 10px;
+    }
 
-</head>
+    .dataTables_wrapper {
+        padding: 10px;
+    }
+
+    .dataTables_filter input {
+        max-width: 250px;
+    }
+    /* Remove default DataTables styles (e.g., borders) */
+    table.dataTable.no-footer {
+        border-bottom: none !important;
+    }
+
+    .dataTables_info,
+    .dataTables_paginate {
+    font-size: 13px;
+    color: #555;
+    }
+</style>
 <body>
 <?php $backLink = "reportPage.php"; include 'navbar.php'; ?>
 

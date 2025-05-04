@@ -2,6 +2,8 @@
 require_once 'api/commonFunc.php';
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
+$pageTitle= "Set Winner";
+require_once 'api/header.php';
 
 init_session();
 $user = $_SESSION['user'];
@@ -222,290 +224,277 @@ foreach ($allWinners as $row) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Set Winner</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap CSS & FontAwesome -->
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/components.min.css" rel="stylesheet">
-    <link href="assets/css/layout.min.css" rel="stylesheet">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/phosphor-icons@1.4.2/src/css/icons.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f9f9f9;
-            padding-top: 80px;
-            overflow-y: auto;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
+<style>
+    body {
+        background-color: #f9f9f9;
+        padding-top: 80px;
+        overflow-y: auto;
+    }
+    .container {
+        max-width: 900px;
+        margin: auto;
+    }
 
-        /* make both buttons the same width */
+    /* make both buttons the same width */
 .action-container form button {
-  min-width: 140px;
-  width: 100%;
+min-width: 140px;
+width: 100%;
 }
 /* wrap the two forms in a row and align to the right */
 .action-container {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 1rem;  /* give some breathing room under the preview */
+display: flex;
+gap: 8px;
+justify-content: flex-end;
+margin-top: 1rem;  /* give some breathing room under the preview */
 }
 
 
-        .alert {
-            margin-top: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .unified-section {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+    .alert {
+        margin-top: 20px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .unified-section {
+        max-width: 900px;
+        margin: 0 auto;
+    }
 
-        #multiStepFormWrapper,
-        .prelook-container {
-            width: 100%;
-        }
+    #multiStepFormWrapper,
+    .prelook-container {
+        width: 100%;
+    }
 
-        #multiStepForm {
-            margin-bottom: 20px;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-            overflow: visible;
-            position: relative;
-        }
+    #multiStepForm {
+        margin-bottom: 20px;
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 40px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        overflow: visible;
+        position: relative;
+    }
 
-        .prelook-container {
-            margin-top: 20px; /* reduce spacing */
-        }
-        /* Category row styling for collapsible preview */
-        .category-row {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background: #ffffff;
-            border-radius: 12px; /* make the corners more round */
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            border: 1px solid #dee2e6; /* light gray border like the form */
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* subtle shadow for depth */
-        }
+    .prelook-container {
+        margin-top: 20px; /* reduce spacing */
+    }
+    /* Category row styling for collapsible preview */
+    .category-row {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: #ffffff;
+        border-radius: 12px; /* make the corners more round */
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        border: 1px solid #dee2e6; /* light gray border like the form */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* subtle shadow for depth */
+    }
 
-        .category-row:hover {
-            background: #f1f1f1;
-        }
-        .category-img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 5px;
-            margin-right: 15px;
-        }
-        .category-info {
-            flex: 1;
-        }
-        .category-info h4 {
-            margin: 0;
-            font-weight: bold;
-        }
-        .category-info small {
-            color: #888;
-        }
-        .category-extra {
-            text-align: right;
-            margin-left: 15px;
-        }
-        .category-extra p {
-            margin: 0;
-            color: #666;
-        }
-        .category-extra a {
-            color: #007bff;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        /* Collapsible winners list */
-        .winners-collapse {
-            display: none;
-            padding-left: 95px;
-            margin-bottom: 15px;
-        }
-        .winners-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .winner-box {
-            text-align: center;
-            width: 120px;
-            position: relative;
-        }
-        .winner-img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            margin-bottom: 8px;
-            background-color: #ccc;
-        }
-        .winner-box p {
-            margin: 0;
-        }
-        .winner-box .faculty {
-            font-size: 0.9rem;
-            color: #666;
-        }
-        .winner-box .rank {
-            font-size: 0.8rem;
-            color: #999;
-        }
-        .remove-candidate {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 22px;
-            height: 22px;
-            background: #dc3545;
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .wizard-steps {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            margin-bottom: 40px;
-        }
+    .category-row:hover {
+        background: #f1f1f1;
+    }
+    .category-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 15px;
+    }
+    .category-info {
+        flex: 1;
+    }
+    .category-info h4 {
+        margin: 0;
+        font-weight: bold;
+    }
+    .category-info small {
+        color: #888;
+    }
+    .category-extra {
+        text-align: right;
+        margin-left: 15px;
+    }
+    .category-extra p {
+        margin: 0;
+        color: #666;
+    }
+    .category-extra a {
+        color: #007bff;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    /* Collapsible winners list */
+    .winners-collapse {
+        display: none;
+        padding-left: 95px;
+        margin-bottom: 15px;
+    }
+    .winners-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .winner-box {
+        text-align: center;
+        width: 120px;
+        position: relative;
+    }
+    .winner-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        margin-bottom: 8px;
+        background-color: #ccc;
+    }
+    .winner-box p {
+        margin: 0;
+    }
+    .winner-box .faculty {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    .winner-box .rank {
+        font-size: 0.8rem;
+        color: #999;
+    }
+    .remove-candidate {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 22px;
+        height: 22px;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .wizard-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        margin-bottom: 40px;
+    }
 
-        .step {
-            text-align: center;
-            position: relative;
-            flex: 1;
-        }
+    .step {
+        text-align: center;
+        position: relative;
+        flex: 1;
+    }
 
-        .step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 20px;
-            right: -50%;
-            width: 100%;
-            height: 2px;
-            background-color: #dee2e6;
-            z-index: 0;
-        }
+    .step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        right: -50%;
+        width: 100%;
+        height: 2px;
+        background-color: #dee2e6;
+        z-index: 0;
+    }
 
-        .step-icon {
-            background-color: #fff;
-            border: 2px solid #ccc;
-            color: #ccc;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 10px;
-            line-height: 36px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 1;
-        }
+    .step-icon {
+        background-color: #fff;
+        border: 2px solid #ccc;
+        color: #ccc;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 10px;
+        line-height: 36px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+    }
 
-        .step.active .step-icon,
-        .step.completed .step-icon {
-            border-color: #3b82f6;
-            background-color: #3b82f6;
-            color: #fff;
-        }
+    .step.active .step-icon,
+    .step.completed .step-icon {
+        border-color: #3b82f6;
+        background-color: #3b82f6;
+        color: #fff;
+    }
 
-        .step-title {
-            font-size: 14px;
-            color: #333;
-        }
+    .step-title {
+        font-size: 14px;
+        color: #333;
+    }
 
-        .form-step {
-            display: none;
-        }
+    .form-step {
+        display: none;
+    }
 
-        .form-step.active {
-            display: block;
-        }
+    .form-step.active {
+        display: block;
+    }
 
-        .btn-nav {
-            min-width: 120px;
-        }
-        .dropdown-select {
-            background-color: #fff !important;
-            color: #495057 !important;
-            border: 1px solid #ced4da !important;
-            border-radius: 6px !important;
-            padding: 10px 12px;
-            font-size: 1rem;
-        }
-        .dropdown-menu {
-            transform: translate(0, 0) !important;
-            top: 100% !important;
-            left: 0;
-            width: 100%;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-        .dropdown-menu a {
-            font-size: 0.95rem;
-        }
-        .dropdown-menu .dropdown-item {
-            white-space: normal;
-            word-break: break-word;
-            line-height: 1.3;
-            padding: 10px 15px;
-        }
-        .dropdown-menu-up {
-            top: auto !important;
-            bottom: 100% !important;
-            transform: translateY(-0.5rem) !important;
-        }
+    .btn-nav {
+        min-width: 120px;
+    }
+    .dropdown-select {
+        background-color: #fff !important;
+        color: #495057 !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 6px !important;
+        padding: 10px 12px;
+        font-size: 1rem;
+    }
+    .dropdown-menu {
+        transform: translate(0, 0) !important;
+        top: 100% !important;
+        left: 0;
+        width: 100%;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .dropdown-menu a {
+        font-size: 0.95rem;
+    }
+    .dropdown-menu .dropdown-item {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.3;
+        padding: 10px 15px;
+    }
+    .dropdown-menu-up {
+        top: auto !important;
+        bottom: 100% !important;
+        transform: translateY(-0.5rem) !important;
+    }
 
-        .dropdown-menu-down {
-            top: 100% !important;
-            bottom: auto !important;
-            transform: translateY(0.5rem) !important;
-        }
-        .dropdown-toggle {
-            border-radius: 6px;
-            padding: 0.5rem 1rem;
-        }
-        .title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            color: #000;
-            text-align: center;
-        }
-    </style>
-</head>
+    .dropdown-menu-down {
+        top: 100% !important;
+        bottom: auto !important;
+        transform: translateY(0.5rem) !important;
+    }
+    .dropdown-toggle {
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+    }
+    .title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        color: #000;
+        text-align: center;
+    }
+</style>
 <body>
 <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 <div class="container unified-section">

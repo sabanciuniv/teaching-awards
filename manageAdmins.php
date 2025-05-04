@@ -2,6 +2,8 @@
 require_once 'api/authMiddleware.php';
 require_once 'api/commonFunc.php';
 require_once 'database/dbConnection.php';
+$pageTitle= "Manage Admins";
+require_once 'api/header.php';
 
 init_session();
 
@@ -25,81 +27,62 @@ $adminsJson = json_encode($adminsData['data']);
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Admins</title>
+<!-- Bootstrap JS Bundle (includes Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- jQuery -->
+<script src="assets/js/main/jquery.min.js"></script>
 
-    <!-- Limitless Theme Styles -->
-    <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+<style>
+    /* Make the page scrollable if content is tall */
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+    }
+    body {
+        background-color: #f9f9f9;
+        padding-top: 70px;
+        overflow-y: auto;
+    }
+    
+    .search-box {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 15px;
+    }
 
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    /* Optional styling for pagination links */
+    .pagination {
+        margin-top: 1rem;
+    }
+    .pagination .page-item .page-link {
+        color: #45748a;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #45748a;
+        border-color: #45748a;
+        color: #fff;
+    }
 
-    <!-- Bootstrap JS Bundle (includes Popper.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- jQuery -->
-    <script src="assets/js/main/jquery.min.js"></script>
-
-    <style>
-        /* Make the page scrollable if content is tall */
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-        }
-        body {
-            background-color: #f9f9f9;
-            padding-top: 70px;
-            overflow-y: auto;
-        }
-        
-        .search-box {
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 15px;
-        }
-
-        /* Optional styling for pagination links */
-        .pagination {
-            margin-top: 1rem;
-        }
-        .pagination .page-item .page-link {
-            color: #45748a;
-        }
-        .pagination .page-item.active .page-link {
-            background-color: #45748a;
-            border-color: #45748a;
-            color: #fff;
-        }
-
-        /* Indicate sortable columns with a pointer and optional arrow icons */
-        th.sortable {
-            cursor: pointer;
-            position: relative; /* so we can place arrows */
-        }
-        th.sortable.asc::after {
-            content: ' \25B2'; /* up arrow */
-            position: absolute;
-            right: 8px;
-            color: #ccc;
-        }
-        th.sortable.desc::after {
-            content: ' \25BC'; /* down arrow */
-            position: absolute;
-            right: 8px;
-            color: #ccc;
-        }
-    </style>
-</head>
+    /* Indicate sortable columns with a pointer and optional arrow icons */
+    th.sortable {
+        cursor: pointer;
+        position: relative; /* so we can place arrows */
+    }
+    th.sortable.asc::after {
+        content: ' \25B2'; /* up arrow */
+        position: absolute;
+        right: 8px;
+        color: #ccc;
+    }
+    th.sortable.desc::after {
+        content: ' \25BC'; /* down arrow */
+        position: absolute;
+        right: 8px;
+        color: #ccc;
+    }
+</style>
 <body>
 <?php
     // Using $backLink for a "Back" button in navbar
