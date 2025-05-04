@@ -46,6 +46,8 @@ $categoryData = $stmt->fetch(PDO::FETCH_ASSOC);
 $categoryDescription = $categoryData['CategoryDescription'] ?? $category;
 
 enforceCategoryVotingAccess($pdo, $user, $category);
+enforceCategoryOwnership($pdo, $user, $category);
+
 ?>
 
 <!DOCTYPE html>

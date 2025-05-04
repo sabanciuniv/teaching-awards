@@ -527,6 +527,74 @@ function enforceCategoryVotingAccess(PDO $pdo, string $username, string $categor
     }
 }
 
+function enforceCategoryOwnership(PDO $pdo, string $username, string $categoryCode): void {
+    // Get current academic year ID
+    $yearID = getCurrentAcademicYearID($pdo);
+    if (!$yearID) {
+        header("Location: accessDenied.php");
+        exit;
+    }
+
+    // Get student ID + YearID
+    $stmtStudent = $pdo->prepare("
+        SELECT id, YearID 
+        FROM Student_Table 
+        WHERE SuNET_Username = :username
+    ");
+    $stmtStudent->execute([':username' => $username]);
+    $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
+
+    if (!$student) {
+        header("Location: accessDenied.php");
+        exit;
+    }
+
+    $studentID = $student['id'];
+    $studentYearID = $student['YearID'];
+
+    // Check if student's YearID matches the current academic year
+    if ($studentYearID != $yearID) {
+        header("Location: accessDenied.php");
+        exit;
+    }
+
+    // Get category ID
+    $stmtCat = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :code");
+    $stmtCat->execute([':code' => $categoryCode]);
+    $cat = $stmtCat->fetch(PDO::FETCH_ASSOC);
+
+    if (!$cat) {
+        header("Location: accessDenied.php");
+        exit;
+    }
+
+    $categoryID = $cat['CategoryID'];
+
+    // Now check Student_Category_Relation + Student_Table.YearID = current year
+    $stmt = $pdo->prepare("
+        SELECT 1 
+        FROM Student_Category_Relation scr
+        JOIN Student_Table s ON scr.student_id = s.id
+        WHERE scr.student_id = :studentID 
+          AND scr.categoryID = :categoryID
+          AND s.YearID = :yearID
+        LIMIT 1
+    ");
+    $stmt->execute([
+        ':studentID' => $studentID,
+        ':categoryID' => $categoryID,
+        ':yearID' => $yearID
+    ]);
+
+    if (!$stmt->fetch()) {
+        header("Location: accessDenied.php");
+        exit;
+    }
+}
+
+
+
+
 
 
 //getAdmins.php
