@@ -9,7 +9,7 @@ $user = $_SESSION['user'];
 // Admin access check
 $role = getUserAdminRole($pdo, $user);
 if (!in_array($role, ['Admin', 'IT_Admin'])) {
-    header("Location: index.php");
+    header("Location: accessDenied.php");
     exit();
 }
 

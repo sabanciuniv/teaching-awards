@@ -4,18 +4,25 @@ session_start();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <title>Access Denied</title>
-    <link rel="stylesheet" href="custom.css"> <!-- Optional: Your own custom CSS -->
+    <meta charset="utf-8">
+    <title>Access Denied - Sabancı University</title>
+
+    <!-- Bootstrap CSS & FontAwesome -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/components.min.css" rel="stylesheet">
+    <link href="assets/css/layout.min.css" rel="stylesheet">
+    <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/phosphor-icons@1.4.2/src/css/icons.min.css" rel="stylesheet">
+
     <style>
         body {
             background-color: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            margin: 0;
+            padding-top: 80px; /* Leave space for fixed navbar */
             font-family: Arial, sans-serif;
         }
 
@@ -25,11 +32,13 @@ session_start();
             border-radius: 10px;
             text-align: center;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
+            max-width: 500px;
+            margin: 50px auto;
 
-        .denied-box h1 {
-            font-size: 24px;
-            color: #dc3545;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .denied-box p {
@@ -37,26 +46,26 @@ session_start();
             margin-top: 10px;
         }
 
-        .denied-box a {
-            display: inline-block;
+        .denied-box a.btn {
             margin-top: 20px;
-            text-decoration: none;
             color: white;
-            background-color: #112568;
-            padding: 10px 20px;
-            border-radius: 5px;
         }
 
-        .denied-box a:hover {
+        .denied-box a.btn:hover {
             background-color: #0d1f45;
         }
     </style>
 </head>
 <body>
-    <div class="denied-box">
-        <h1>Access Denied</h1>
-        <p>You do not have permission to access this page.</p>
-        <a href="index.php">Return to Homepage</a>
-    </div>
+
+<?php include 'navbar.php'; ?>
+
+<!-- MAIN CONTENT -->
+<div class="denied-box">
+    <h1>Access Denied</h1>
+    <p>You do not have permission to access this page.</p>
+    <a href="index.php" class="btn btn-secondary">Return to Homepage</a>
+</div>
+
 </body>
 </html>

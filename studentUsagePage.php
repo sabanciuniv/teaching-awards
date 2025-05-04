@@ -9,7 +9,7 @@ $user = $_SESSION['user'];
 
 // Admin check
 if (! checkIfUserIsAdmin($pdo, $user)) {
-  header("Location: index.php");
+  header("Location: accessDenied.php");
   exit();
 }
 

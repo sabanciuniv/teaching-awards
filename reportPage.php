@@ -28,7 +28,7 @@ try {
     
     // If no record is found, redirect to index.php
     if (!$adminStmt->fetch()) {
-        header("Location: index.php");
+        header("Location: accessDenied.php");
         exit();
     }
 } catch (PDOException $e) {

@@ -15,7 +15,7 @@ $role = getUserAdminRole($pdo, $_SESSION['user']);
 // Check role existence
 if (!$role || !in_array($role, ['Admin', 'IT_Admin'])) {
     logUnauthorizedAccess($pdo, $username, basename(__FILE__));
-    header("Location: index.php");
+    header("Location: accessDenied.php");
     exit();
 }
 ?>

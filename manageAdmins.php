@@ -14,7 +14,7 @@ $role = getUserAdminRole($pdo, $user);
 // Only allow IT_Admins
 if ($role !== 'IT_Admin') {
     logUnauthorizedAccess($pdo, $user, basename(__FILE__));
-    header("Location: index.php");
+    header("Location: accessDenied.php");
     exit();
 }
 

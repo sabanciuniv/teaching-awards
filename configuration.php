@@ -21,7 +21,7 @@
   //admin access check, if not valid, user will be logged as unauthorized log in
   if (!checkIfUserIsAdmin($pdo, $user)) {
     logUnauthorizedAccess($pdo, $user, basename(__FILE__));
-    header("Location: index.php");
+    header("Location: accessDenied.php");
     exit();
   }
 

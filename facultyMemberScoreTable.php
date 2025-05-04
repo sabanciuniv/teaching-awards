@@ -25,7 +25,7 @@ try {
 
 // BEGIN: Admin Access Check --> using the commonFunc
 if (! checkIfUserIsAdmin($pdo, $user)) {
-    header("Location: index.php");
+    header("Location: accessDenied.php");
     exit();
 }
 // END: Admin Access Check
