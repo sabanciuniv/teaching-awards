@@ -503,6 +503,7 @@ function enforceCategoryVotingAccess(PDO $pdo, string $username, string $categor
     ]);
 
     if ($stmtVote->fetch()) {
+        logUnauthorizedAccess($pdo, $username, "voteScreen.php - already voted");
         ?>
         <!DOCTYPE html>
         <html lang="en">
@@ -545,6 +546,7 @@ function enforceCategoryOwnership(PDO $pdo, string $username, string $categoryCo
     $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
 
     if (!$student) {
+        logUnauthorizedAccess($pdo, $username, "voteScreen.php - student not found");
         header("Location: accessDenied.php");
         exit;
     }
@@ -554,6 +556,7 @@ function enforceCategoryOwnership(PDO $pdo, string $username, string $categoryCo
 
     // Check if student's YearID matches the current academic year
     if ($studentYearID != $yearID) {
+        logUnauthorizedAccess($pdo, $username, "voteScreen.php - year mismatch");
         header("Location: accessDenied.php");
         exit;
     }
@@ -564,6 +567,7 @@ function enforceCategoryOwnership(PDO $pdo, string $username, string $categoryCo
     $cat = $stmtCat->fetch(PDO::FETCH_ASSOC);
 
     if (!$cat) {
+        logUnauthorizedAccess($pdo, $username, "voteScreen.php - invalid category");
         header("Location: accessDenied.php");
         exit;
     }
@@ -587,6 +591,7 @@ function enforceCategoryOwnership(PDO $pdo, string $username, string $categoryCo
     ]);
 
     if (!$stmt->fetch()) {
+        logUnauthorizedAccess($pdo, $username, "voteScreen.php - category ownership failed");
         header("Location: accessDenied.php");
         exit;
     }
