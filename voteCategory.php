@@ -4,7 +4,19 @@ require_once 'api/commonFunc.php';
 init_session();
 checkVotingWindow($pdo);
 $pageTitle= "Vote Category";
+
+// Get the current user (either impersonated or actual login)
+$user = (isset($_SESSION['impersonating']) && $_SESSION['impersonating']) 
+    ? $_SESSION['impersonated_user'] 
+    : $_SESSION['user'];
+
+// Call the function with the username
+$allowedCategories = getAllowedCategories($pdo, $user);
+$categoriesJSON = json_encode($allowedCategories);
+
 require_once 'api/header.php';
+
+
 ?>
 
 
@@ -142,81 +154,73 @@ require_once 'api/header.php';
   </div>
 
   <script>
-    // 1) Fetch categories on page load
-    async function fetchCategories() {
-      try {
-        const response = await fetch('api/getAllowedCategories.php');
-        const data = await response.json();
+    // 0) Categories data passed from PHP
+    const categoriesData = <?= json_encode($allowedCategories['categories'] ?? []); ?>;
 
-        if (data.status === "success" && data.categories && data.categories.length > 0) {
-          renderCategories(data.categories);
-        } else {
-          console.error("No categories found:", data.message);
-          document.getElementById('categories-container').innerHTML = "<p>No available voting categories.</p>";
-        }
-      } catch (error) {
-        console.error("Fetch Error:", error);
-        document.getElementById('categories-container').innerHTML = "<p>Error loading categories.</p>";
-      }
-    }
-
-    // 2) Render category cards
+    // 1) Render category cards
     function renderCategories(categories) {
-      const container = document.getElementById('categories-container');
-      container.innerHTML = '';
+        const container = document.getElementById('categories-container');
+        container.innerHTML = '';
 
-      categories.forEach(category => {
-        const card = document.createElement('div');
-        card.className = 'card category-card bg-secondary';
-
-        // If the user has voted, mark the card as completed
-        if (parseInt(category.isVoted) === 1) {
-          card.classList.add('completed');
-          const checkmark = document.createElement('div');
-          checkmark.className = 'checkmark';
-          checkmark.innerHTML = '<i class="fa fa-check"></i>';
-          card.appendChild(checkmark);
+        if (!categories || categories.length === 0) {
+            container.innerHTML = "<p>No available voting categories.</p>";
+            return;
         }
 
-        // Clicking a voted category => show popup
-        // Clicking a non-voted category => redirect to voting screen
-        card.onclick = () => {
-          if (parseInt(category.isVoted) === 1) {
-            showVotePopup(category.CategoryCode);
-          } else {
-            window.location.href = `voteScreen.php?category=${category.CategoryCode}`;
-          }
-        };
+        categories.forEach(category => {
+            const card = document.createElement('div');
+            card.className = 'card category-card bg-secondary';
 
-        // Display the category description in the card
-        const cardBody = document.createElement('div');
-        cardBody.className = 'card-body';
-        cardBody.textContent = category.CategoryDescription;
-        card.appendChild(cardBody);
-        container.appendChild(card);
-      });
-    }
+            // Mark as completed if voted
+            if (parseInt(category.isVoted) === 1) {
+                card.classList.add('completed');
+                const checkmark = document.createElement('div');
+                checkmark.className = 'checkmark';
+                checkmark.innerHTML = '<i class="fa fa-check"></i>';
+                card.appendChild(checkmark);
+            }
 
-    // 3) Show the vote details popup (modal)
-    function showVotePopup(categoryCode) {
-      fetch(`api/getVoteDetails.php?category=${categoryCode}`)
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('modalBody').innerHTML = data.voteDetails || '<p>No details available.</p>';
-          var voteModal = new bootstrap.Modal(document.getElementById('voteModal'));
-          voteModal.show();
-        })
-        .catch(error => {
-          console.error('Error fetching vote details:', error);
-          document.getElementById('modalBody').innerHTML = '<p>Error loading vote details.</p>';
-          var voteModal = new bootstrap.Modal(document.getElementById('voteModal'));
-          voteModal.show();
+            // Set click behavior
+            card.onclick = () => {
+                if (parseInt(category.isVoted) === 1) {
+                    showVotePopup(category.CategoryCode);
+                } else {
+                    window.location.href = `voteScreen.php?category=${category.CategoryCode}`;
+                }
+            };
+
+            // Add category description
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+            cardBody.textContent = category.CategoryDescription;
+            card.appendChild(cardBody);
+
+            container.appendChild(card);
         });
     }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', fetchCategories);
-  </script>
+    // 2) Show vote details popup for voted categories
+    function showVotePopup(categoryCode) {
+        fetch(`api/getVoteDetails.php?category=${categoryCode}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modalBody').innerHTML = data.voteDetails || '<p>No details available.</p>';
+                var voteModal = new bootstrap.Modal(document.getElementById('voteModal'));
+                voteModal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching vote details:', error);
+                document.getElementById('modalBody').innerHTML = '<p>Error loading vote details.</p>';
+                var voteModal = new bootstrap.Modal(document.getElementById('voteModal'));
+                voteModal.show();
+            });
+    }
+
+    // 3) Render categories immediately on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        renderCategories(categoriesData);
+    });
+</script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

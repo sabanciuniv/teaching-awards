@@ -597,9 +597,73 @@ function enforceCategoryOwnership(PDO $pdo, string $username, string $categoryCo
     }
 }
 
+function getAllowedCategories(PDO $pdo, string $username): array {
+    try {
+        // 1) Get student ID and YearID
+        $stmtStudent = $pdo->prepare("
+            SELECT id, YearID 
+            FROM Student_Table 
+            WHERE SuNET_Username = :sunet_username
+        ");
+        $stmtStudent->execute(['sunet_username' => $username]);
+        $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
 
+        if (!$student) {
+            return [
+                "status" => "error",
+                "message" => "Student not found."
+            ];
+        }
 
+        $student_id = $student['id'];
+        $year_id    = $student['YearID'];
 
+        // 2) Get categories + vote status
+        $stmtCat = $pdo->prepare("
+                SELECT 
+                c.CategoryID,
+                c.CategoryCode,
+                c.CategoryDescription,
+                CASE WHEN COUNT(vt.id) > 0 THEN 1 ELSE 0 END AS isVoted
+            FROM Student_Category_Relation scr
+            JOIN Category_Table c ON scr.categoryID = c.CategoryID
+            JOIN Student_Table s ON scr.student_id = s.id
+            LEFT JOIN Votes_Table vt
+                ON vt.VoterID = s.id
+            AND vt.CategoryID = c.CategoryID
+            AND vt.AcademicYear = s.YearID
+            WHERE s.id = :student_id
+            AND s.YearID = :year_id
+            GROUP BY c.CategoryID, c.CategoryCode, c.CategoryDescription
+        ");
+        $stmtCat->execute([
+            'student_id' => $student_id,
+            'year_id'    => $year_id
+        ]);
+
+        $categories = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($categories)) {
+            return [
+                "status"  => "success",
+                "message" => "No voting categories found for this academic year.",
+                "categories" => []
+            ];
+        }
+
+        return [
+            "status"     => "success",
+            "categories" => $categories
+        ];
+
+    } catch (PDOException $e) {
+        error_log("Database error in getAllowedCategories: " . $e->getMessage());
+        return [
+            "status" => "error",
+            "message" => "Database query failed."
+        ];
+    }
+}
 
 
 //getAdmins.php
