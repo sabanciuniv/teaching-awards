@@ -33,6 +33,7 @@ if ($context === 'nominate') {
     <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/layout.min.css" rel="stylesheet" type="text/css">
     <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <style>
         body {
@@ -81,6 +82,7 @@ if ($context === 'nominate') {
     </style>
 </head>
 <body>
+    <?php include 'navbar.php'; ?>
     <div class="thank-you-container">
         <h1 class="thank-you-message"><?= $thankYouMessage ?></h1>
         <p>Your action has been successfully recorded.</p>
