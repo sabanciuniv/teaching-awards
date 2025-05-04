@@ -42,6 +42,8 @@ $stmt = $pdo->prepare("SELECT CategoryDescription FROM Category_Table WHERE Cate
 $stmt->execute(['category' => $category]);
 $categoryData = $stmt->fetch(PDO::FETCH_ASSOC);
 $categoryDescription = $categoryData['CategoryDescription'] ?? $category;
+
+enforceCategoryVotingAccess($pdo, $user, $category);
 ?>
 
 <!DOCTYPE html>

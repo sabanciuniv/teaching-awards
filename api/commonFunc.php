@@ -10,7 +10,6 @@ function enforceAdminAccess(PDO $pdo): void {
     }
 }
 
-
 //starting session function
 function init_session(): void {
     //TO DO: session cookie 
@@ -28,10 +27,6 @@ function init_session(): void {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
 }
-
-
-
-
 
 function deleteExcludedCandidate(PDO $pdo, int $candidateID): array {
     enforceAdminAccess($pdo);
@@ -120,8 +115,6 @@ function getClientIP(): string {
     // Default: REMOTE_ADDR
     return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
 }
-
-
 
 function getAllCategories(PDO $pdo): array {
     $stmt = $pdo->query(
@@ -420,9 +413,6 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
     }
 }
 
-
-
-
 function checkVotingWindow(PDO $pdo) {
     try {
         $stmt = $pdo->query("
@@ -471,6 +461,73 @@ function logUnauthorizedAccess(PDO $pdo, string $username, string $page): void {
         error_log("Failed to log unauthorized access: " . $e->getMessage());
     }
 }
+
+function enforceCategoryVotingAccess(PDO $pdo, string $username, string $categoryCode): void {
+    $yearID = getCurrentAcademicYearID($pdo);
+    if (!$yearID) {
+        echo "Academic year not set.";
+        exit;
+    }
+
+    // Get the category ID
+    $stmtCat = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :code");
+    $stmtCat->execute([':code' => $categoryCode]);
+    $cat = $stmtCat->fetch(PDO::FETCH_ASSOC);
+    if (!$cat) {
+        echo "Invalid category.";
+        exit;
+    }
+    $categoryID = $cat['CategoryID'];
+
+    // Get student ID from username
+    $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :username");
+    $stmtStudent->execute([':username' => $username]);
+    $student = $stmtStudent->fetch(PDO::FETCH_ASSOC);
+    if (!$student) {
+        echo "User not found.";
+        exit;
+    }
+    $voterID = $student['id'];
+
+    // Check if this student has already voted in this category and year
+    $stmtVote = $pdo->prepare("
+        SELECT 1 
+        FROM Votes_Table 
+        WHERE VoterID = :voterID AND CategoryID = :catID AND AcademicYear = :yearID
+        LIMIT 1
+    ");
+    $stmtVote->execute([
+        ':voterID' => $voterID,
+        ':catID' => $categoryID,
+        ':yearID' => $yearID
+    ]);
+
+    if ($stmtVote->fetch()) {
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Voting Notice</title>
+            <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+            <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet" type="text/css">
+            <link href="assets/css/components.min.css" rel="stylesheet" type="text/css">
+        </head>
+        <body>
+            <div class="container mt-5">
+                <div class="alert alert-warning" role="alert" style="font-size: 1.2rem;">
+                    <strong>You have already voted in this category.</strong>
+                </div>
+                <a href="index.php" class="btn btn-secondary">Back to Main Page</a>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
+    }
+}
+
+
 
 //getAdmins.php
 
