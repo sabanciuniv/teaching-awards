@@ -42,68 +42,87 @@ if (isset($_GET['success']) && $_GET['success'] == '1') {
 }
 
 $categories = getAllCategories($pdo);
-$academicYearsStmt = $pdo->prepare("
-    SELECT YearID, Academic_year
+$academicYearsStmt = $pdo->prepare(
+    "SELECT YearID, Academic_year
       FROM AcademicYear_Table
-  ORDER BY Academic_year DESC
-");
+  ORDER BY Academic_year DESC"
+);
 $academicYearsStmt->execute();
 $academicYears = $academicYearsStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// *** FIX: determine preview year before use ***
+$academicYearData = fetchCurrentAcademicYear($pdo);
+$selectedYearID = isset($_GET['previewYearID'])
+    ? (int) $_GET['previewYearID']
+    : ($academicYearData['YearID'] ?? 0);
+
+// Then use $selectedYearID when fetching winners:
+try {
+    $stmtWinners = $pdo->prepare(
+        "SELECT w.WinnerID, w.WinnerName, w.Faculty, w.`Rank`, w.ImagePath,
+               w.candidate_points, c.CategoryCode, c.CategoryDescription
+          FROM Winners_Table w
+          JOIN Category_Table  c ON w.CategoryID = c.CategoryID
+         WHERE w.YearID = :yearID
+      ORDER BY
+           CASE w.`Rank`
+               WHEN 'Rank-1' THEN 1
+               WHEN 'Rank-2' THEN 2
+               WHEN 'Rank-3' THEN 3
+               ELSE 4
+           END,
+           w.CreatedAt DESC"
+    );
+    $stmtWinners->execute([':yearID' => $selectedYearID]);
+    $allWinners = $stmtWinners->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $allWinners = [];
+}
+
 // -------------------------
-// A) Handle "Finish Winner List" Button
+// A) Handle "Finish Winner List"
 // -------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finishWinnerList'])) {
-    // Retrieve current academic year
-    $academicYearData = fetchCurrentAcademicYear($pdo);
-    if (!$academicYearData) {
-        $error = "No academic year found.";
-    } else {
-        $yearID = $academicYearData['YearID'];
-    }
-    
-    
-    if (empty($error)) {
-        // Update winners for the current academic year only
-        try {
-            $stmtUpdate = $pdo->prepare("
-                UPDATE Winners_Table 
-                SET readyDisplay = 'yes', displayDate = NOW() 
-                WHERE YearID = :yearID AND readyDisplay = 'no'
-            ");
-            $stmtUpdate->execute([':yearID' => $yearID]);
-            $message = "Winner successfully set for the selected category.";
-            header("Location: setWinners.php?success=1");
-            exit;
-        } catch (PDOException $e) {
-            $error = "Error finishing winner list: " . $e->getMessage();
-        }
+    // take the year the admin selected:
+    $yearID = isset($_POST['yearID']) 
+        ? (int) $_POST['yearID'] 
+        : ($academicYearData['YearID'] ?? 0);
+
+    try {
+        $stmtUpdate = $pdo->prepare("
+            UPDATE Winners_Table
+               SET readyDisplay = 'yes',
+                   displayDate  = NOW()
+             WHERE YearID      = :yearID
+               AND readyDisplay = 'no'
+        ");
+        $stmtUpdate->execute([':yearID' => $yearID]);
+        header("Location: setWinners.php?success=1&previewYearID={$yearID}");
+        exit;
+    } catch (PDOException $e) {
+        $error = "Error finishing winner list: " . $e->getMessage();
     }
 }
 
 // -------------------------
-// A.2) Handle "Unpublish Winner List" Button
+// A.2) Handle "Unpublish Winner List"
 // -------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unpublishWinnerList'])) {
+    $yearID = isset($_POST['yearID'])
+        ? (int) $_POST['yearID']
+        : ($academicYearData['YearID'] ?? 0);
+
     try {
-        $academicYear = fetchCurrentAcademicYear($pdo);
-        if ($academicYear) {
-            $yearID = $academicYear['YearID'];
-
-            // reset readyDisplay for that year
-            $stmtUnpublish = $pdo->prepare("
-                UPDATE Winners_Table
-                   SET readyDisplay = 'no',
-                       displayDate  = NULL
-                 WHERE YearID      = :yearID
-                   AND readyDisplay = 'yes'
-            ");
-            $stmtUnpublish->execute([':yearID' => $yearID]);
-
-            $message = "Winner list unpublished successfully.";
-        } else {
-            $error = "No academic year found.";
-        }
+        $stmtUnpublish = $pdo->prepare("
+            UPDATE Winners_Table
+               SET readyDisplay = 'no',
+                   displayDate  = NULL
+             WHERE YearID      = :yearID
+               AND readyDisplay = 'yes'
+        ");
+        $stmtUnpublish->execute([':yearID' => $yearID]);
+        header("Location: setWinners.php?previewYearID={$yearID}");
+        exit;
     } catch (PDOException $e) {
         $error = "Error unpublishing winner list: " . $e->getMessage();
     }
@@ -156,10 +175,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['finishWinnerList']))
                         $error = "Failed to move uploaded file to: " . htmlspecialchars($destination);
                     } else {
                         try {
-                            $stmtInsert = $pdo->prepare("
-                                INSERT INTO Winners_Table (CategoryID, YearID, WinnerName, Faculty, `Rank`, ImagePath, SuNET_Username, SU_ID, Email, candidate_points)
-                                VALUES (:categoryID, :yearID, :winnerName, :faculty, :rank, :imagePath, :suNET_Username, :su_ID, :email, :candidate_points)
-                            ");
+                            $stmtInsert = $pdo->prepare(
+                                "INSERT INTO Winners_Table (CategoryID, YearID, WinnerName, Faculty, `Rank`, ImagePath, SuNET_Username, SU_ID, Email, candidate_points)
+                                VALUES (:categoryID, :yearID, :winnerName, :faculty, :rank, :imagePath, :suNET_Username, :su_ID, :email, :candidate_points)"
+                            );
                             $stmtInsert->execute([
                                 ':categoryID' => $categoryID,
                                 ':yearID'     => $yearID,
@@ -194,27 +213,29 @@ $currentYearID = $academicYearData['YearID'] ?? 0;
 
 
 $allWinners = [];
+
 try {
-    $stmtWinners = $pdo->prepare("
-        SELECT w.WinnerID, w.WinnerName, w.Faculty, w.`Rank`, w.ImagePath, 
-        w.candidate_points, c.CategoryCode, c.CategoryDescription
-        FROM Winners_Table w
-        JOIN Category_Table c ON w.CategoryID = c.CategoryID
-        WHERE w.YearID = :yearID
-        ORDER BY 
-            CASE w.`Rank`
-                WHEN 'Rank-1' THEN 1
-                WHEN 'Rank-2' THEN 2
-                WHEN 'Rank-3' THEN 3
-                ELSE 4
-            END ASC,
-            w.CreatedAt DESC
-    ");
-    $stmtWinners->execute([':yearID' => $currentYearID]);
+    $stmtWinners = $pdo->prepare(
+        "SELECT w.WinnerID, w.WinnerName, w.Faculty, w.`Rank`, w.ImagePath,
+               w.candidate_points, c.CategoryCode, c.CategoryDescription
+          FROM Winners_Table w
+          JOIN Category_Table  c ON w.CategoryID = c.CategoryID
+         WHERE w.YearID = :yearID
+      ORDER BY
+           CASE w.`Rank`
+               WHEN 'Rank-1' THEN 1
+               WHEN 'Rank-2' THEN 2
+               WHEN 'Rank-3' THEN 3
+               ELSE 4
+           END,
+           w.CreatedAt DESC"
+    );
+    $stmtWinners->execute([':yearID' => $selectedYearID]);
     $allWinners = $stmtWinners->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $allWinners = [];
 }
+
 
 $winnersByCategory = [];
 foreach ($allWinners as $row) {
@@ -612,6 +633,35 @@ body {
         <!-- Preview Section: Accordion-like collapsible category previews with Remove Candidate buttons -->
         <div class="prelook-container mt-4">
             <h4 class="mt-4 mb-4 text-center">Current Winners Preview</h4>
+              <!-- Year selector -->
+              <form method="GET" class="text-center mb-3">
+  <div class="dropdown d-inline-block">
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+            id="previewYearDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <?= htmlspecialchars(
+           array_reduce(
+             $academicYears,
+             fn($carry, $ay) => $ay['YearID']===$selectedYearID
+               ? ($ay['Academic_year'].' – '.($ay['Academic_year']+1))
+               : $carry,
+             'Select Year…'
+           )
+         ) ?>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="previewYearDropdown">
+      <?php foreach ($academicYears as $ay): ?>
+        <li>
+          <button class="dropdown-item <?= $ay['YearID']===$selectedYearID?'active':''?>"
+                  type="submit"
+                  name="previewYearID"
+                  value="<?= $ay['YearID'] ?>">
+            <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
+          </button>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+</form>
             <?php if (empty($winnersByCategory)): ?>
                 <p class="text-center">No winners found for the current academic year.</p>
             <?php else: ?>   
@@ -657,14 +707,17 @@ body {
         </div>
     </div>
     <!-- immediately after the preview div -->
-<div class="action-container">
-  <form action="setWinners.php" method="POST">
-    <button type="submit" name="finishWinnerList" class="btn btn-secondary">
+    <div class="action-container">
+  <form method="POST">
+    <!-- carry the chosen preview year into POST -->
+    <input type="hidden" name="yearID" value="<?= $selectedYearID ?>">
+    <button name="finishWinnerList" class="btn btn-secondary">
       Publish
     </button>
   </form>
-  <form action="setWinners.php" method="POST">
-    <button type="submit" name="unpublishWinnerList" class="btn btn-secondary">
+  <form method="POST">
+    <input type="hidden" name="yearID" value="<?= $selectedYearID ?>">
+    <button name="unpublishWinnerList" class="btn btn-secondary">
       Unpublish
     </button>
   </form>
