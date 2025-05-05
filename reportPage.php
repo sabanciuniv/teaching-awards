@@ -13,32 +13,13 @@ require_once __DIR__ . '/database/dbConnection.php';
 // Get the current user from the session
 $user = $_SESSION['user'];
 
-// -------------------------
-// BEGIN: Admin Access Check (IT_Admin only)
-// -------------------------
-try {
-    // This query ensures the user exists in Admin_Table, is not marked as 'Removed',
-    // and that their Role is exactly 'IT_Admin'
-    $adminQuery = "SELECT 1 
-                     FROM Admin_Table 
-                    WHERE AdminSuUsername = :username 
-                      AND checkRole <> 'Removed'
-                      AND Role IN ('IT_Admin', 'Admin')
-                    LIMIT 1";
-    $adminStmt = $pdo->prepare($adminQuery);
-    $adminStmt->execute([':username' => $user]);
-    
-    // If no record is found, redirect to index.php
-    if (!$adminStmt->fetch()) {
-        header("Location: accessDenied.php");
-        exit();
-    }
-} catch (PDOException $e) {
-    die("Admin check failed: " . $e->getMessage());
+// Admin access check (allow Admin and IT_Admin), log if unauthorized
+$role = getUserAdminRole($pdo, $user);
+if (!in_array($role, ['IT_Admin', 'Admin'])) {
+    logUnauthorizedAccess($pdo, $user, basename(__FILE__));
+    header("Location: index.php");
+    exit();
 }
-// -----------------------
-// END: Admin Access Check
-// -----------------------
 ?>
 
 

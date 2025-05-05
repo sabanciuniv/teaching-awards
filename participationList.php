@@ -20,7 +20,8 @@ try {
 // BEGIN: Admin Access Check
 // -------------------------
 if (!checkIfUserIsAdmin($pdo, $user)) {
-    header("Location: accessDenied.php");
+    logUnauthorizedAccess($pdo, $user, basename(__FILE__));
+    header("Location: index.php");
     exit();
 }
 // -----------------------

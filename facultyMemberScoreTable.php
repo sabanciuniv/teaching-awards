@@ -27,10 +27,12 @@ try {
 
 // BEGIN: Admin Access Check --> using the commonFunc
 if (! checkIfUserIsAdmin($pdo, $user)) {
-    header("Location: accessDenied.php");
+    logUnauthorizedAccess($pdo, $user, basename(__FILE__));
+    header("Location: index.php");
     exit();
 }
 // END: Admin Access Check
+
 
 ?>
 
