@@ -68,7 +68,6 @@ function synchronizeStudents(PDO $pdo, int $yearID): array {
         }
 
         //BUNU DENE ******
-        // Free up statement resources if needed (good practice)
         $stmt->closeCursor();
 
 
@@ -120,7 +119,7 @@ function synchronizeStudents(PDO $pdo, int $yearID): array {
                     $existing['Class'] !== $studentData['Class'] ||
                     $existing['Faculty'] !== $studentData['Faculty'] ||
                     $existing['Department'] !== $studentData['Department'] ||
-                    abs((float)($existing['CGPA'] ?? 0) - (float)($studentData['CGPA'] ?? 0)) > 0.001 // Tolerance for float
+                    abs((float)($existing['CGPA'] ?? 0) - (float)($studentData['CGPA'] ?? 0)) > 0.001 
                 ) {
                     $needsUpdate = true;
                 }
@@ -161,7 +160,7 @@ function synchronizeStudents(PDO $pdo, int $yearID): array {
                 // --- Insert New Student ---
                 $insertData = [
                     ':StudentID' => $stu_id,
-                    ':YearID' => $yearID, // Use the specific $yearID
+                    ':YearID' => $yearID, // Use the specific yearID
                     ':StudentFullName' => $studentData['StudentFullName'],
                     ':SuNET_Username' => $studentData['SuNET_Username'],
                     ':Mail' => $studentData['Mail'],
@@ -219,7 +218,7 @@ function synchronizeStudents(PDO $pdo, int $yearID): array {
 
             if (!empty($studentsToDeleteResult)) {
                 $studentIDsToDelete = array_column($studentsToDeleteResult, 'StudentID');
-                $studentInternalIDsToDelete = array_column($studentsToDeleteResult, 'id'); // Get internal IDs for related table deletion
+                $studentInternalIDsToDelete = array_column($studentsToDeleteResult, 'id'); 
             }
         }
 
@@ -332,7 +331,6 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
             $subjCode = $row['SUBJ_CODE'] ?? 'UNKNOWN_SUBJ';
             $crseNumb = $row['CRSE_NUMB'] ?? 'UNKNOWN_CRSE';
             
-            // Key for matching: CRN + Term + Subject + CourseNumber
             $key = $crn . '_' . $termCode . '_' . $subjCode . '_' . $crseNumb;
             $apiCourses[$key] = $row;
         }
@@ -347,7 +345,6 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
 
         $existingCourses = [];
         while ($row = $stmtDb->fetch(PDO::FETCH_ASSOC)) {
-            // Key for matching: CRN + Term + Subject + CourseNumber
             $crn = $row['CRN'] ?? 'UNKNOWN_CRN';
             $termCode = $row['Term'] ?? 'UNKNOWN_TERM';
             $subjCode = $row['Subject_Code'] ?? 'UNKNOWN_SUBJ';
@@ -362,7 +359,7 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
             (CourseName, Subject_Code, Course_Number, Section, CRN, Term, Sync_Date, YearID) 
             VALUES (:CourseName, :Subject_Code, :Course_Number, :Section, :CRN, :Term, NOW(), :YearID)");
 
-        // Update only non-key fields. YearID is part of the WHERE to scope the update.
+        // Update only non-key fields. YearID is part of the WHERE to the update.
         $updateStmt = $pdo->prepare("UPDATE Courses_Table 
             SET CourseName = :CourseName, Section = :Section, Sync_Date = NOW() 
             WHERE Subject_Code = :Subject_Code AND Course_Number = :Course_Number AND 
@@ -383,7 +380,6 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
             $apiCourseData['CRN'] = $apiCourseData['CRN'] ?? 'N/A_CRN';
             $apiCourseData['TERM_CODE'] = $apiCourseData['TERM_CODE'] ?? 'N/A_TERM';
 
-            // This check is mostly redundant if API query is already filtered, but good for safety
             if (!in_array($apiCourseData['TERM_CODE'], $validTerms)) {
                 continue;
             }
@@ -395,7 +391,7 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
                 'Section'        => $apiCourseData['SEQ_NUMB'],
                 'CRN'            => $apiCourseData['CRN'],
                 'Term'           => $apiCourseData['TERM_CODE'],
-                'YearID'         => $targetYearID // Use the targetYearID for all operations
+                'YearID'         => $targetYearID 
             ];
 
             if (isset($existingCourses[$compositeKey])) {
@@ -500,7 +496,6 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
         $stmtStudents->closeCursor();
 
         // Fetch valid courses for the given YearID
-        // Map CRN + Term to internal Course_Table 'CourseID'
         $stmtCourses = $pdo->prepare("SELECT CourseID, CRN, Term, YearID FROM Courses_Table WHERE YearID = ?");
         $stmtCourses->execute([$yearID]);
         $coursesMap = []; // Key: "CRN_Term", Value: internal 'CourseID'
@@ -525,22 +520,19 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
         $stmtApi->closeCursor();
 
         // Build a set of current enrollments from the API data
-        $apiEnrollments = []; // Key: "internal_student_id_internal_course_id"
+        $apiEnrollments = []; 
         foreach ($apiRows as $apiRow) {
             $apiStuID = trim($apiRow['STU_ID']);
             $apiCRN = trim($apiRow['CRN']);
             $apiTermCode = trim($apiRow['TERM_CODE']);
 
-            // Filter 1: Is the term one of the relevant ones?
             if (!in_array($apiTermCode, $validTerms)) {
                 continue;
             }
 
-            // Create key for coursesMap lookup
             $courseMapKey = $apiCRN . '_' . $apiTermCode;
 
-            // Filter 2: Does this student exist in our Student_Table for the current YearID?
-            // Filter 3: Does this course (CRN + Term) exist in our Courses_Table for the current YearID?
+
             if (isset($studentsMap[$apiStuID]) && isset($coursesMap[$courseMapKey])) {
                 // Check YearID match between student and course
                 $studentYearID = $studentsMap[$apiStuID]['year_id'];
@@ -571,7 +563,7 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
             WHERE s.YearID = :yearID AND c.YearID = :yearID
         ");
         $stmtExisting->execute([':yearID' => $yearID]);
-        $existingRelations = []; // Key: "internal_student_id_internal_course_id", Value: EnrollmentStatus
+        $existingRelations = [];
         while ($row = $stmtExisting->fetch(PDO::FETCH_ASSOC)) {
             $key = $row['student.id'] . "_" . $row['CourseID'];
             $existingRelations[$key] = $row['EnrollmentStatus'];
@@ -583,7 +575,7 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
         $updateToEnrolledStmt = $pdo->prepare("UPDATE Student_Course_Relation SET EnrollmentStatus = 'enrolled' WHERE `student.id` = :student_id AND CourseID = :course_id");
         $updateToDroppedStmt = $pdo->prepare("UPDATE Student_Course_Relation SET EnrollmentStatus = 'dropped' WHERE `student.id` = :student_id AND CourseID = :course_id");
 
-        // Process enrollments: Insert new ones or update 'dropped' ones to 'enrolled'
+        // insert new ones or update 'dropped' ones to 'enrolled'
         foreach ($apiEnrollments as $relationKey => $data) {
             if (!isset($existingRelations[$relationKey])) {
                 // New enrollment found in API
@@ -593,27 +585,24 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
                 ]);
                 if ($insertStmt->rowCount() > 0) {
                     $response['inserted']++;
-                    $response['insertedRows'][] = $data; // Contains internal and external IDs
+                    $response['insertedRows'][] = $data; 
                 }
             } elseif ($existingRelations[$relationKey] === 'dropped') {
-                // Existing enrollment was 'dropped', but now found in API, so update to 'enrolled'
+                // Existing enrollment was 'dropped', but now found in API
                 $updateToEnrolledStmt->execute([ 
                     ':student_id' => $data['student_id'],
                     ':course_id' => $data['course_id']
                 ]);
                 if ($updateToEnrolledStmt->rowCount() > 0) {
                     $response['updated_to_enrolled']++;
-                    $response['updatedToEnrolledRows'][] = $data; // Contains internal and external IDs
+                    $response['updatedToEnrolledRows'][] = $data; 
                 }
             }
             // If it exists and is already 'enrolled', do nothing.
         }
 
-        // Process drops: Mark existing enrollments as 'dropped' if not found in current API data
         foreach ($existingRelations as $relationKey => $status) {
             if (!isset($apiEnrollments[$relationKey]) && $status !== 'dropped') {
-                // This enrollment exists in DB for the current YearID but not in the filtered API data
-                // AND it's not already marked as 'dropped'.
                 list($studentInternalIdToDrop, $courseInternalIdToDrop) = explode('_', $relationKey);
                 $updateToDroppedStmt->execute([
                     ':student_id' => $studentInternalIdToDrop,
@@ -622,8 +611,8 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
                 if ($updateToDroppedStmt->rowCount() > 0) {
                     $response['updated_to_dropped']++;
                     $response['updatedToDroppedRows'][] = [
-                        'student_id' => $studentInternalIdToDrop, // internal student table id
-                        'course_id' => $courseInternalIdToDrop    // internal course table id
+                        'student_id' => $studentInternalIdToDrop,
+                        'course_id' => $courseInternalIdToDrop   
                     ];
                 }
             }
@@ -765,7 +754,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
                         $stmtStudent = $pdo->prepare("SELECT * FROM Student_Table WHERE id = ?");
                         $stmtStudent->execute([$info['student_id']]);
                         $studentRow = $stmtStudent->fetch(PDO::FETCH_ASSOC);
-                        unset($studentRow['id']); // remove internal auto-increment if needed
+                        unset($studentRow['id']); 
 
                         $response['insertedRows'][] = array_merge(
                             $studentRow,
@@ -867,7 +856,11 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
 
             if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'TA') continue;
 
-            $fullName = trim(($row['TA_FIRST_NAME'] ?? '') . ' ' . ($row['TA_MI_NAME'] ?? '') . ' ' . ($row['TA_LAST_NAME'] ?? ''));
+            $fullName = trim(
+                $row['TA_FIRST_NAME'] .
+                ($row['TA_MI_NAME'] ? ' ' . $row['TA_MI_NAME'] : '') .
+                ' ' . $row['TA_LAST_NAME']
+            );
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
             $candidatesApiData[$su_id] = [
@@ -887,11 +880,15 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
             // Only consider Instructors active in the valid terms
             if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'Instructor') continue;
 
-            $fullName = trim(($row['INST_FIRST_NAME'] ?? '') . ' ' . ($row['INST_MI_NAME'] ?? '') . ' ' . ($row['INST_LAST_NAME'] ?? ''));
+            $fullName = trim(
+                $row['INST_FIRST_NAME'] .
+                ($row['INST_MI_NAME'] ? ' ' . $row['INST_MI_NAME'] : '') .
+                ' ' . $row['INST_LAST_NAME']
+            );
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
             if (isset($candidatesApiData[$su_id]) && $candidatesApiData[$su_id]['Role'] === 'TA') {
-                 // Potentially log 
+                 // 
             }
             $candidatesApiData[$su_id] = [
                 'SU_ID' => $su_id,
@@ -904,7 +901,7 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         $stmtInst->closeCursor();
 
         // Handle Exceptions
-        $exceptionStmt = $pdo->query("SELECT CandidateID FROM Exception_Table"); // Assuming CandidateID is Candidate_Table.id
+        $exceptionStmt = $pdo->query("SELECT CandidateID FROM Exception_Table"); 
         $exceptionCandidateInternalIDs = $exceptionStmt->fetchAll(PDO::FETCH_COLUMN);
         $exceptionStmt->closeCursor();
         
@@ -933,8 +930,8 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         // Fetch existing candidates from DB for the current YearID
         $stmtExisting = $pdo->prepare("SELECT id, SU_ID, Name, Mail, Role, Status FROM Candidate_Table WHERE YearID = ?");
         $stmtExisting->execute([$yearID]);        
-        $existingCandidatesDb = []; // Keyed by SU_ID
-        $existingCandidateInternalIdMap = []; // Keyed by SU_ID, maps to internal DB 'id'
+        $existingCandidatesDb = []; 
+        $existingCandidateInternalIdMap = []; // SU_ID, maps to internal DB 'id'
         while ($row = $stmtExisting->fetch(PDO::FETCH_ASSOC)) {
             $existingCandidatesDb[$row['SU_ID']] = $row;
             $existingCandidateInternalIdMap[$row['SU_ID']] = $row['id'];
@@ -952,7 +949,7 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         $processedSuIdsFromApi = [];
 
         foreach ($candidatesApiData as $su_id_api => $candidateData) {
-            $processedSuIdsFromApi[] = $su_id_api; // Track SU_IDs present in API for this $yearID's terms
+            $processedSuIdsFromApi[] = $su_id_api; //  SU_IDs present in API for this $yearID's terms
 
             $params = [
                 ':SU_ID'    => $candidateData['SU_ID'], 
@@ -973,10 +970,9 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
                 if ($existing['Mail'] !== $candidateData['Mail']) { $needsUpdate = true; $changes['Mail'] = ['old' => $existing['Mail'], 'new' => $candidateData['Mail']];}
                 if ($existing['Role'] !== $candidateData['Role']) { $needsUpdate = true; $changes['Role'] = ['old' => $existing['Role'], 'new' => $candidateData['Role']];}
                 if ($existing['Status'] !== $candidateData['Status']) { $needsUpdate = true; $changes['Status'] = ['old' => $existing['Status'], 'new' => $candidateData['Status']];}
-                // YearID is constant for this operation and part of WHERE, so no change tracking for it.
 
                 if ($needsUpdate) {
-                    $updateStmt->execute($params); // Uses all keys from $params
+                    $updateStmt->execute($params); 
                     if ($updateStmt->rowCount() > 0) {
                         $response['updated']++;
                         $response['updatedRows'][] = [
@@ -998,7 +994,7 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         $updateStmt->closeCursor();
 
         // --- Process Deletions ---
-        // Find SU_IDs in the DB (for this YearID) that were NOT in the processed API data
+        // Find SU_IDs in the DB (for this YearID) that were NOT processed API data
         $existingSuIdsInDbForYear = array_keys($existingCandidatesDb);
         $suIdsToDelete = array_diff($existingSuIdsInDbForYear, $processedSuIdsFromApi);
 
@@ -1046,7 +1042,6 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         return [
             'status' => 'error',
             'message' => 'A database error occurred during candidate synchronization. Check logs. HY093 might originate in getAcademicYearFromID.',
-            'detailed_error' => $e->getMessage() // For debugging, consider removing for production
         ];
     } catch (Exception $e) {
         // Catch general exceptions
@@ -1054,7 +1049,6 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         return [
             'status' => 'error',
             'message' => 'An unexpected error occurred during candidate synchronization. Check logs.',
-            'detailed_error' => $e->getMessage() // For debugging
         ];
     }
 }
@@ -1063,7 +1057,7 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
 
 
 //sync Candidate Course Relation
-function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array { // Parameter is the specific internal YearID we want to sync
+function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array { 
     $response = [
         'status' => 'success',
         'inserted' => 0,
@@ -1099,7 +1093,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
             return ['status' => 'error', 'message' => "Academic year string not found for YearID: {$targetInternalYearID}."];
         }
 
-        //Extract the primary calendar year from this string (e.g., 2023 from "2023-2024")
+        //Extract the year from this string (e.g., 2023 from "2023-2024")
         $calendarYearToMatchAPI = null;
         if (preg_match('/^(\d{4})/', $academicYearStringForTargetID, $matches)) {
             $calendarYearToMatchAPI = (int)$matches[1];
@@ -1168,18 +1162,15 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $subjectFromAPI = strtoupper(trim($apiRow['SUBJ_CODE']));
                 $courseNumFromAPI = strtoupper(trim($apiRow['CRSE_NUMB']));
 
-                // Try to find a matching course from Courses_Table (which was filtered by $targetInternalYearID)
                 $courseKey = "{$termFromAPI}_{$subjectFromAPI}_{$courseNumFromAPI}_{$crnFromAPI}";
                 $courseData = $courses[$courseKey] ?? null;
 
-                // Try to find a matching candidate from Candidate_Table 
                 $candidateData = $candidates[$suIdFromAPI] ?? null;
 
                 if (!$courseData || !$candidateData) {
                     continue;
                 }
 
-                // Now we have a valid course and candidate *for the $targetInternalYearID*.
                 $currentRelationKey = "{$candidateData['id']}_{$courseData['CourseID']}";
 
                 if (isset($processedRelationKeysInThisRun[$currentRelationKey])) {
@@ -1247,7 +1238,6 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                     $deletedCount = $deleteResignedStmt->rowCount();
                     if ($deletedCount > 0) {
                         $response['deleted'] += $deletedCount;
-                        // For logging, you might need to know which courses were associated if you don't fetch them first
                         $response['deletedRows'][] = [
                             'SU_ID' => $resignedCand['SU_ID'],
                             'CandidateID_internal' => $resignedCand['id'],
@@ -1288,7 +1278,6 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
         return $response;
 
     } catch (PDOException | Exception $e) { // Catch both PDO and general exceptions
-        // error_log("Error in synchronizeCandidateCourses: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
         return [
             'status' => 'error', 'message' => $e->getMessage(),
             'error_details' => ($e instanceof PDOException) ? $e->errorInfo : $e->getTraceAsString(),
