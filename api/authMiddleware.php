@@ -8,6 +8,9 @@ $cas_service_url = getenv('CAS_SERVICE_URL') ?: $app_base_url;
 phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 session_start();
 
+$newUsernameCookieName = 'teaching_awards_user';
+$newIdCookieName = 'teaching_awards_token';
+
 // Only set `$_SESSION['user']` from cookie if not impersonating
 if (!isset($_SESSION['impersonating']) || $_SESSION['impersonating'] !== true) {
     if (!isset($_SESSION['user']) && isset($_COOKIE['username'])) {
@@ -24,8 +27,16 @@ if (!isset($_SESSION['impersonating']) || $_SESSION['impersonating'] !== true) {
 require_once 'database/dbConnection.php';
 
 // Fetch the username and cookie_id from the browser cookies
-$username = $_COOKIE['username'];
-$cookie_id = $_COOKIE['cookie_id'];
+$username = $_COOKIE[$newUsernameCookieName] ?? null;
+$cookie_id = $_COOKIE[$newIdCookieName] ?? null;
+
+if (!$username || !$cookie_id) {
+    // Missing cookies — force logout
+    session_unset();
+    session_destroy();
+    phpCAS::logoutWithRedirectService($app_base_url . "odul/ENS491-492/");
+    exit();
+}
 
 try {
     // Check the cookie_id in the database
@@ -36,8 +47,8 @@ try {
 
     if (!$row || $row['cookie_id'] !== $cookie_id) {
         // If no record found or cookie_id does not match, log the user out
-        setcookie("username", "", time() - 3600, "/"); // Expire the username cookie
-        setcookie("cookie_id", "", time() - 3600, "/"); // Expire the cookie_id cookie
+        setcookie($newUsernameCookieName, "", time() - 3600, "/"); // Expire the username cookie
+        setcookie($newIdCookieName, "", time() - 3600, "/"); // Expire the cookie_id cookie
         session_unset();
         session_destroy(); // Destroy the session
         phpCAS::logoutWithRedirectService($app_base_url . "odul/ENS491-492/");
