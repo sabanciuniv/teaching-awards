@@ -125,6 +125,24 @@ function getAllCategories(PDO $pdo): array {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function getCategoryDetailsByCode(PDO $pdo, string $categoryCode): ?array {
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT CategoryID, CategoryDescription 
+               FROM Category_Table 
+              WHERE CategoryCode = ?"
+        );
+        $stmt->execute([$categoryCode]);
+        $category = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $category ?: null; // If fetch returns false (not found), return null
+    } catch (PDOException $e) {
+        // Log the error or handle it as appropriate for your application
+        error_log("Error fetching category details by code '" . $categoryCode . "': " . $e->getMessage());
+        return null; // Indicate failure
+    }
+}
+
 function getAllAcademicYears(PDO $pdo): array {
     $stmt = $pdo->query(
         "SELECT YearID, Academic_year 
