@@ -32,6 +32,7 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
         display: flex;
         flex-direction: column;
         font-family: Arial, sans-serif;
+        overflow-y: auto;
     }
     .navbar .nav-item .nav-link {
         margin-right: -30px; 
@@ -63,16 +64,19 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
         border-radius: 40px;
         margin-left: -20px;
         margin-right: -20px;
+        margin-bottom: 0;  /* kill any default gap */
     }
 
     .bg-video {
         position: absolute;
-        top: 0;
-        left: 0;
-        min-width: 100%;
-        min-height: 100%;
-        object-fit: cover;
-        z-index: 0;
+  top: 0;
+  left: 0;
+  /* width:auto + min-width covers the full width without distortion */
+  width: auto;
+  min-width: 100%;
+  height: 100%;      /* fill the hero‐section height */
+  object-fit: cover; /* crop/scale so no letterboxes appear */
+  z-index: 0;
     }
 
     .hero-overlay {
