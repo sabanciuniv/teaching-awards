@@ -487,38 +487,39 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
         $currentYear = (int)$academicYear;
         $previousYear = $currentYear - 1;
 
-        // Define valid terms based on the academic year derived from yearID
-        $validTerms = [
-            $previousYear . '01',
-            $previousYear . '02',
-            $currentYear . '01',
-            $currentYear . '02'
-        ];
-
-        // Fetch valid students for the given YearID
-        // Map StudentID (external) to internal student table 'id'
-        $stmtStudents = $pdo->prepare("SELECT id, StudentID FROM Student_Table WHERE YearID = ?");
+        // Fetch all students with the given yearID, including their YearID
+        $stmtStudents = $pdo->prepare("SELECT id, StudentID, YearID FROM Student_Table WHERE YearID = ?");
         $stmtStudents->execute([$yearID]);
-        $studentsMap = []; // Key: StudentID (e.g., 's12345'), Value: internal 'id'
+        $studentsMap = []; 
         while ($row = $stmtStudents->fetch(PDO::FETCH_ASSOC)) {
-            $studentsMap[$row['StudentID']] = $row['id'];
+            $studentsMap[$row['StudentID']] = [
+                'student_id' => $row['id'],   
+                'year_id' => $row['YearID']   // YearID of the student
+            ];
         }
         $stmtStudents->closeCursor();
 
         // Fetch valid courses for the given YearID
         // Map CRN + Term to internal Course_Table 'CourseID'
-        // This is the critical change: courses are identified by CRN AND Term
-        $stmtCourses = $pdo->prepare("SELECT CourseID, CRN, Term FROM Courses_Table WHERE YearID = ?");
+        $stmtCourses = $pdo->prepare("SELECT CourseID, CRN, Term, YearID FROM Courses_Table WHERE YearID = ?");
         $stmtCourses->execute([$yearID]);
         $coursesMap = []; // Key: "CRN_Term", Value: internal 'CourseID'
         while ($row = $stmtCourses->fetch(PDO::FETCH_ASSOC)) {
             $key = trim($row['CRN']) . '_' . trim($row['Term']);
-            $coursesMap[$key] = $row['CourseID'];
+            $coursesMap[$key] = [
+                'course_id' => $row['CourseID'],
+                'year_id' => $row['YearID']   // YearID of the course
+            ];
         }
         $stmtCourses->closeCursor();
 
+        // Define valid terms based on the academic year derived from yearID
+        $validTerms = [
+            $previousYear . '01', $previousYear . '02',  // Last year's terms
+            $currentYear . '01', $currentYear . '02'     // Current year's terms
+        ];
+
         // Load student-course enrollments from API_STUDENT_COURSES
-        // Fetches all records initially, will be filtered by term and existence in studentsMap/coursesMap
         $stmtApi = $pdo->query("SELECT STU_ID, CRN, TERM_CODE FROM API_STUDENT_COURSES WHERE STU_ID IS NOT NULL AND CRN IS NOT NULL AND TERM_CODE IS NOT NULL");
         $apiRows = $stmtApi->fetchAll(PDO::FETCH_ASSOC);
         $stmtApi->closeCursor();
@@ -541,22 +542,27 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
             // Filter 2: Does this student exist in our Student_Table for the current YearID?
             // Filter 3: Does this course (CRN + Term) exist in our Courses_Table for the current YearID?
             if (isset($studentsMap[$apiStuID]) && isset($coursesMap[$courseMapKey])) {
-                $studentInternalId = $studentsMap[$apiStuID];
-                $courseInternalId = $coursesMap[$courseMapKey];
+                // Check YearID match between student and course
+                $studentYearID = $studentsMap[$apiStuID]['year_id'];
+                $courseYearID = $coursesMap[$courseMapKey]['year_id'];
 
-                $relationKey = $studentInternalId . "_" . $courseInternalId;
-                $apiEnrollments[$relationKey] = [
-                    'student_id' => $studentInternalId, // internal student table id
-                    'course_id' => $courseInternalId,   // internal course table id
-                    'Stu_ID_external' => $apiStuID,     // For response logging
-                    'CRN_external' => $apiCRN,          // For response logging
-                    'Term_external' => $apiTermCode     // For response logging
-                ];
+                if ($studentYearID === $courseYearID) {
+                    $studentInternalId = $studentsMap[$apiStuID]['student_id'];
+                    $courseInternalId = $coursesMap[$courseMapKey]['course_id'];
+
+                    $relationKey = $studentInternalId . "_" . $courseInternalId;
+                    $apiEnrollments[$relationKey] = [
+                        'student_id' => $studentInternalId, 
+                        'course_id' => $courseInternalId,   
+                        'Stu_ID_external' => $apiStuID,     
+                        'CRN_external' => $apiCRN,          
+                        'Term_external' => $apiTermCode    
+                    ];
+                }
             }
         }
 
         // Fetch existing relations from Student_Course_Relation for the current YearID
-        // This ensures we only consider relations where both student and course are tied to the current sync YearID
         $stmtExisting = $pdo->prepare("
             SELECT scr.`student.id`, scr.CourseID, scr.EnrollmentStatus
             FROM Student_Course_Relation scr
@@ -591,7 +597,7 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
                 }
             } elseif ($existingRelations[$relationKey] === 'dropped') {
                 // Existing enrollment was 'dropped', but now found in API, so update to 'enrolled'
-                $updateToEnrolledStmt->execute([
+                $updateToEnrolledStmt->execute([ 
                     ':student_id' => $data['student_id'],
                     ':course_id' => $data['course_id']
                 ]);
@@ -615,8 +621,6 @@ function synchronizeStudentCourses(PDO $pdo, int $yearID): array {
                 ]);
                 if ($updateToDroppedStmt->rowCount() > 0) {
                     $response['updated_to_dropped']++;
-                    // For richer logging, you might want to fetch external STU_ID and CRN for dropped rows
-                    // For now, just logging internal IDs.
                     $response['updatedToDroppedRows'][] = [
                         'student_id' => $studentInternalIdToDrop, // internal student table id
                         'course_id' => $courseInternalIdToDrop    // internal course table id
@@ -1072,8 +1076,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
     ];
     $processedRelationKeysInThisRun = [];
 
-    // mapCategoryID function (local to this function or globally available)
-    // Ensure this is defined as in your original script or the previous correct version
+
     $mapCategoryID = function($subject, $course, $role, $status) {
         $full = strtoupper(trim($subject)) . ' ' . strtoupper(trim($course));
         if ($role === 'Instructor' && $status === 'Etkin') {
@@ -1090,19 +1093,19 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
 
 
     try {
-        // 1. Get the "Academic_year" string (e.g., "2023-2024" or "2023") for the targetInternalYearID
+        //Get the "Academic_year" string for the targetInternalYearID
         $academicYearStringForTargetID = getAcademicYearFromID($pdo, $targetInternalYearID);
         if ($academicYearStringForTargetID === null) {
-            return ['status' => 'error', 'message' => "Academic year string not found for internal YearID: {$targetInternalYearID}."];
+            return ['status' => 'error', 'message' => "Academic year string not found for YearID: {$targetInternalYearID}."];
         }
 
-        // 2. Extract the primary calendar year from this string (e.g., 2023 from "2023-2024")
+        //Extract the primary calendar year from this string (e.g., 2023 from "2023-2024")
         $calendarYearToMatchAPI = null;
         if (preg_match('/^(\d{4})/', $academicYearStringForTargetID, $matches)) {
             $calendarYearToMatchAPI = (int)$matches[1];
         }
         if ($calendarYearToMatchAPI === null) {
-            return ['status' => 'error', 'message' => "Could not parse calendar year from '{$academicYearStringForTargetID}' for internal YearID: {$targetInternalYearID}."];
+            return ['status' => 'error', 'message' => "Could not parse calendar year from '{$academicYearStringForTargetID}' for YearID: {$targetInternalYearID}."];
         }
 
 
@@ -1137,7 +1140,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
         $insertStmt = $pdo->prepare("INSERT INTO Candidate_Course_Relation (CourseID, CandidateID, Academic_Year, CategoryID, Term)
             VALUES (:CourseID, :CandidateID, :Academic_Year, :CategoryID, :Term)");
 
-        // Update statement from your original script (adjust if IS DISTINCT FROM is preferred)
+        // Update statement from your original script 
         $updateStmt = $pdo->prepare("
             UPDATE Candidate_Course_Relation
             SET Academic_Year = :Academic_Year, CategoryID = :CategoryID, Term = :Term
@@ -1160,9 +1163,6 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
 
             while ($apiRow = $apiStmt->fetch(PDO::FETCH_ASSOC)) {
                 $termFromAPI = strtoupper(trim($apiRow['TERM_CODE']));
-                // $apiTermCalendarYear = (int)substr($termFromAPI, 0, 4);
-                // if ($apiTermCalendarYear !== $calendarYearToMatchAPI) continue; // Already filtered by SQL, but good for sanity
-
                 $crnFromAPI = strtoupper(trim($apiRow['CRN']));
                 $suIdFromAPI = strtoupper(trim($apiRow['SU_ID']));
                 $subjectFromAPI = strtoupper(trim($apiRow['SUBJ_CODE']));
@@ -1172,7 +1172,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $courseKey = "{$termFromAPI}_{$subjectFromAPI}_{$courseNumFromAPI}_{$crnFromAPI}";
                 $courseData = $courses[$courseKey] ?? null;
 
-                // Try to find a matching candidate from Candidate_Table (which was filtered by $targetInternalYearID)
+                // Try to find a matching candidate from Candidate_Table 
                 $candidateData = $candidates[$suIdFromAPI] ?? null;
 
                 if (!$courseData || !$candidateData) {
@@ -1219,14 +1219,14 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                     if ($insertStmt->execute($params)) {
                         $response['inserted']++;
                         $response['insertedRows'][] = $logRow;
-                    } else { /* error handling */ }
+                    }
                 } else {
                     if ($updateStmt->execute($params)) {
                         if ($updateStmt->rowCount() > 0) {
                             $response['updated']++;
                             $response['updatedRows'][] = $logRow;
                         }
-                    } else { /* error handling */ }
+                    } 
                 }
             }
         }
@@ -1251,15 +1251,13 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                         $response['deletedRows'][] = [
                             'SU_ID' => $resignedCand['SU_ID'],
                             'CandidateID_internal' => $resignedCand['id'],
-                            'reason' => 'Candidate status İşten ayrıldı for AcademicYear (internal ID) ' . $targetInternalYearID . ' (deleted ' . $deletedCount . ' relations)'
+                            'reason' => 'Candidate status İşten ayrıldı for AcademicYear ' . $targetInternalYearID . ' (deleted ' . $deletedCount . ' relations)'
                         ];
                     }
-                } else { /* error handling */ }
+                } 
             }
         }
 
-
-        // 2. Delete orphan relations:
         $stmtOrphanCheck = $pdo->prepare("
             SELECT ccr.CandidateCourseID, ccr.CandidateID, ccr.CourseID, ct.SU_ID, ccr.Term
             FROM Candidate_Course_Relation ccr
@@ -1279,9 +1277,9 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                     $response['deletedRows'][] = [
                         'SU_ID' => $existingRelInDB['SU_ID'],
                         'CourseID' => $existingRelInDB['CourseID'],
-                        'reason' => 'Orphan: Relation for Term ' . $existingRelInDB['Term'] . ' (linked to internal YearID ' . $targetInternalYearID . ') not found in current API sources for its calendar year.'
+                        'reason' => 'Relation for Term ' . $existingRelInDB['Term'] . ' (YearID ' . $targetInternalYearID . ') not found.'
                     ];
-                } else {/* HANDLE ERROR*/ }
+                } 
             }
         }
 

@@ -100,9 +100,8 @@ try {
     $academicYearID = $yearRow['YearID'];
 
     // Lookup CategoryID
-    $categoryStmt = $pdo->prepare("SELECT CategoryID, CategoryDescription FROM Category_Table WHERE CategoryCode = ?");
-    $categoryStmt->execute([$categoryCode]);
-    $categoryRow = $categoryStmt->fetch(PDO::FETCH_ASSOC);
+    $categoryRow = getCategoryDetailsByCode($pdo, $categoryCode);
+
     if (!$categoryRow) {
         echo json_encode(["status" => "error", "message" => "Invalid category code."]);
         exit();
