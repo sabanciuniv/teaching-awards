@@ -4,6 +4,10 @@
  require_once 'api/commonFunc.php';
 
  init_session();
+
+ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidateID'], $_POST['action'])) {
+  handleCandidateExclusion($pdo); 
+ }
  $username = $_SESSION['user'];  // Current user
  $user = $_SESSION['user'];
 
@@ -29,8 +33,6 @@
 } catch (Exception $e) {
   die("Error: " . $e->getMessage());
 }
- 
- handleCandidateExclusion($pdo);
 
  
  ?>
