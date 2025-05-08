@@ -219,6 +219,7 @@ $mailTemplates = $pdo
 
 // current year ID (for display in the log modal)
 $currentYearID = getCurrentAcademicYearID($pdo) ?: 0;
+$currentYear = getAcademicYearFromID($pdo,$currentYearID);
 
 // fetch logs
 $mailLogs = $pdo->prepare("
@@ -360,7 +361,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
 <!-- Mail Log Modal -->
 <div class="modal fade" id="logModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content">
   <div class="modal-header">
-    <h5 class="modal-title">Mail Log (Year <?= $currentYearID ?>)</h5>
+    <h5 class="modal-title">Mail Log (Year <?= $currentYear ?>)</h5>
     <button type="button" class="close-modal-btn" data-bs-dismiss="modal">&times;</button>
   </div>
   <div class="modal-body">
