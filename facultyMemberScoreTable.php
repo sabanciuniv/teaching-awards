@@ -296,6 +296,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const yearInput = document.getElementById("selectedYearInput");
     const categoryInput = document.getElementById("selectedCategoryInput");
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const yearParam = urlParams.get('year');
+    const categoryParam = urlParams.get('category');
+
+    if (yearParam) {
+        yearInput.value = yearParam;
+    }
+    
+    if (categoryParam) {
+        categoryInput.value = categoryParam;
+    }
+
     yearOptions.forEach(option => {
         option.addEventListener("click", function () {
             yearSelectBtn.textContent = this.textContent;
