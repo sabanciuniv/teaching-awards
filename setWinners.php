@@ -2,23 +2,10 @@
 require_once 'api/commonFunc.php';
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
-$pageTitle= "Set Winner";
-require_once 'api/header.php';
 
-init_session();
-$user = $_SESSION['user'];
-
-// Admin access check
-$role = getUserAdminRole($pdo, $user);
-if (!in_array($role, ['Admin', 'IT_Admin'])) {
-    header("Location: accessDenied.php");
-    exit();
-}
-
-$error   = '';
-
-// Integrated removal API: if action=removeCandidate is provided in the URL and a POST winnerID exists, process removal and exit.
-if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['winnerID'])) {
+if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate'
+    && $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['winnerID'])) {
     require_once __DIR__ . '/database/dbConnection.php';
     header('Content-Type: application/json');
     $winnerID = (int) $_POST['winnerID'];
@@ -35,6 +22,25 @@ if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate' && $_SERVER[
     }
     exit;
 }
+
+$pageTitle= "Set Winner";
+require_once 'api/header.php';
+
+init_session();
+$user = $_SESSION['user'];
+
+
+
+// Admin access check
+$role = getUserAdminRole($pdo, $user);
+if (!in_array($role, ['Admin', 'IT_Admin'])) {
+    header("Location: accessDenied.php");
+    exit();
+}
+
+$error   = '';
+
+
 
 $message = '';
 if (isset($_GET['success']) && $_GET['success'] == '1') {
@@ -815,23 +821,34 @@ body {
             const winnerID = $(this).data('id');
             const $candidateBox = $(this).closest('.winner-box');
             $.ajax({
-                url: 'setWinners.php?action=removeCandidate',
-                type: 'POST',
-                data: { winnerID: winnerID },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        $candidateBox.fadeOut(function() {
-                            $(this).remove();
-                        });
-                    } else {
-                        alert("Failed to remove candidate: " + response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert("An error occurred while removing the candidate.");
-                }
-            });
+    url: 'setWinners.php?action=removeCandidate',
+    type: 'POST',
+    data: { winnerID: winnerID },
+    // drop dataType so we don’t get parse errors
+    success: function(response) {
+        // if PHP is still emitting JSON-without-extra-whitespace,
+        // 'response' will already be an object;
+        // otherwise parse manually:
+        if (typeof response === 'string') {
+            try {
+                response = JSON.parse(response);
+            } catch(e) {
+                return alert('Unexpected server response.');
+            }
+        }
+
+        if (response.success) {
+            // immediately reload the page
+            window.location.reload();
+        } else {
+            alert("Failed to remove candidate: " + response.message);
+        }
+    },
+    error: function(xhr, status, error) {
+        alert("Error contacting server: " + status);
+    }
+});
+
         });
     });
 </script>
