@@ -23,7 +23,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'removeCandidate'
     exit;
 }
 
-$pageTitle= "Set Winner";
+$pageTitle= "Set Winners";
 require_once 'api/header.php';
 
 init_session();
@@ -352,6 +352,49 @@ body {
     text-decoration: underline;
     cursor: pointer;
 }
+
+#categoryDropdown {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    width: 100%;
+    padding-right: 2rem;
+    position: relative;
+}
+
+#categoryDropdown::after { 
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #333;
+    pointer-events: none;
+}
+
+.custom-select-wrapper {
+    position: relative;
+}
+
+.custom-select-wrapper::after {  
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #333;
+    pointer-events: none;
+}
+
+#YearID {
+    background-color: #fff;
+    background-image: none;
+    padding-right: 2rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+}
+
 /* Collapsible winners list */
 .winners-collapse {
     display: none;
@@ -519,6 +562,14 @@ body {
     color: #000;
     text-align: center;
 }
+
+
+#previewYearDropdown + .dropdown-menu {
+    min-width: 250px;
+    width: 100%;   
+}
+
+
 </style>
 <body>
 <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
@@ -553,14 +604,16 @@ body {
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="YearID">Academic Year:</label>
-                            <select name="YearID" id="YearID" class="form-control" required>
-                                <option value="" disabled selected>Choose year…</option>
-                                <?php foreach ($academicYears as $ay): ?>
-                                <option value="<?= $ay['YearID'] ?>">
-                                    <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="custom-select-wrapper position-relative">
+                                <select name="YearID" id="YearID" class="form-control" required>
+                                    <option value="" disabled selected>Choose year…</option>
+                                    <?php foreach ($academicYears as $ay): ?>
+                                    <option value="<?= $ay['YearID'] ?>">
+                                        <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -641,33 +694,33 @@ body {
             <h4 class="mt-4 mb-4 text-center">Current Winners Preview</h4>
               <!-- Year selector -->
               <form method="GET" class="text-center mb-3">
-  <div class="dropdown d-inline-block">
-    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
-            id="previewYearDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-      <?= htmlspecialchars(
-           array_reduce(
-             $academicYears,
-             fn($carry, $ay) => $ay['YearID']===$selectedYearID
-               ? ($ay['Academic_year'].' – '.($ay['Academic_year']+1))
-               : $carry,
-             'Select Year…'
-           )
-         ) ?>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="previewYearDropdown">
-      <?php foreach ($academicYears as $ay): ?>
-        <li>
-          <button class="dropdown-item <?= $ay['YearID']===$selectedYearID?'active':''?>"
-                  type="submit"
-                  name="previewYearID"
-                  value="<?= $ay['YearID'] ?>">
-            <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
-          </button>
-        </li>
-      <?php endforeach; ?>
-    </ul>
-  </div>
-</form>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+                            id="previewYearDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <?= htmlspecialchars(
+                        array_reduce(
+                            $academicYears,
+                            fn($carry, $ay) => $ay['YearID']===$selectedYearID
+                            ? ($ay['Academic_year'].' – '.($ay['Academic_year']+1))
+                            : $carry,
+                            'Select Year…'
+                        )
+                        ) ?>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="previewYearDropdown">
+                    <?php foreach ($academicYears as $ay): ?>
+                        <li>
+                        <button class="dropdown-item <?= $ay['YearID']===$selectedYearID?'active':''?>"
+                                type="submit"
+                                name="previewYearID"
+                                value="<?= $ay['YearID'] ?>">
+                            <?= htmlspecialchars($ay['Academic_year'] . ' – ' . ($ay['Academic_year'] + 1)) ?>
+                        </button>
+                        </li>
+                    <?php endforeach; ?>
+                    </ul>
+                </div>
+            </form>
             <?php if (empty($winnersByCategory)): ?>
                 <p class="text-center">No winners found for the current academic year.</p>
             <?php else: ?>   
@@ -738,27 +791,56 @@ body {
         const dropdownToggle = document.getElementById('categoryDropdown');
         const dropdownMenu = document.querySelector('#categoryDropdown + .dropdown-menu');
 
-        dropdownToggle.addEventListener('click', function () {
-            // Wait for dropdown to render
+        if (dropdownToggle && dropdownMenu) {
+            dropdownToggle.addEventListener('click', function () {
+                // Wait for dropdown to render
+                setTimeout(() => {
+                    const toggleRect = dropdownToggle.getBoundingClientRect();
+                    const menuHeight = dropdownMenu.offsetHeight;
+                    const spaceBelow = window.innerHeight - toggleRect.bottom;
+                    const spaceAbove = toggleRect.top;
+
+                    // Reset classes
+                    dropdownMenu.classList.remove('dropdown-menu-up');
+                    dropdownMenu.classList.remove('dropdown-menu-down');
+
+                    if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+                        dropdownMenu.classList.add('dropdown-menu-up'); // Add custom upward class
+                    } else {
+                        dropdownMenu.classList.add('dropdown-menu-down');
+                    }
+                }, 10); // Let Bootstrap inject the dropdown first
+            });
+        }
+    });
+
+    // Fix for the previewYearDropdown
+    const previewYearDropdown = document.getElementById('previewYearDropdown');
+    const previewDropdownMenu = document.querySelector('#previewYearDropdown + .dropdown-menu');
+    
+    if (previewYearDropdown && previewDropdownMenu) {
+        previewYearDropdown.addEventListener('click', function () {
+            // Make sure dropdown is visible before calculating
+            previewDropdownMenu.classList.add('show');
+            
             setTimeout(() => {
-                const toggleRect = dropdownToggle.getBoundingClientRect();
-                const menuHeight = dropdownMenu.offsetHeight;
+                const toggleRect = previewYearDropdown.getBoundingClientRect();
+                const menuHeight = previewDropdownMenu.offsetHeight;
                 const spaceBelow = window.innerHeight - toggleRect.bottom;
                 const spaceAbove = toggleRect.top;
 
                 // Reset classes
-                dropdownMenu.classList.remove('dropdown-menu-up');
-                dropdownMenu.classList.remove('dropdown-menu-down');
+                previewDropdownMenu.classList.remove('dropdown-menu-up');
+                previewDropdownMenu.classList.remove('dropdown-menu-down');
 
                 if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-                    dropdownMenu.classList.add('dropdown-menu-up'); // Add custom upward class
+                    previewDropdownMenu.classList.add('dropdown-menu-up');
                 } else {
-                    dropdownMenu.classList.add('dropdown-menu-down');
+                    previewDropdownMenu.classList.add('dropdown-menu-down');
                 }
-            }, 10); // Let Bootstrap inject the dropdown first
+            }, 50); // Longer timeout to ensure the dropdown is fully rendered
         });
-    });
-
+    }
 
     let currentStep = 1;
 
