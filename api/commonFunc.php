@@ -304,6 +304,10 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         }
         
 
+        if (empty($validTerms)) {
+            return ['status' => 'error', 'message' => 'No valid terms were generated.'];
+        }
+
         // Get student ID
         $stmtStudent = $pdo->prepare("SELECT id FROM Student_Table WHERE SuNET_Username = :suNetUsername");
         $stmtStudent->execute(['suNetUsername' => $suNetUsername]);
@@ -315,7 +319,7 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         $stmtCourses = $pdo->prepare("SELECT CourseID FROM Student_Course_Relation WHERE `student.id` = :studentID AND EnrollmentStatus = 'enrolled'");
         $stmtCourses->execute(['studentID' => $studentID]);
         $courses = $stmtCourses->fetchAll(PDO::FETCH_COLUMN);
-        if (empty($courses)) return ['status' => 'error', 'message' => 'No enrolled courses found'];
+        if (empty($courses)) return ['status' => 'error', 'message' => 'No enrolled courses found for this student.']; // More specific message
 
         // Get category ID
         $stmtCategory = $pdo->prepare("SELECT CategoryID FROM Category_Table WHERE CategoryCode = :categoryCode");
@@ -324,8 +328,11 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         if (!$category) return ['status' => 'error', 'message' => 'Invalid category code'];
         $categoryID = $category['CategoryID'];
 
-        // Dynamically bind placeholders
-        $placeholders = implode(',', array_fill(0, count($courses), '?'));
+        // Dynamically bind placeholders for courses
+        $coursePlaceholders = implode(',', array_fill(0, count($courses), '?'));
+        
+        // Dynamically bind placeholders for terms
+        $termPlaceholders = implode(',', array_fill(0, count($validTerms), '?')); // <<< THIS IS THE KEY CHANGE
 
         // Query instructors and group courses with GROUP_CONCAT
         $query = "
@@ -341,22 +348,24 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
             WHERE i.Role = 'Instructor' 
               AND i.Status = 'Etkin' 
               AND r.CategoryID = ?
-              AND r.Term IN (?, ?, ?, ?)
-              AND r.CourseID IN ($placeholders)
+              AND r.Term IN ($termPlaceholders)       
+              AND r.CourseID IN ($coursePlaceholders) -- Use dynamic placeholders for courses
               AND NOT EXISTS (
                   SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
               )
             GROUP BY i.id
+            ORDER BY i.Name 
         ";
 
         $params = array_merge([$categoryID], $validTerms, $courses);
+        
         $stmt = $pdo->prepare($query);
         $stmt->execute($params);
         $instructors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return $instructors
             ? ['status' => 'success', 'data' => $instructors]
-            : ['status' => 'error', 'message' => 'No instructors found'];
+            : ['status' => 'error', 'message' => 'No instructors found matching the criteria.'];
     } catch (PDOException $e) {
         return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
     }
