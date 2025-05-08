@@ -119,7 +119,12 @@ if (!checkIfUserIsAdmin($pdo, $user)) {
         color: #dc3545;
         font-size: 16px;
         font-weight: bold;
-        margin-top: 15px;
+        margin: 30px auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+        max-width: 600px;
     }
 
     .action-container {
@@ -249,12 +254,17 @@ document.addEventListener("DOMContentLoaded", () => {
     let gridInstance;
     let currentData = [];
     let selectedYear = null;
+    let dataTable = null;
+
 
     const yearSelectBtn = document.getElementById("yearSelectBtn");
     const yearOptions = document.querySelectorAll(".year-option");
     const viewReportBtn = document.getElementById("viewReportBtn");
-    const participationGrid = document.getElementById("participation-grid");
+    //const participationGrid = document.getElementById("participation-grid");
     const errorMessage = document.getElementById("error-message");
+    const tableSection = document.getElementById("table-section");
+
+    tableSection.style.display = "none";
 
     // Handle Year Selection from Dropdown
     yearOptions.forEach(option => {
@@ -262,9 +272,12 @@ document.addEventListener("DOMContentLoaded", () => {
             selectedYear = this.getAttribute("data-value");
             yearSelectBtn.textContent = this.textContent;
 
-            if (gridInstance) gridInstance.destroy();
+            if (dataTable) {
+                dataTable.destroy();
+                dataTable = null;
+            }
             errorMessage.style.display = "none";
-            document.getElementById("table-section").style.display = "block";
+            tableSection.style.display = "none";
         });
     });
 
@@ -274,22 +287,26 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        errorMessage.style.display = "none";
+        tableSection.style.display = "none";
+
         try {
+            errorMessage.textContent = "Loading data...";
+            errorMessage.style.display = "block";
+
             const apiUrl = `api/getVotingParticipation.php?yearID=${selectedYear}`;
             const response = await fetch(apiUrl);
             const data = await response.json();
 
-            if (data.error) {
-                errorMessage.textContent = data.error;
+            if (data.error || data.length === 0) {
+                // Show error message and hide table when no data
+                errorMessage.textContent = data.error || "No votes recorded for the selected year";
                 errorMessage.style.display = "block";
                 return;
             }
 
-            errorMessage.style.display = "none";
-
-            // Clear existing table body
             const tbody = document.getElementById("participation-body");
-            tbody.innerHTML = "";
+            tbody.innerHTML = ""; 
 
             data.forEach(row => {
                 const tr = document.createElement("tr");
@@ -301,6 +318,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 tbody.appendChild(tr);
             });
+
+            errorMessage.style.display = "none";
+            tableSection.style.display = "block";
 
             // Re-initialize DataTable
             if ($.fn.DataTable.isDataTable('#participationTable')) {
@@ -322,11 +342,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 pageLength: 8
             });
 
-
-
-
         } catch (error) {
             console.error("Fetch Error:", error);
+            errorMessage.textContent = "An error occurred while fetching data";
+            errorMessage.style.display = "block";
         }
     });
 });
