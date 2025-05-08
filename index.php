@@ -32,7 +32,7 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
         display: flex;
         flex-direction: column;
         font-family: Arial, sans-serif;
-        overflow-y: auto;
+
     }
     .navbar .nav-item .nav-link {
         margin-right: -30px; 
