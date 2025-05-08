@@ -61,7 +61,6 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
         position: relative;
         height: 100vh;
         overflow: hidden;
-        border-radius: 40px;
         margin-left: -20px;
         margin-right: -20px;
         margin-bottom: 0;  /* kill any default gap */
