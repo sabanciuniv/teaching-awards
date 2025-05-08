@@ -139,7 +139,9 @@ $adminsJson = json_encode($adminsData['data']);
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addAdminModalLabel">Add New Admin</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" aria-label="Close" style="border:none; background:none;">
+                    <i class="fa-solid fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="addAdminForm">
