@@ -172,7 +172,7 @@ try {
 
 if (isset($_GET['redirect']) && $_GET['redirect'] === 'adminDashboard.php') {
     if (!checkIfUserIsAdmin($pdo, $user)) {
-        header("Location: index.php");
+        header("Location: accessDenied.php");
         exit;
     }
 
