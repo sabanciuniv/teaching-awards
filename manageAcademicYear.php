@@ -33,13 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_academic_year'
     $currentYearInt  = (int) date('Y');
 
     // 3) Disallow if < current calendar year
-    if ($academicYearInt < $currentYearInt) {
-        echo "<script>
-            alert('Error: Academic year cannot be lower than the current calendar year.');
-            window.location.href='manageAcademicYear.php';
-        </script>";
-        exit();
-    }
+    //if ($academicYearInt < $currentYearInt) {
+      //  echo "<script>
+        //    alert('Error: Academic year cannot be lower than the current calendar year.');
+          //  window.location.href='manageAcademicYear.php';
+        //</script>";
+        //exit();
+  //  }
 
     $startDate = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
     $endDate   = date('Y-m-d H:i:s', strtotime($_POST['end_date']));
