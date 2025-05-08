@@ -98,15 +98,17 @@
                     aria-expanded="false">
 
                     <strong>
-                        Welcome, 
-                        <?php 
-                        echo htmlspecialchars(
-                            (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true) 
-                            ? $_SESSION['impersonated_full_name'] 
-                            : (isset($_SESSION['full_name']) ? $_SESSION['full_name'] : (isset($_SESSION['user']) ? $_SESSION['user'] : 'User'))
-                        ); 
+                        Welcome<?php 
+                            if (isset($_SESSION['impersonating']) && $_SESSION['impersonating'] === true) {
+                                echo ', ' . htmlspecialchars($_SESSION['impersonated_full_name']);
+                            } elseif (!empty($_SESSION['full_name'])) {
+                                echo ', ' . htmlspecialchars($_SESSION['full_name']);
+                            } elseif (!empty($_SESSION['user'])) {
+                                echo ', ' . htmlspecialchars($_SESSION['user']);
+                            }
                         ?>
                     </strong>
+
 
                     </a>
 

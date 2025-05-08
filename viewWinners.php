@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/database/dbConnection.php';
 require_once 'api/commonFunc.php';
-init_session();
+
+session_start();
 $pageTitle= "Award Winners";
 require_once 'api/header.php';
 
@@ -82,7 +83,19 @@ SQL
 <!DOCTYPE html>
 <html lang="en">
 <style>
-  body { background: #f9f9f9; padding: 2rem 0; overflow-x: hidden;      overflow-y: auto;}    
+  /* General Page Styles */
+  html, body {
+    height: 100%;
+    margin: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  body {
+    margin: 0;
+    background-color: #f9f9f9;
+    padding-top: 80px; /* Add padding for fixed navbar */
+  }
+  
   .container { max-width: 800px; margin: auto; }
   h1 { text-align: center; margin-bottom:1.5rem; font-weight:600; }
   .filter { display:flex; justify-content:center; align-items:center; gap:.5rem; margin-bottom:2rem; }
@@ -101,6 +114,8 @@ SQL
   .dropdown-menu.show { display:block!important; }
   .dropdown-item { color:#333!important; padding:.5rem 1rem!important; }
   .dropdown-item:hover { background:#f1f1f1!important; }
+  .dropdown-item.text-danger { color:#dc3545!important; }
+  .dropdown-item.text-danger:hover { background:#f1f1f1!important; color:#dc3545!important; }
   .category-row {
     display:flex; align-items:center; background:#fff; padding:1rem;
     border-radius:.5rem; margin-bottom:.5rem; cursor:pointer; transition:background .2s;
@@ -128,8 +143,29 @@ SQL
     padding:.5rem 1.25rem!important; border-radius:6px!important;
   }
   .btn-return:hover { background:#365a6b!important; }
+  
+  /* Fix for impersonation message */
+  .impersonation-warning {
+    margin-top: 0 !important;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  /* Adjust for fixed navbar */
+  .background-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    background-color: #3f51b5;
+    z-index: -1;
+  }
 </style>
 <body>
+  <!-- Background Placeholder -->
+  <div class="background-placeholder"></div>
 
   <?php 
     $backLink = isset($_SESSION['previous_page']) && $_SESSION['previous_page']==='adminDashboard.php'
@@ -223,7 +259,7 @@ SQL
 
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // handle year dropdown selection
     $('#yearToggle').siblings('.dropdown-menu')
@@ -233,7 +269,7 @@ SQL
         $('#yearID').val($(this).data('value'));
       });
 
-    // toggle each category’s winners list
+    // toggle each category's winners list
     $('.category-row').click(function(){
       const id = $(this).data('toggle');
       $('#' + id).slideToggle();
