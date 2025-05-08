@@ -28,7 +28,9 @@ if (!$file) {
 }
 
 // Define the secure file path (stored outside the web root)
-$uploadDir = "/var/www/html/odul/uploads/"; 
+$academicYear = getCurrentAcademicYear($pdo);
+$uploadDir = "/var/www/html/odul/uploads/" . $academicYear . "/";
+
 $filePath = $uploadDir . $file['DocumentCodedName'];
 
 if (!file_exists($filePath)) {

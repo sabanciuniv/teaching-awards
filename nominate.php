@@ -261,7 +261,8 @@ error_reporting(E_ALL);
                                         <div class="file-preview-thumbnails clearfix" id="fileThumbnails"></div>
                                     </div>
                                 </div>
-                                <input type="file" id="fileInput" name="ReferenceLetterFiles[]" multiple style="display: none;">
+                                <input type="file" id="fileInput" multiple style="display: none;">
+
                                 <div class="file-caption">
                                     <input type="text" class="file-caption-name form-control" id="fileCaption" readonly 
                                            placeholder="No file selected">

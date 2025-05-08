@@ -33,6 +33,7 @@ if (!is_writable($yearlyUploadDir)) {
     die("Error: Directory for the academic year is not writable.");
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 1) Verify that the user accepted the rules
     $rulesAccepted = $_POST['rulesAccepted'] ?? '';
@@ -45,9 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     print_r($_POST);
     echo "</pre>";
 
-    if (empty($_FILES['ReferenceLetterFiles']['name'][0])) {
+    if (!isset($_FILES['ReferenceLetterFiles']) || count($_FILES['ReferenceLetterFiles']['name']) === 0) {
         die("Error: No files uploaded.");
     }
+
 
     require_once __DIR__ . '/database/dbConnection.php';
 
