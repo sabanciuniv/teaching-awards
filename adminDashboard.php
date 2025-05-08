@@ -5,19 +5,18 @@ require_once 'database/dbConnection.php';
 init_session();
 
 // Determine the username (handle impersonation)
-$username = isset($_SESSION['impersonating'], $_SESSION['impersonated_user']) && $_SESSION['impersonating'] === true
+$actualUsername = isset($_SESSION['impersonating'], $_SESSION['impersonated_user']) && $_SESSION['impersonating'] === true
     ? $_SESSION['impersonated_user']
     : $_SESSION['user'];
 
-// Get role once (based on actual session user, not impersonated user!)
-$role = getUserAdminRole($pdo, $_SESSION['user']);
+$role = getUserAdminRole($pdo, $actualUsername);
 
-// Check role existence
 if (!$role || !in_array($role, ['Admin', 'IT_Admin'])) {
-    logUnauthorizedAccess($pdo, $username, basename(__FILE__));
+    logUnauthorizedAccess($pdo, $actualUsername, basename(__FILE__));
     header("Location: accessDenied.php");
     exit();
 }
+
 ?>
 
 
