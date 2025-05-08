@@ -19,7 +19,7 @@ function init_session(): void {
 
     // Optionally, enforce login here
     if (!isset($_SESSION['user'])) {
-        header("Location: login.php");
+        header("Location: index.php");
         exit();
     }
 
