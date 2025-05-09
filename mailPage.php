@@ -3,12 +3,15 @@
 
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
+$config = require __DIR__ . '/config.php';
 
 // start session & enforce login
 require_once 'api/commonFunc.php';
 init_session();
 // only admins may proceed
 enforceAdminAccess($pdo);
+set_time_limit(0);
+ignore_user_abort(true);
 
 // PHPMailer
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -113,20 +116,28 @@ if (
   try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
-    $mail->Host          = 'smtp.gmail.com';
-    $mail->SMTPAuth      = true;
-    $mail->Username      = 'ens492odul@gmail.com';
-    $mail->Password      = 'aycmatyxmxhphsvh';
-    $mail->SMTPSecure    = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port          = 587;
-    $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
+    $mail->Host       = $config['mail']['host'];
+    $mail->SMTPAuth   = true;
+    $mail->Username   = $config['mail']['username'];
+    $mail->Password   = $config['mail']['password'];
+    // map encryption setting
+    if ($config['mail']['encryption'] === 'ssl') {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    } else {
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    }
+    $mail->Port         = $config['mail']['port'];
+    $mail->setFrom(
+        $config['mail']['from_address'], 
+        $config['mail']['from_name']
+    );
     $mail->SMTPKeepAlive = true;
     $mail->isHTML(true);
-  } catch (Exception $e) {
+} catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
+    echo json_encode(['error' => 'SMTP init failed: ' . $e->getMessage()]);
     exit;
-  }
+}
 
   // send loop
   $sent = 0;
@@ -251,7 +262,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     .btn-custom:hover{ background:#365a6b!important; }
     .action-container{ position:fixed; bottom:20px; right:20px;
                        display:flex; flex-direction:column; gap:8px; }
-    #sendOpeningBtn{ display: block; margin: 20px auto; position:static; }
+    #sendOpeningBtn{ position:fixed; bottom:20px; left:20px; z-index:1000; }
     .close-modal-btn {
       color: red;
       background: none;
@@ -309,10 +320,6 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     <?php endforeach; ?>
     </tbody>
   </table>
-  <!-- Send Opening Mail -->
-  <button id="sendOpeningBtn" class="btn btn-custom">
-    <i class="fa fa-paper-plane"></i> Send Opening Mail
-  </button>
 </div>
 
 <!-- Edit Modal -->
@@ -347,10 +354,10 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
   </div>
 </div></div></div>
 
-
-
-
-
+<!-- Send Opening Mail -->
+<button id="sendOpeningBtn" class="btn btn-custom">
+  <i class="fa fa-paper-plane"></i> Send Opening Mail
+</button>
 
 <!-- Action Buttons -->
 <div class="action-container">
