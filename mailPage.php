@@ -3,17 +3,12 @@
 
 require_once 'api/authMiddleware.php';
 require_once __DIR__ . '/database/dbConnection.php';
-$config = require __DIR__ . '/config.php';
-$pageTitle= "Mail Templates &amp; Log";
-require_once 'api/header.php';
 
 // start session & enforce login
 require_once 'api/commonFunc.php';
 init_session();
 // only admins may proceed
 enforceAdminAccess($pdo);
-set_time_limit(0);
-ignore_user_abort(true);
 
 // PHPMailer
 require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -118,28 +113,20 @@ if (
   try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
-    $mail->Host       = $config['mail']['host'];
-    $mail->SMTPAuth   = true;
-    $mail->Username   = $config['mail']['username'];
-    $mail->Password   = $config['mail']['password'];
-    // map encryption setting
-    if ($config['mail']['encryption'] === 'ssl') {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    } else {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    }
-    $mail->Port         = $config['mail']['port'];
-    $mail->setFrom(
-        $config['mail']['from_address'], 
-        $config['mail']['from_name']
-    );
+    $mail->Host          = 'smtp.gmail.com';
+    $mail->SMTPAuth      = true;
+    $mail->Username      = 'ens492odul@gmail.com';
+    $mail->Password      = 'aycmatyxmxhphsvh';
+    $mail->SMTPSecure    = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port          = 587;
+    $mail->setFrom('ens492odul@gmail.com','Teaching Awards');
     $mail->SMTPKeepAlive = true;
     $mail->isHTML(true);
-} catch (Exception $e) {
+  } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'SMTP init failed: ' . $e->getMessage()]);
+    echo json_encode(['error'=>'SMTP init failed: '.$e->getMessage()]);
     exit;
-}
+  }
 
   // send loop
   $sent = 0;
@@ -242,50 +229,62 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<style>
-  body { background:#f9f9f9; padding-top:70px; overflow:auto;}
-  .container{ max-width:90%; margin:auto; }
-  .title{ text-align:center; margin-bottom:1rem;}
-  .btn-custom{ background:#45748a!important;color:#fff!important;border:none!important;
-                padding:.5rem 1rem;border-radius:4px;cursor:pointer;}
-  .btn-custom:hover{ background:#365a6b!important; }
-  .action-container{ position:fixed; bottom:20px; right:20px;
-                      display:flex; flex-direction:column; gap:8px; }
-  #sendOpeningBtn{ position:fixed; bottom:20px; left:20px; z-index:1000; }
-  .close-modal-btn {
-    color: red;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .btn-close {
-    background: none !important;
-    background-image: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    width: 1em;
-    height: 1em;
-    padding: 0;
-    position: relative;
-  }
-  .btn-close::before {
-    content: "×";
-    color: #ff0000;
-    font-size: 1.4rem;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .btn-close:hover::before,
-  .btn-close:focus::before {
-    opacity: 0.8;
-  }
-</style>
+<head>
+  <meta charset="UTF-8">
+  <title>Mail Templates &amp; Log</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="assets/css/bootstrap.min.css"           rel="stylesheet">
+  <link href="assets/css/bootstrap_limitless.min.css" rel="stylesheet">
+  <link href="assets/css/components.min.css"          rel="stylesheet">
+  <link href="assets/css/layout.min.css"              rel="stylesheet">
+  <link href="assets/global_assets/css/icons/icomoon/styles.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background:#f9f9f9; padding-top:70px; overflow:auto;}
+    .container{ max-width:90%; margin:auto; }
+    .title{ text-align:center; margin-bottom:1rem;}
+    .btn-custom{ background:#45748a!important;color:#fff!important;border:none!important;
+                 padding:.5rem 1rem;border-radius:4px;cursor:pointer;}
+    .btn-custom:hover{ background:#365a6b!important; }
+    .action-container{ position:fixed; bottom:20px; right:20px;
+                       display:flex; flex-direction:column; gap:8px; }
+    #sendOpeningBtn{ display: block; margin: 20px auto; position:static; }
+    .close-modal-btn {
+      color: red;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .btn-close {
+      background: none !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      width: 1em;
+      height: 1em;
+      padding: 0;
+      position: relative;
+    }
+    .btn-close::before {
+      content: "×";
+      color: #ff0000;
+      font-size: 1.4rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .btn-close:hover::before,
+    .btn-close:focus::before {
+      opacity: 0.8;
+    }
+  </style>
+</head>
 <body>
 <?php $backLink = "adminDashboard.php"; include 'navbar.php'; ?>
 
@@ -310,6 +309,10 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
     <?php endforeach; ?>
     </tbody>
   </table>
+  <!-- Send Opening Mail -->
+  <button id="sendOpeningBtn" class="btn btn-custom">
+    <i class="fa fa-paper-plane"></i> Send Opening Mail
+  </button>
 </div>
 
 <!-- Edit Modal -->
@@ -344,10 +347,10 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
   </div>
 </div></div></div>
 
-<!-- Send Opening Mail -->
-<button id="sendOpeningBtn" class="btn btn-custom">
-  <i class="fa fa-paper-plane"></i> Send Opening Mail
-</button>
+
+
+
+
 
 <!-- Action Buttons -->
 <div class="action-container">
