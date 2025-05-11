@@ -176,6 +176,15 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
         color: white;
     }
 
+    footer .unified-button {
+  width: auto;
+}
+footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+
 </style>
 
     <!-- Page Content -->
@@ -236,10 +245,14 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
                             <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary unified-button">Nominate a TA</a>
                             <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary unified-button">Vote   <i class="fas fa-vote-yea"></i></a>
                             <a href="viewWinners.php" class="btn btn-secondary unified-button">View Previous Winners</a>
+                            <a href="acknolwdgements.php" class="btn btn-secondary unified-button">Acknolwdgements</a>
                         </div>
 
                         <!-- Footer Text -->
                         <p class="footer-text">YOU CAN VOTE BETWEEN <?php echo $startDate; ?> - <?php echo $endDate; ?></p>
+                 
+
+
                     </div>
                 </div>
             </div>
@@ -303,6 +316,7 @@ $endDate   = isset($academicYear['End_date_time'])   ? date('F j, Y', strtotime(
         </div>
     </div>
 </div>
+
 
     <!-- Limitless Theme JS -->
     <script src="assets/js/main/jquery.min.js"></script>
