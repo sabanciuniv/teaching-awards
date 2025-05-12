@@ -80,7 +80,11 @@ require_once 'api/header.php';
     </div>
 
     <div class="ack-footer">
-      Teaching Awards Web Application Project is developed by the students above with the helps of IT Department of Sabancı University.
+    We would like to thank the IT Department of Sabancı University for their support and guidance during the development of our ENS491/492 Graduation Project: the Teaching Awards Web Application.<br>
+
+We are especially grateful to Hüsnü Yenigün for his mentorship, technical help, and encouragement throughout the project.<br>
+
+Thank you to everyone who supported us along the way and helped make this project a valuable learning experience.
     </div>
   </div>
 
