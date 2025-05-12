@@ -79,14 +79,19 @@ require_once 'api/header.php';
       </div>
     </div>
 
-    <div class="ack-footer">
-    We would like to thank the IT Department of Sabancı University for their support and guidance during the development of our ENS491/492 Graduation Project: the Teaching Awards Web Application.<br>
-
-We are especially grateful to Hüsnü Yenigün for his mentorship, technical help, and encouragement throughout the project.<br>
-
-Thank you to everyone who supported us along the way and helped make this project a valuable learning experience.
-    </div>
+  <div class="ack-footer" style="line-height: 1.9; max-width: 900px; margin: 4rem auto 0; text-align: center; font-size: 1.15rem;">
+    <p>
+      We would like to thank the <strong>IT Department of Sabancı University</strong> for their support and guidance during the development of our ENS491/492 Graduation Project: the Teaching Awards Web Application.
+    </p>
+    <p>
+      We are especially grateful to <strong>Hüsnü Yenigün</strong> for his mentorship, technical help, and encouragement throughout the project.
+    </p>
+    <p>
+      Thank you to everyone who supported us along the way and helped make this project a valuable learning experience.
+    </p>
   </div>
+
+
 
   <?php require_once 'api/footer.php'; ?>
 </body>
