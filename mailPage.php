@@ -121,11 +121,13 @@ if (
     $mail->Username   = $config['mail']['username'];
     $mail->Password   = $config['mail']['password'];
     // map encryption setting
+
+
     if ($config['mail']['encryption'] === 'ssl') {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    } else {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    }
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+  } elseif ($config['mail']['encryption'] === 'tls') {
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+  }
     $mail->Port         = $config['mail']['port'];
     $mail->setFrom(
         $config['mail']['from_address'], 
