@@ -2,6 +2,9 @@
 require_once 'commonFunc.php';
 init_session();
 
+ini_set('max_execution_time', 1200); // 20 minutes
+
+
 $config = require __DIR__ . '/../config.php';
 require_once '../database/dbConnection.php';
 
