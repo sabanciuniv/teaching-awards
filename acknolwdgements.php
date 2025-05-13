@@ -26,6 +26,7 @@ require_once 'api/header.php';
       margin: 0;
       font-family: Arial, sans-serif;
       overflow-x: hidden;
+      overflow-y: auto;
     }
     .container-ack {
   padding: 15rem 1rem 4rem; 
@@ -80,14 +81,23 @@ require_once 'api/header.php';
     </div>
 
   <div class="ack-footer" style="line-height: 1.9; max-width: 900px; margin: 4rem auto 0; text-align: center; font-size: 1.15rem;">
+  <p>
+  </p>  
+  We would like to express our sincere gratitude to everyone who supported, guided, and created the opportunity for the development of the ENS491/492 Graduation Project: the Teaching Awards Web Application.
+  
+  <p>
+    <br>
+  We extend our special thanks to <strong>Mustafa Yörükoğlu</strong> and <strong>Can Çakmakçı</strong> for their generous guidance throughout the process. They provided technical insights, valuable feedback, and hands-on support whenever needed. Their assistance was also instrumental in the successful deployment of the system.
+  </p>
+
     <p>
-      We would like to thank the <strong>IT Department of Sabancı University</strong> for their support and guidance during the development of our ENS491/492 Graduation Project: the Teaching Awards Web Application.
+    We are deeply thankful to  <strong>Serkan Keskin</strong>, whose approval and support enabled us to undertake this project in the first place. We are also grateful to  <strong>Hüsnü Yenigün</strong> for his mentorship and encouragement throughout the project.
     </p>
+    <br>
     <p>
-      We are especially grateful to <strong>Hüsnü Yenigün</strong> for his mentorship, technical help, and encouragement throughout the project.
-    </p>
-    <p>
-      Thank you to everyone who supported us along the way and helped make this project a valuable learning experience.
+    Our appreciation goes to the IT Department of Sabancı University for offering Computer Science students the opportunity to work on a real-world system. Applying the skills we have acquired during our studies to a meaningful and practical project has been a vital part of our learning experience. This aligns perfectly with the goals of the ENS491/492 Graduation Project course.
+
+Thank you to everyone who supported us along the way and helped make this project a valuable learning journey.
     </p>
   </div>
 
