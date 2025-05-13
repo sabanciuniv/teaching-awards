@@ -2,7 +2,7 @@
 session_start();
 require_once 'api/commonFunc.php';
 require_once 'database/dbConnection.php';
-$pageTitle = "Acknowledgments";
+$pageTitle = "Acknowledgements";
 require_once 'api/header.php';
 ?>
 <!DOCTYPE html>
