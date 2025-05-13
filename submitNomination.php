@@ -10,8 +10,7 @@ $uploadDir = $config['upload_directory']; // Get the upload directory path
 require_once 'api/commonFunc.php';
 init_session();
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once 'api/errorInit.php';
 
 require_once __DIR__ . '/database/dbConnection.php'; // ensure $pdo is available
 

@@ -4,8 +4,7 @@ require_once __DIR__ . '/../database/dbConnection.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once 'api/errorInit.php';
 
 try {
     // Check for first-year courses (adjusting column names as necessary)

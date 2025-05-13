@@ -4,8 +4,7 @@ require_once 'api/impersonationLogger.php';
 require_once 'api/commonFunc.php';
 
 header('Content-Type: application/json');
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once 'api/errorInit.php';
 
 try {
     if (!isset($pdo) || !$pdo) {

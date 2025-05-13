@@ -12,8 +12,7 @@ $usernameToUse = isset($_SESSION['impersonating']) && $_SESSION['impersonating']
     : $_SESSION['user'];
 
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+    require_once 'api/errorInit.php';
 ?>
 
 

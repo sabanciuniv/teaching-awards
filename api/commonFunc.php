@@ -24,8 +24,7 @@ function init_session(): void {
     }
 
     // Error reporting (you can toggle this based on environment)
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
+    require_once 'api/errorInit.php';
 }
 
 function deleteExcludedCandidate(PDO $pdo, int $candidateID): array {
