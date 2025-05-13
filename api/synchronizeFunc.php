@@ -1,7 +1,7 @@
 <?php
 require_once 'commonFunc.php';
 init_session();
-
+ini_set('memory_limit', '512M'); 
 ini_set('max_execution_time', 1200); // 20 minutes
 
 
@@ -713,7 +713,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
 
             $categoryID = null;
 
-            if (in_array($code, ['TLL 101', 'TLL 102', 'AL 102']) && $class === 'Freshman') {
+            if (in_array($code, ['TLL 101', 'TLL 102', 'AL 102','SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 1;
             } elseif (in_array($code, ['SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192']) && $class === 'Freshman') {
                 $categoryID = 2;
@@ -722,7 +722,8 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 5;
             } elseif (!in_array($code, ['TLL 101', 'TLL 102', 'AL 102',
-                                       'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102',
+                                       'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
+                                       'CIP 101N','NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D',
                                        'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192',
                                        'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004']) && $cgpa >= 2 && $class === 'Senior') {
                 $categoryID = 3;
@@ -1077,7 +1078,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
     $mapCategoryID = function($subject, $course, $role, $status) {
         $full = strtoupper(trim($subject)) . ' ' . strtoupper(trim($course));
         if ($role === 'Instructor' && $status === 'Etkin') {
-            if (in_array($full, ['TLL 101', 'TLL 102', 'AL 102'])) return '1';
+            if (in_array($full, ['TLL 101', 'TLL 102', 'AL 102','SPS 101D', 'SPS 102D'])) return '1';
             if (in_array($full, ['SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192'])) return '2';
             if (in_array($full, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'])) return '4';
             return '3';
