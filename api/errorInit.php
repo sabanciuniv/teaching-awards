@@ -1,5 +1,5 @@
 <?php
-$config = require __DIR__ . 'config.php';
+$config = require __DIR__ . '/../config.php';
 
 if (!empty($config['dev_mode'])) {
     error_reporting(E_ALL);
