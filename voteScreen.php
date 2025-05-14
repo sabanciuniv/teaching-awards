@@ -276,28 +276,30 @@ enforceCategoryOwnership($pdo, $user, $category);
         container.innerHTML += `
           <div class="col-md-3">
             <div class="card">
-              <img src="https://i.pinimg.com/originals/e7/13/89/e713898b573d71485de160a7c29b755d.png" alt="Instructor Photo">
-                <h6>${instructor.InstructorName || 'Unknown'}</h6>
-                <div class="course-history-scroll">
-                  ${instructor.Courses || 'No courses found'}
-                </div>
-                <div class="dropdown mt-2">
-                  <button class="btn btn-secondary dropdown-toggle rank-btn"
-                          type="button"
-                          data-bs-toggle="dropdown"
-                          id="rank-btn-${index}"
-                          data-candidate-id="${instructor.InstructorID}">
-                    Rank here
-                  </button>
-                  <div class="dropdown-menu">
-                    <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
-                    <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
-                    <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
-                  </div>
-                </div>
-                <div id="selected-rank-${index}" class="mt-2"></div>
+              <img onerror="javascript:this.src='http://www.sabanciuniv.edu/rehber/fotograflar/notfound.gif';" 
+                  src="${instructor.ImageURL}" 
+                  alt="Instructor Photo">
+              <h6>${instructor.InstructorName || 'Unknown'}</h6>
+              <div class="course-history-scroll">
+                ${instructor.Courses || 'No courses found'}
               </div>
+              <div class="dropdown mt-2">
+                <button class="btn btn-secondary dropdown-toggle rank-btn"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        id="rank-btn-${index}"
+                        data-candidate-id="${instructor.InstructorID}">
+                  Rank here
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item rank-option" data-rank="1" data-index="${index}" href="#">1st place</a>
+                  <a class="dropdown-item rank-option" data-rank="2" data-index="${index}" href="#">2nd place</a>
+                  <a class="dropdown-item rank-option" data-rank="3" data-index="${index}" href="#">3rd place</a>
+                </div>
+              </div>
+              <div id="selected-rank-${index}" class="mt-2"></div>
             </div>
+          </div>
         `;
       });
 

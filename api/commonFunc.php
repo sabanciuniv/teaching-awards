@@ -362,6 +362,13 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         $stmt->execute($params);
         $instructors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Add image URL for each instructor
+        foreach ($instructors as &$instructor) {
+            $url_prefix = "http://www.sabanciuniv.edu/rehber/fotograflar";
+            $instructor['ImageURL'] = "{$url_prefix}/{$instructor['InstructorID']}.jpg";
+        }
+
+
         return $instructors
             ? ['status' => 'success', 'data' => $instructors]
             : ['status' => 'error', 'message' => 'No instructors found matching the criteria.'];
@@ -429,6 +436,12 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
         $stmt = $pdo->prepare($query);
         $stmt->execute($params);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Add image URL for each TA
+        foreach ($results as &$ta) {
+            $url_prefix = "http://www.sabanciuniv.edu/rehber/fotograflar";
+            $ta['ImageURL'] = "{$url_prefix}/{$ta['TA_ID']}.jpg";
+        }
 
         return $results
             ? ['status' => 'success', 'data' => $results]
