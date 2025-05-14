@@ -245,7 +245,7 @@ footer {
                             <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary unified-button">Nominate a TA</a>
                             <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary unified-button">Vote   <i class="fas fa-vote-yea"></i></a>
                             <a href="viewWinners.php" class="btn btn-secondary unified-button">View Previous Winners</a>
-                            <a href="acknolwdgements.php" class="btn btn-secondary unified-button">Acknolwdgements</a>
+                            <a href="acknowledgements.php" class="btn btn-secondary unified-button">Acknowledgements</a>
                         </div>
 
                         <!-- Footer Text -->
