@@ -1093,6 +1093,9 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
     try {
         //Get the "Academic_year" string for the targetInternalYearID
         $academicYearStringForTargetID = getAcademicYearFromID($pdo, $targetInternalYearID);
+        $academicYearInt = (int) $academicYearStringForTargetID; // e.g., 2023
+        $validTermPrefixes = [$academicYearInt, $academicYearInt - 1];
+
         if ($academicYearStringForTargetID === null) {
             return ['status' => 'error', 'message' => "Academic year string not found for YearID: {$targetInternalYearID}."];
         }
@@ -1152,12 +1155,14 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
         $sources = ['API_INSTRUCTORS' => 'INST_ID', 'API_TAS' => 'TA_ID'];
         foreach ($sources as $apiTable => $idField) {
             // Fetch API data only for terms matching the $calendarYearToMatchAPI
+            $termPlaceholders = implode(',', array_fill(0, count($validTermPrefixes), '?'));
             $apiStmt = $pdo->prepare(
                 "SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, {$idField} AS SU_ID
-                 FROM {$apiTable}
-                 WHERE {$idField} IS NOT NULL AND SUBSTR(TERM_CODE, 1, 4) = ?"
+                FROM {$apiTable}
+                WHERE {$idField} IS NOT NULL AND SUBSTR(TERM_CODE, 1, 4) IN ($termPlaceholders)"
             );
-            $apiStmt->execute([strval($calendarYearToMatchAPI)]);
+            $apiStmt->execute(array_map('strval', $validTermPrefixes));
+
 
             while ($apiRow = $apiStmt->fetch(PDO::FETCH_ASSOC)) {
                 $termFromAPI = strtoupper(trim($apiRow['TERM_CODE']));
