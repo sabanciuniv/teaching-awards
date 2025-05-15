@@ -337,6 +337,7 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         $query = "
             SELECT 
                 i.id AS InstructorID,
+                i.SU_ID AS InstructorSU_ID,
                 i.Name AS InstructorName,
                 i.Mail AS InstructorEmail,
                 i.Status,
@@ -365,7 +366,8 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
         // Add image URL for each instructor
         foreach ($instructors as &$instructor) {
             $url_prefix = "http://www.sabanciuniv.edu/rehber/fotograflar";
-            $instructor['ImageURL'] = "{$url_prefix}/{$instructor['InstructorID']}.jpg";
+            $cleanedID = intval($instructor['InstructorSU_ID']);
+            $instructor['ImageURL'] = "{$url_prefix}/{$cleanedID}.jpg";
         }
 
 
@@ -412,6 +414,7 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
         $query = "
             SELECT 
                 i.id AS TA_ID,
+                i.SU_ID AS TA_SU_ID,
                 i.Name AS TA_Name,
                 i.Mail AS TA_Email,
                 i.Status,
@@ -440,7 +443,8 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
         // Add image URL for each TA
         foreach ($results as &$ta) {
             $url_prefix = "http://www.sabanciuniv.edu/rehber/fotograflar";
-            $ta['ImageURL'] = "{$url_prefix}/{$ta['TA_ID']}.jpg";
+            $cleanedID = intval($ta['TA_SU_ID']);
+            $ta['ImageURL'] = "{$url_prefix}/{$cleanedID}.jpg";
         }
 
         return $results
