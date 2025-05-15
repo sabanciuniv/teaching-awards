@@ -560,15 +560,19 @@
  
        // Candidate search
        $("#searchBox").on("keyup", function() {
-         const searchTerm = $(this).val().toLowerCase();
-         const filteredCandidates = allCandidates.filter(candidate => 
-           candidate.Name.toLowerCase().includes(searchTerm) || 
-           candidate.Mail.toLowerCase().includes(searchTerm) || 
-           candidate.SU_ID.toLowerCase().includes(searchTerm) ||
-           (candidate.Courses && candidate.Courses.toLowerCase().includes(searchTerm))
-         );
-         renderTable(filteredCandidates, 1);
-         renderPaginationControls(filteredCandidates);
+          const searchTerm = $(this).val().toLowerCase();
+          const filteredCandidates = allCandidates.filter(candidate => {
+            const nameMatch = candidate.Name && candidate.Name.toString().toLowerCase().includes(searchTerm);
+            const emailMatch = candidate.Mail && candidate.Mail.toString().toLowerCase().includes(searchTerm);
+            const idMatch = candidate.SU_ID && candidate.SU_ID.toString().toLowerCase().includes(searchTerm);
+            const roleMatch = candidate.Role && candidate.Role.toString().toLowerCase().includes(searchTerm);
+            const coursesMatch = candidate.Courses && candidate.Courses.toString().toLowerCase().includes(searchTerm);
+
+          return nameMatch || emailMatch || idMatch || roleMatch || coursesMatch;
+        });
+
+        renderTable(filteredCandidates, 1);
+        renderPaginationControls(filteredCandidates);
        });
  
        $("#studentSearchBox").on("keyup", function() {
