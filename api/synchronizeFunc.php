@@ -321,8 +321,9 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
         // MY: validTerms değerleri ile kriter belirtilmeli
         $placeholdersForTerms = implode(',', array_fill(0, count($validTerms), '?'));
         $sqlApiCourses = "SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, SEQ_NUMB, CRSE_TITLE 
-                          FROM API_COURSES 
-                          WHERE TERM_CODE IN ({$placeholdersForTerms})";
+                        FROM API_COURSES 
+                        WHERE TERM_CODE IN ({$placeholdersForTerms}) AND CREDIT_HR_LOW > 0";
+
         $stmtApi = $pdo->prepare($sqlApiCourses);
         $stmtApi->execute($validTerms);
 
