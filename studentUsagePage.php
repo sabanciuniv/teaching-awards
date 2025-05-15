@@ -77,6 +77,7 @@ if (!empty($_GET['year'])) {
   body {
     background:#f9f9f9;
     padding-top:70px;
+    overflow-y: auto;
   }
   .container {
     max-width:900px;
