@@ -345,14 +345,19 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
             FROM Candidate_Table i
             INNER JOIN Candidate_Course_Relation r ON i.id = r.CandidateID
             INNER JOIN Courses_Table c ON r.CourseID = c.CourseID
+            " . ($categoryCode === 'B' ? "
+            INNER JOIN API_COURSES a ON a.TERM_CODE = r.Term 
+                        AND a.CRN = c.CRN 
+                        AND a.CREDIT_HR_LOW > 0
+            " : "") . "
             WHERE i.Role = 'Instructor' 
-              AND i.Status = 'Etkin' 
-              AND r.CategoryID = ?
-              AND r.Term IN ($termPlaceholders)       
-              AND r.CourseID IN ($coursePlaceholders) -- Use dynamic placeholders for courses
-              AND NOT EXISTS (
-                  SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
-              )
+            AND i.Status = 'Etkin' 
+            AND r.CategoryID = ?
+            AND r.Term IN ($termPlaceholders)       
+            AND r.CourseID IN ($coursePlaceholders)
+            AND NOT EXISTS (
+                SELECT 1 FROM Exception_Table e WHERE e.CandidateID = i.id
+            )
             GROUP BY i.id
             ORDER BY i.Name 
         ";
