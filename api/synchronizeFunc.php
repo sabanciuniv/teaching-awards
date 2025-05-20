@@ -847,7 +847,15 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
             return ['status' => 'error', 'message' => 'Invalid yearID or academic year not found.'];
         }
         
-        $validTermCodes = [$academicYear . '01', $academicYear . '02'];
+        //$validTermCodes = [$academicYear . '01', $academicYear . '02'];
+        $previousAcademicYear = $academicYear - 1;
+        $validTermCodes = [
+            $previousAcademicYear . '01',
+            $previousAcademicYear . '02',
+            $academicYear . '01',
+            $academicYear . '02'
+        ];
+
 
         // Build valid SU_IDs from TERM_CODE filtering
         $validSuIdsFromTerms = [];
