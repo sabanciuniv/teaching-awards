@@ -358,6 +358,7 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
             $existingCourses[$key] = $row;
         }
 
+
         // Prepare SQL statements
         $insertStmt = $pdo->prepare("INSERT INTO Courses_Table 
             (CourseName, Subject_Code, Course_Number, Section, CRN, Term, Sync_Date, YearID) 
@@ -423,6 +424,16 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
 
         // Delete missing ones:
         foreach ($existingCourses as $key => $dbCourseToDelete) {
+
+            $deleteCourseID = $dbCourseToDelete['CourseID'];
+
+            // First, remove from Candidate_Course_Relation
+            $stmtCleanupCandidates = $pdo->prepare("DELETE FROM Candidate_Course_Relation WHERE CourseID = ?");
+            $stmtCleanupCandidates->execute([$deleteCourseID]);
+
+            // Then remove from Student_Course_Relation
+            $stmtCleanupStudents = $pdo->prepare("DELETE FROM Student_Course_Relation WHERE CourseID = ?");
+            $stmtCleanupStudents->execute([$deleteCourseID]);
             // Construct params for delete statement from the $dbCourseToDelete
             $deleteParams = [
                 ':Subject_Code'  => $dbCourseToDelete['Subject_Code'],
@@ -431,6 +442,9 @@ function synchronizeCourses(PDO $pdo, int $targetYearID): array {
                 ':Term'          => $dbCourseToDelete['Term'],
                 ':YearID'        => $dbCourseToDelete['YearID'] // targetYearID
             ];
+
+
+
             $deleteStmt->execute($deleteParams);
             if ($deleteStmt->rowCount() > 0) {
                 $response['deleted']++;
@@ -1155,14 +1169,13 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
 
         $sources = ['API_INSTRUCTORS' => 'INST_ID', 'API_TAS' => 'TA_ID'];
         foreach ($sources as $apiTable => $idField) {
-            // Fetch API data only for terms matching the $calendarYearToMatchAPI
-            $termPlaceholders = implode(',', array_fill(0, count($validTermPrefixes), '?'));
-            $apiStmt = $pdo->prepare(
-                "SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, {$idField} AS SU_ID
+            $apiStmt = $pdo->prepare("
+                SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, {$idField} AS SU_ID
                 FROM {$apiTable}
-                WHERE {$idField} IS NOT NULL AND SUBSTR(TERM_CODE, 1, 4) IN ($termPlaceholders)"
-            );
-            $apiStmt->execute(array_map('strval', $validTermPrefixes));
+                WHERE {$idField} IS NOT NULL
+            ");
+            $apiStmt->execute();
+
 
 
             while ($apiRow = $apiStmt->fetch(PDO::FETCH_ASSOC)) {
@@ -1191,6 +1204,19 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $validKeysForDeletionCheck[$currentRelationKey] = true;
 
                 $categoryID = $mapCategoryID($subjectFromAPI, $courseNumFromAPI, $candidateData['Role'], $candidateData['Status']);
+                if (!$categoryID) continue;
+
+                // Extract the 4-digit year prefix from TERM_CODE
+                $yearPrefix = (int)substr($termFromAPI, 0, 4);
+
+                // Apply custom filter logic
+                if ($categoryID === '3') {
+                    // Allow current year and previous year
+                    if ($yearPrefix !== $academicYearInt && $yearPrefix !== ($academicYearInt - 1)) continue;
+                } else {
+                    // Allow only current year
+                    if ($yearPrefix !== $academicYearInt) continue;
+                }
                 if (!$categoryID) continue;
 
                 $logRow = [
