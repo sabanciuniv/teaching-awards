@@ -91,7 +91,7 @@ require_once 'api/header.php';
   </p>
 
     <p>
-    We are deeply thankful to  <strong>Serkan Keskin</strong>, whose approval and support enabled us to undertake this project in the first place. We are also grateful to  <strong>Hüsnü Yenigün</strong> for his mentorship and encouragement throughout the project.
+    We are deeply thankful to  <strong>Serkan Keskin</strong>, whose approval and support enabled us to undertake this project in the first place. We are also grateful to  <strong>Hüsnü Yenigün</strong> for his mentorship and encouragement throughout the project, and <strong>Deniz İnan</strong> for her guidance on the correct interpretation of SU Teaching Awards procedures and her feedback on our system.
     </p>
     <br>
     <p>
