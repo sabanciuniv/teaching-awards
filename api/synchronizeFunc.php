@@ -706,23 +706,11 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
         }
 
         $stmt = $pdo->prepare("
-            SELECT
-                s.id AS student_id,
-                s.StudentID,
-                s.Class,
-                s.CGPA,
-                CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code,
-                api.CREDIT_HR_LOW
-            FROM `Student_Course_Relation` AS scr
-            JOIN `Courses_Table`            AS c
-            ON scr.CourseID    = c.CourseID
-            JOIN `API_COURSES` api
-            ON api.TERM_CODE   = c.`Term`
-            AND api.SUBJ_CODE   = c.Subject_Code
-            AND api.CRSE_NUMB   = c.Course_Number
-            AND api.CRN         = c.CRN
-            JOIN `Student_Table` AS s
-            ON scr.id  = s.StudentID
+            SELECT s.id AS student_id, s.StudentID, s.Class, s.CGPA,
+                   CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code
+            FROM Student_Course_Relation scr
+            JOIN Courses_Table c ON scr.CourseID = c.CourseID
+            JOIN Student_Table s ON scr.`student.id` = s.id
             WHERE s.YearID = ?
         ");
 
@@ -737,7 +725,6 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             $class = $row['Class'];
             $cgpa = (float)$row['CGPA'];
             $code = $row['full_code'];
-            $creditHrLow  = (int)$row['CREDIT_HR_LOW']; 
 
             $categoryID = null;
 
@@ -753,7 +740,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
                                        'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
                                        'CIP 101N','NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D',
                                        'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192',
-                                       'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0 ) {
+                                       'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004']) && $cgpa >= 2 && $class === 'Senior') {
                 $categoryID = 3;
             }
 
