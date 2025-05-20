@@ -707,21 +707,21 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
 
         $stmt = $pdo->prepare("
             SELECT
-            s.id           AS student_id,
-            s.StudentID,
-            s.Class,
-            s.CGPA,
-            CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code,
-            api.CREDIT_HR_LOW
+                s.id AS student_id,
+                s.StudentID,
+                s.Class,
+                s.CGPA,
+                CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code,
+                api.CREDIT_HR_LOW
             FROM `Student_Course_Relation` AS scr
             JOIN `Courses_Table`            AS c
             ON scr.CourseID    = c.CourseID
-            JOIN `API_COURSES`               api   -- no AS here
-            ON api.TERM_CODE   = c.`Term`      -- quote Term in case it’s reserved
+            JOIN `API_COURSES` api
+            ON api.TERM_CODE   = c.`Term`
             AND api.SUBJ_CODE   = c.Subject_Code
             AND api.CRSE_NUMB   = c.Course_Number
             AND api.CRN         = c.CRN
-            JOIN `Student_Table`            AS s
+            JOIN `Student_Table` AS s
             ON scr.id  = s.StudentID
             WHERE s.YearID = ?
         ");
