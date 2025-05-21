@@ -679,9 +679,6 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             return ['status' => 'error', 'message' => 'Current academic year not found.'];
         }
 
-        $currentYear = (int)$currentYearRow['Academic_year'];
-        $validYears = [$yearID]; // Use the current sync year only
-
         // Fetch existing student-category relations
         //sadece şu an olanları değişitr
         $stmt = $pdo->query("SELECT scr.student_id, scr.categoryID, s.StudentID  
@@ -706,7 +703,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
         }
 
         $stmt = $pdo->prepare("
-            SELECT s.id AS student_id, s.StudentID, s.Class, s.CGPA,
+            SELECT s.id AS student_id, s.StudentID, s.Class, s.CGPA, c.Course_Number AS CRSE_NUMB,
                    CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code, api.CREDIT_HR_LOW
             FROM Student_Course_Relation scr
             JOIN Courses_Table c ON scr.CourseID = c.CourseID
@@ -731,6 +728,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             $cgpa = (float)$row['CGPA'];
             $code = $row['full_code'];
             $creditHrLow  = (int)$row['CREDIT_HR_LOW']; 
+            $crseNumb     = $row['CRSE_NUMB'];
 
             $categoryID = null;
 
@@ -738,14 +736,15 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
                 $categoryID = 1;
             } elseif (in_array($code, ['SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192']) && $class === 'Freshman') {
                 $categoryID = 2;
-            } elseif (in_array($code, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'])) {
+            } elseif (in_array($code, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004', 'ENG 0005'])) {
                 $categoryID = 4;
             } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 5;
             } elseif (!in_array($code, ['TLL 101', 'TLL 102', 'AL 102',
                                        'SPS 101', 'SPS 102','SPS 101D', 'SPS 102D','MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
                                        'CIP 101N','NS 101R', 'NS 102R', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192','IF 100', 'IF 100R',
-                                       'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0) {
+                                       'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004','ENG 0005']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0 
+                                       && $crseNumb < '500' && strpos($crseNumb, '0') !== 0 && ! in_array($code, ['PROJ 300','PROJ 302'])) {
                 $categoryID = 3;
             }
 
@@ -1138,13 +1137,13 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
             'NS 101R', 'NS 102R', 'NS 101', 'NS 102',
             'HIST 191', 'HIST 192',
             'IF 100', 'IF 100R',
-            'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'
+            'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004', 'ENG 0005'
         ];
 
         if ($role === 'Instructor' && $status === 'Etkin') {
             if ($full === 'TLL 101' || $full === 'TLL 102' || $full === 'AL 102' || $full === 'SPS 101D' || $full === 'SPS 102D') return '1';
             if ($full === 'SPS 101' || $full === 'SPS 102' || $full === 'MATH 101' || $full === 'MATH 102' || $full === 'IF 100' || $full === 'NS 101' || $full === 'NS 102' || $full === 'HIST 191' || $full === 'HIST 192') return '2';
-            if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004') return '4';
+            if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004' || $full === 'ENG 0005' ) return '4';
             // fallback: instructor not matching any of the above courses
             if (!in_array($full, $categorizedCourses)) return '3';
         }
