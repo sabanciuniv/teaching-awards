@@ -828,31 +828,28 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
 //
 function synchronizeCandidates(PDO $pdo, int $yearID): array {
     $response = [
-        'inserted' => 0,
-        'updated' => 0,
-        'deleted' => 0,
+        'inserted'     => 0,
+        'updated'      => 0,
+        'deleted'      => 0,
         'insertedRows' => [],
-        'updatedRows' => [],
-        'deletedRows' => []
+        'updatedRows'  => [],
+        'deletedRows'  => []
     ];
 
     try {
         $statusMapping = [
-            'Active' => 'Etkin',
-            'Inactive' => 'İşten ayrıldı',
-            'Terminated' => 'İşten ayrıldı',
-            'İşten ayrıldı' => 'İşten ayrıldı' // Handles if status is already mapped
+            'Active'       => 'Etkin',
+            'Inactive'     => 'İşten ayrıldı',
+            'Terminated'   => 'İşten ayrıldı',
+            'İşten ayrıldı' => 'İşten ayrıldı'
         ];
 
-        $candidatesApiData = []; 
-        
+        $candidatesApiData = [];
 
-        $academicYear = getAcademicYearFromID($pdo, $yearID);
+        $academicYear        = getAcademicYearFromID($pdo, $yearID);
         if (!$academicYear) {
             return ['status' => 'error', 'message' => 'Invalid yearID or academic year not found.'];
         }
-        
-        //$validTermCodes = [$academicYear . '01', $academicYear . '02'];
         $previousAcademicYear = $academicYear - 1;
         $validTermCodes = [
             $previousAcademicYear . '01',
@@ -861,76 +858,103 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
             $academicYear . '02'
         ];
 
-
-        // Build valid SU_IDs from TERM_CODE filtering
+        //Collect which SU_IDs appear in those terms as TA or Instructor
         $validSuIdsFromTerms = [];
-
-        $stmtApiTerms = $pdo->query("SELECT DISTINCT TA_ID, TERM_CODE FROM API_TAS WHERE TA_ID IS NOT NULL");
-        while ($row = $stmtApiTerms->fetch(PDO::FETCH_ASSOC)) {
-            if (in_array($row['TERM_CODE'], $validTermCodes)) {
-                $validSuIdsFromTerms[$row['TA_ID']] = 'TA';
+        $stmt = $pdo->query("SELECT DISTINCT TA_ID, TERM_CODE FROM API_TAS WHERE TA_ID IS NOT NULL");
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (in_array($r['TERM_CODE'], $validTermCodes, true)) {
+                $validSuIdsFromTerms[$r['TA_ID']] = 'TA';
             }
         }
-        $stmtApiTerms->closeCursor();
+        $stmt->closeCursor();
 
-        $stmtApiTerms = $pdo->query("SELECT DISTINCT INST_ID, TERM_CODE FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
-        while ($row = $stmtApiTerms->fetch(PDO::FETCH_ASSOC)) {
-            if (in_array($row['TERM_CODE'], $validTermCodes)) {
-                $validSuIdsFromTerms[$row['INST_ID']] = 'Instructor';
+        $stmt = $pdo->query("SELECT DISTINCT INST_ID, TERM_CODE FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (in_array($r['TERM_CODE'], $validTermCodes, true)) {
+                $validSuIdsFromTerms[$r['INST_ID']] = 'Instructor';
             }
         }
-        $stmtApiTerms->closeCursor();
+        $stmt->closeCursor();
 
-        // Fetch TA data
-        $stmtTas = $pdo->query("SELECT TA_ID, TA_FIRST_NAME, TA_MI_NAME, TA_LAST_NAME, TA_EMAIL, EMPL_STATUS FROM API_TAS WHERE TA_ID IS NOT NULL");
+        //Precompute total credit‐hours per instructor in one aggregated query
+        $placeholders = implode(',', array_fill(0, count($validTermCodes), '?'));
+        $sql = "
+            SELECT i.INST_ID,
+                   COALESCE(SUM(c.CREDIT_HR_LOW),0) AS total_credit
+              FROM API_INSTRUCTORS i
+              JOIN API_COURSES     c
+                ON i.TERM_CODE = c.TERM_CODE
+               AND i.CRN       = c.CRN
+             WHERE i.TERM_CODE IN ($placeholders)
+             GROUP BY i.INST_ID
+        ";
+        $stmtCredits = $pdo->prepare($sql);
+        $stmtCredits->execute($validTermCodes);
+        $creditMap = [];
+        while ($r = $stmtCredits->fetch(PDO::FETCH_ASSOC)) {
+            $creditMap[$r['INST_ID']] = (int)$r['total_credit'];
+        }
+        $stmtCredits->closeCursor();
+
+        //Fetch all TAs
+        $stmtTas = $pdo->query("
+            SELECT TA_ID, TA_FIRST_NAME, TA_MI_NAME, TA_LAST_NAME, TA_EMAIL, EMPL_STATUS
+              FROM API_TAS
+             WHERE TA_ID IS NOT NULL
+        ");
         while ($row = $stmtTas->fetch(PDO::FETCH_ASSOC)) {
             $su_id = $row['TA_ID'];
-
-            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'TA') continue;
-
+            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'TA') {
+                continue;
+            }
             $fullName = trim(
-                $row['TA_FIRST_NAME'] .
-                ($row['TA_MI_NAME'] ? ' ' . $row['TA_MI_NAME'] : '') .
-                ' ' . $row['TA_LAST_NAME']
+                $row['TA_FIRST_NAME']
+              . ($row['TA_MI_NAME'] ? ' ' . $row['TA_MI_NAME'] : '')
+              . ' ' . $row['TA_LAST_NAME']
             );
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
-
             $candidatesApiData[$su_id] = [
-                'SU_ID' => $su_id,
-                'Name' => $fullName,
-                'Mail' => $row['TA_EMAIL'] ?: null,
-                'Role' => 'TA',
+                'SU_ID'  => $su_id,
+                'Name'   => $fullName,
+                'Mail'   => $row['TA_EMAIL'] ?: null,
+                'Role'   => 'TA',
                 'Status' => $status
             ];
         }
         $stmtTas->closeCursor();
 
-        // Fetch Instructor data
-        $stmtInst = $pdo->query("SELECT INST_ID, INST_FIRST_NAME, INST_MI_NAME, INST_LAST_NAME, INST_EMAIL, EMPL_STATUS FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
+        // 5) Fetch all Instructors, then demote to TA if no credit‐hour courses
+        $stmtInst = $pdo->query("
+            SELECT INST_ID, INST_FIRST_NAME, INST_MI_NAME, INST_LAST_NAME,
+                   INST_EMAIL, EMPL_STATUS
+              FROM API_INSTRUCTORS
+             WHERE INST_ID IS NOT NULL
+        ");
         while ($row = $stmtInst->fetch(PDO::FETCH_ASSOC)) {
             $su_id = $row['INST_ID'];
-            // Only consider Instructors active in the valid terms
-            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'Instructor') continue;
+            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'Instructor') {
+                continue;
+            }
+            $totalCredit = $creditMap[$su_id] ?? 0;
+            $role        = $totalCredit > 0 ? 'Instructor' : 'TA';
 
             $fullName = trim(
-                $row['INST_FIRST_NAME'] .
-                ($row['INST_MI_NAME'] ? ' ' . $row['INST_MI_NAME'] : '') .
-                ' ' . $row['INST_LAST_NAME']
+                $row['INST_FIRST_NAME']
+              . ($row['INST_MI_NAME'] ? ' ' . $row['INST_MI_NAME'] : '')
+              . ' ' . $row['INST_LAST_NAME']
             );
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
-            if (isset($candidatesApiData[$su_id]) && $candidatesApiData[$su_id]['Role'] === 'TA') {
-                 // 
-            }
             $candidatesApiData[$su_id] = [
-                'SU_ID' => $su_id,
-                'Name' => $fullName,
-                'Mail' => $row['INST_EMAIL'] ?: null,
-                'Role' => 'Instructor',
+                'SU_ID'  => $su_id,
+                'Name'   => $fullName,
+                'Mail'   => $row['INST_EMAIL'] ?: null,
+                'Role'   => $role,
                 'Status' => $status
             ];
         }
         $stmtInst->closeCursor();
+
 
         // Handle Exceptions
         $exceptionStmt = $pdo->query("SELECT CandidateID FROM Exception_Table"); 
