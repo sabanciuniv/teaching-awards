@@ -743,9 +743,8 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 5;
             } elseif (!in_array($code, ['TLL 101', 'TLL 102', 'AL 102',
-                                       'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
-                                       'CIP 101N','NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D',
-                                       'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192',
+                                       'SPS 101', 'SPS 102','SPS 101D', 'SPS 102D','MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
+                                       'CIP 101N','NS 101R', 'NS 102R', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192','IF 100', 'IF 100R',
                                        'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0) {
                 $categoryID = 3;
             }
@@ -1106,17 +1105,35 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
 
     $mapCategoryID = function($subject, $course, $role, $status) {
         $full = strtoupper(trim($subject)) . ' ' . strtoupper(trim($course));
+
+        $categorizedCourses = [
+            'TLL 101', 'TLL 102', 'AL 102',
+            'SPS 101', 'SPS 102', 'SPS 101D', 'SPS 102D',
+            'MATH 101', 'MATH 102', 'MATH 101R', 'MATH 102R',
+            'CIP 101N',
+            'NS 101R', 'NS 102R', 'NS 101', 'NS 102',
+            'HIST 191', 'HIST 192',
+            'IF 100', 'IF 100R',
+            'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'
+        ];
+
         if ($role === 'Instructor' && $status === 'Etkin') {
-            if (in_array($full, ['TLL 101', 'TLL 102', 'AL 102','SPS 101D', 'SPS 102D'])) return '1';
-            if (in_array($full, ['SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192'])) return '2';
-            if (in_array($full, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'])) return '4';
-            return '3';
+            if ($full === 'TLL 101' || $full === 'TLL 102' || $full === 'AL 102' || $full === 'SPS 101D' || $full === 'SPS 102D') return '1';
+            if ($full === 'SPS 101' || $full === 'SPS 102' || $full === 'MATH 101' || $full === 'MATH 102' || $full === 'IF 100' || $full === 'NS 101' || $full === 'NS 102' || $full === 'HIST 191' || $full === 'HIST 192') return '2';
+            if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004') return '4';
+            // fallback: instructor not matching any of the above courses
+            if (!in_array($full, $categorizedCourses)) return '3';
         }
+
         if ($role === 'TA' && $status === 'Etkin') {
-            if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D'])) return '5';
+            if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D'])) {
+                return '5';
+            }
         }
+
         return null;
     };
+
 
 
     try {
