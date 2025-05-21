@@ -740,7 +740,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
                 $categoryID = 2;
             } elseif (in_array($code, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'])) {
                 $categoryID = 4;
-            } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
+            } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 5;
             } elseif (!in_array($code, ['TLL 101', 'TLL 102', 'AL 102',
                                        'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
@@ -1113,7 +1113,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
             return '3';
         }
         if ($role === 'TA' && $status === 'Etkin') {
-            if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D'])) return '5';
+            if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D'])) return '5';
         }
         return null;
     };
