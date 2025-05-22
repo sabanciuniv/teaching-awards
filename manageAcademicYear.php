@@ -7,6 +7,7 @@ require_once 'api/commonFunc.php';
 $pageTitle= "Manage Academic Year";
 require_once 'api/header.php';
 init_session();
+enforceAdminAccess($pdo); // Yetki kontrolü öncelikli olarak yapılmalı 
 
 $user = $_SESSION['user'];
 
