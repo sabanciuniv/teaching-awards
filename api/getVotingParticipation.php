@@ -1,4 +1,6 @@
 <?php
+die("***DISABLED***".__FILE__);
+
 require_once '../database/dbConnection.php';
 header('Content-Type: application/json');
 

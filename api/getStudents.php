@@ -1,4 +1,6 @@
 <?php
+die("***DISABLED***".__FILE__);
+
 require_once __DIR__ . '/../database/dbConnection.php';
 
 try {
