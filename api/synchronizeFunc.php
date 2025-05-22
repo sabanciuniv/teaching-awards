@@ -716,6 +716,8 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             WHERE s.YearID = ?
         ");
 
+        //suID 40,000-5,000 olunca TA veya student
+
         //YEAR ID OLAYINI DÜZELT
         $stmt->execute([$yearID]);
 
@@ -891,6 +893,7 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
         $stmtCredits->execute($validTermCodes);
         $creditMap = [];
         while ($r = $stmtCredits->fetch(PDO::FETCH_ASSOC)) {
+            // ENG 0 ile başlıyorsa kredi + 1, sps101D instructor olanlar TA e çevrilmeyecek -- son iki dönem
             $creditMap[$r['INST_ID']] = (int)$r['total_credit'];
         }
         $stmtCredits->closeCursor();
@@ -1126,14 +1129,15 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
     $processedRelationKeysInThisRun = [];
 
 
-    $mapCategoryID = function($subject, $course, $role, $status) {
+    $mapCategoryID = function($subject, $course, $role, $status, $credit) {
+        $courseNumInit = substr(strtoupper(trim($course)),0,1);
         $full = strtoupper(trim($subject)) . ' ' . strtoupper(trim($course));
 
         $categorizedCourses = [
             'TLL 101', 'TLL 102', 'AL 102',
             'SPS 101', 'SPS 102', 'SPS 101D', 'SPS 102D',
             'MATH 101', 'MATH 102', 'MATH 101R', 'MATH 102R',
-            'CIP 101N',
+            'CIP 101N', // CIP olmYcK
             'NS 101R', 'NS 102R', 'NS 101', 'NS 102',
             'HIST 191', 'HIST 192',
             'IF 100', 'IF 100R',
@@ -1145,13 +1149,17 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
             if ($full === 'SPS 101' || $full === 'SPS 102' || $full === 'MATH 101' || $full === 'MATH 102' || $full === 'IF 100' || $full === 'NS 101' || $full === 'NS 102' || $full === 'HIST 191' || $full === 'HIST 192') return '2';
             if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004' || $full === 'ENG 0005' ) return '4';
             // fallback: instructor not matching any of the above courses
-            if (!in_array($full, $categorizedCourses)) return '3';
+            if (!in_array($full, $categorizedCourses) && in_array($courseNumInit, ['1','2','3','4']) && $credit > 0) return '3'; 
+            //ilk digit 1-4 arası olmalı
+
+
         }
 
         if ($role === 'TA' && $status === 'Etkin') {
             if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D'])) {
                 return '5';
             }
+            if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004' || $full === 'ENG 0005' ) return '4';
         }
 
         return null;
@@ -1224,9 +1232,11 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
         $sources = ['API_INSTRUCTORS' => 'INST_ID', 'API_TAS' => 'TA_ID'];
         foreach ($sources as $apiTable => $idField) {
             $apiStmt = $pdo->prepare("
-                SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, {$idField} AS SU_ID
-                FROM {$apiTable}
+                SELECT A.TERM_CODE, A.CRN, A.SUBJ_CODE, A.CRSE_NUMB, C.CREDIT_HR_LOW, {$idField} AS SU_ID
+                FROM {$apiTable} AS A
+                    JOIN API_COURSES AS C ON C.TERM_CODE = A.TERM_CODE AND C.CRN = A.CRN
                 WHERE {$idField} IS NOT NULL
+
             ");
             $apiStmt->execute();
 
@@ -1238,6 +1248,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $suIdFromAPI = strtoupper(trim($apiRow['SU_ID']));
                 $subjectFromAPI = strtoupper(trim($apiRow['SUBJ_CODE']));
                 $courseNumFromAPI = strtoupper(trim($apiRow['CRSE_NUMB']));
+                $courseCreditFromAPI = strtoupper(trim($apiRow['CREDIT_HR_LOW']));
 
                 $courseKey = "{$termFromAPI}_{$subjectFromAPI}_{$courseNumFromAPI}_{$crnFromAPI}";
                 $courseData = $courses[$courseKey] ?? null;
@@ -1257,7 +1268,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $processedRelationKeysInThisRun[$currentRelationKey] = true;
                 $validKeysForDeletionCheck[$currentRelationKey] = true;
 
-                $categoryID = $mapCategoryID($subjectFromAPI, $courseNumFromAPI, $candidateData['Role'], $candidateData['Status']);
+                $categoryID = $mapCategoryID($subjectFromAPI, $courseNumFromAPI, $candidateData['Role'], $candidateData['Status'],$courseCreditFromAPI);
                 if (!$categoryID) continue;
 
                 // Extract the 4-digit year prefix from TERM_CODE
