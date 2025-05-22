@@ -715,7 +715,9 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             JOIN Student_Table s ON scr.`student.id` = s.id
             WHERE s.YearID = ?
         ");
-
+        //selectte term de koyarsan , a1,a2.. kontorlünde bir de terms kontrol
+        //B kategoride sadece 4 dönem
+        
         //suID 40,000-5,000 olunca TA veya student
 
         //YEAR ID OLAYINI DÜZELT
