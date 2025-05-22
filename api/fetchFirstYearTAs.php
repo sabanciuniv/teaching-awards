@@ -1,4 +1,5 @@
 <?php
+die("***DISABLED***".__FILE__);
 // Include database connection
 require_once __DIR__ . '/../database/dbConnection.php';
 

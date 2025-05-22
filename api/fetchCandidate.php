@@ -1,4 +1,5 @@
 <?php
+die("***DISABLED***".__FILE__);
 session_start();
 require_once '../database/dbConnection.php';  // Adjust path if needed
 
