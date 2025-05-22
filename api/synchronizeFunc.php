@@ -731,6 +731,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             $code = $row['full_code'];
             $creditHrLow  = (int)$row['CREDIT_HR_LOW']; 
             $crseNumb     = $row['CRSE_NUMB'];
+            $crseNumbInit = substr($crseNumb,0,1);
 
             $categoryID = null;
 
@@ -740,13 +741,13 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
                 $categoryID = 2;
             } elseif (in_array($code, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004', 'ENG 0005'])) {
                 $categoryID = 4;
-            } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
+            } elseif (in_array($code, [ 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 5;
             } elseif (!in_array($code, ['TLL 101', 'TLL 102', 'AL 102',
                                        'SPS 101', 'SPS 102','SPS 101D', 'SPS 102D','MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
                                        'CIP 101N','NS 101R', 'NS 102R', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192','IF 100', 'IF 100R',
                                        'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004','ENG 0005']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0 
-                                       && $crseNumb < '500' && strpos($crseNumb, '0') !== 0 && ! in_array($code, ['PROJ 300','PROJ 302'])) {
+                                       &&  in_array($crseNumbInit, ['1','2','3','4']) && ! in_array($code, ['PROJ 201'])) {
                 $categoryID = 3;
             }
 
