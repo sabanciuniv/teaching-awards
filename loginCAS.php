@@ -5,7 +5,7 @@
 // Set cookie parameters BEFORE session_start()
 session_set_cookie_params([
     'lifetime' => 3600, // 1 hour or you can keep 24*60*60 for 24h
-    'path' => '/odul/ENS491-492', // <-- only under this subfolder
+    'path' => '/courses/awards', // <-- only under this subfolder
     'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
     'httponly' => true,
     'samesite' => 'Lax'
@@ -89,7 +89,7 @@ try {
 
     // (2) Set cookies for the client, valid for 2 hours
     $cookie_lifetime = 24 * 60 * 60; // 24 hours in seconds
-    $cookie_path     = "/odul/ENS491-492/";
+    $cookie_path     = "/courses/awards/";
     $cookie_domain   = ""; 
     $cookie_secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
     $cookie_httponly = true;
