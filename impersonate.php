@@ -2,6 +2,7 @@
 session_start();
 require_once 'database/dbConnection.php';
 require_once __DIR__ . '/api/impersonationLogger.php';
+require_once __DIR__ . '/api/commonFunc.php';
 
 // Only allow admin
 if (!isset($_SESSION['user']) || !in_array($_SESSION['role'], ['Admin', 'IT_Admin'])) {
