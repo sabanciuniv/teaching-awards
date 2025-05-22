@@ -1,4 +1,6 @@
 <?php
+require_once 'commonFunc.php';
+/*
 require './phpCAS/source/CAS.php';
 $cas_host = 'login.sabanciuniv.edu';
 $cas_context = '/cas';
@@ -7,6 +9,8 @@ $app_base_url = 'http://pro2-dev.sabanciuniv.edu/odul';
 $cas_service_url = getenv('CAS_SERVICE_URL') ?: $app_base_url;
 phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $app_base_url);
 session_start();
+*/
+prep_session();
 
 $newUsernameCookieName = 'teaching_awards_user';
 $newIdCookieName = 'teaching_awards_token';

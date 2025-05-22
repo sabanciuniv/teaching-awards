@@ -1,25 +1,13 @@
 <?php
 // -------------------------
-// SECURE SESSION SETUP 
-// -------------------------
-// Set cookie parameters BEFORE session_start()
-session_set_cookie_params([
-    'lifetime' => 3600, // 1 hour or you can keep 24*60*60 for 24h
-    'path' => '/courses/awards', // <-- only under this subfolder
-    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
-    'httponly' => true,
-    'samesite' => 'Lax'
-]);
-session_start();
-
-
-// -------------------------
 // Include phpCAS and config
 // -------------------------
 
 // Include phpCAS
 require './phpCAS/source/CAS.php';
 require_once 'api/commonFunc.php';
+
+prep_session();
 
 // Include configuration
 $config = include 'config.php';
