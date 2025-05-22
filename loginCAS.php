@@ -6,6 +6,11 @@
 // Include phpCAS
 require './phpCAS/source/CAS.php';
 require_once 'api/commonFunc.php';
+<<<<<<< HEAD
+=======
+require_once 'database/dbConnection.php';
+
+>>>>>>> b196c20 (loginCAS basitleştirildi.)
 prep_session();
 
 // Include configuration
@@ -28,90 +33,8 @@ phpCAS::forceAuthentication();
 // Retrieve the authenticated user's ID
 $user = phpCAS::getUser();
 $_SESSION['user'] = $user;
-// -------------------------
-// BEGIN: Cookie & DB Logic
-// -------------------------
 
-// Generate a unique cookie ID
-//$cookie_id = bin2hex(random_bytes(16)); // 32-character unique ID
 
-// --- Define New Cookie Names ---
-$newUsernameCookieName = 'teaching_awards_user';
-$newIdCookieName = 'teaching_awards_token';
-
-// Generate a unique cookie ID value (the actual token)
-$cookie_token_value = bin2hex(random_bytes(16)); // 32-character unique ID
-
-// Include the database connection
-require_once 'database/dbConnection.php';
-
-try {
-    // (1) Insert or update the user_cookies table
-
-    // Check if the user exists in the user_cookies table
-    $checkQuery = "SELECT 1 FROM user_cookies WHERE SUNET_Username = :username";
-    $checkStmt  = $pdo->prepare($checkQuery);
-    $checkStmt->execute([':username' => $user]);
-
-    if ($checkStmt->fetch()) {
-        // If the user exists, update the cookie_id
-        $updateQuery = "UPDATE user_cookies 
-                        SET cookie_id = :cookie_id 
-                        WHERE SUNET_Username = :username";
-        $updateStmt = $pdo->prepare($updateQuery);
-        $updateStmt->execute([
-            ':cookie_id' => $cookie_token_value,
-            ':username'  => $user,
-        ]);
-    } else {
-        // If the user does not exist, insert a new record
-        $insertQuery = "INSERT INTO user_cookies (SUNET_Username, cookie_id) 
-                        VALUES (:username, :cookie_id)";
-        $insertStmt = $pdo->prepare($insertQuery);
-        $insertStmt->execute([
-            ':username'  => $user,
-            ':cookie_id' => $cookie_token_value,
-        ]);
-    }
-
-    // (2) Set cookies for the client, valid for 2 hours
-    $cookie_lifetime = 24 * 60 * 60; // 24 hours in seconds
-    $cookie_path     = "/courses/awards/";
-    $cookie_domain   = ""; 
-    $cookie_secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-    $cookie_httponly = true;
-    $cookie_samesite = 'Lax';
-    
-    /*setcookie("username", $user, time() + $cookie_lifetime, "/", "", $secure, $httponly);
-    setcookie("cookie_id", $cookie_id, time() + $cookie_lifetime, "/", "", $secure, $httponly);*/
-
-     // Set the NEW username cookie
-     setcookie($newUsernameCookieName, $user, [
-        'expires' => time() + $cookie_lifetime,
-        'path' => $cookie_path,
-        'domain' => $cookie_domain,
-        'secure' => $cookie_secure,
-        'httponly' => $cookie_httponly,
-        'samesite' => $cookie_samesite
-    ]);
-
-    // Set the NEW ID/token cookie
-    setcookie($newIdCookieName, $cookie_token_value, [
-        'expires' => time() + $cookie_lifetime,
-        'path' => $cookie_path,
-        'domain' => $cookie_domain,
-        'secure' => $cookie_secure,
-        'httponly' => $cookie_httponly,
-        'samesite' => $cookie_samesite
-    ]);
-    
-} catch (PDOException $e) {
-    die("Database operation failed: " . $e->getMessage());
-}
-
-// -----------------------
-// END: Cookie & DB Logic
-// -----------------------
 // -------------------------
 // BEGIN: Fetch name and surname from database
 // -----
