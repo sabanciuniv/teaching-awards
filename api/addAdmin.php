@@ -1,6 +1,10 @@
 <?php
-session_start();
+
 require_once '../database/dbConnection.php';
+require_once './commonFunc.php';
+init_session();
+
+enforceAdminAccess($pdo);
 
 header('Content-Type: application/json');
 

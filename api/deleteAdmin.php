@@ -1,6 +1,11 @@
 <?php
-session_start();
-require_once __DIR__ . '/../database/dbConnection.php';
+
+require_once '../database/dbConnection.php';
+require_once './commonFunc.php';
+init_session();
+
+enforceAdminAccess($pdo);
+
 header("Content-Type: application/json");
 
 if (!isset($_SESSION['user'])) {
