@@ -402,6 +402,8 @@ function getInstructorsForStudent(PDO $pdo, string $suNetUsername, string $categ
 }
 
 function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode): array {
+	global $prodconn;
+	
     try {
         // Use local function to get current academic year
         $academicYear = getCurrentAcademicYear($pdo);
@@ -464,9 +466,18 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
 
         // Add image URL for each TA
         foreach ($results as &$ta) {
-            $url_prefix = "http://www.sabanciuniv.edu/rehber/fotograflar";
+			
             $cleanedID = intval($ta['TA_SU_ID']);
-            $ta['ImageURL'] = "{$url_prefix}/{$cleanedID}.jpg";
+			
+			$photo_sql = "select sabanci_hababam.sabanci_sis.f_get_photo('" . substr("00000000" . $cleanedID, -8) . "') FOTO from dual";
+			
+			$parsed 	= ociparse($prodconn, $photo_sql);
+			$results 	= ociexecute($parsed);
+			$nrows 		= ocifetchstatement($parsed, $results);
+			
+			$url_prefix = "https://suisimg.sabanciuniv.edu/photos";
+			$img = $results["FOTO"][0];
+            $ta['ImageURL'] = "{$url_prefix}/{$img}.jpg";
         }
 
         return $results
