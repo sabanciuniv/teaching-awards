@@ -477,7 +477,7 @@ function getTAsForStudent(PDO $pdo, string $suNetUsername, string $categoryCode)
 			
 			$url_prefix = "https://suisimg.sabanciuniv.edu/photos";
 			$img = $results["FOTO"][0];
-            $ta['ImageURL'] = "{$url_prefix}/{$img}.jpg";
+            $ta['ImageURL'] = "{$url_prefix}/{$img}";
         }
 
         return $results
