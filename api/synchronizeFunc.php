@@ -681,9 +681,6 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             return ['status' => 'error', 'message' => 'Current academic year not found.'];
         }
 
-        $currentYear = (int)$currentYearRow['Academic_year'];
-        $validYears = [$yearID]; // Use the current sync year only
-
         // Fetch existing student-category relations
         //sadece şu an olanları değişitr
         $stmt = $pdo->query("SELECT scr.student_id, scr.categoryID, s.StudentID  
@@ -708,7 +705,7 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
         }
 
         $stmt = $pdo->prepare("
-            SELECT s.id AS student_id, s.StudentID, s.Class, s.CGPA,
+            SELECT s.id AS student_id, s.StudentID, s.Class, s.CGPA, c.Course_Number AS CRSE_NUMB,
                    CONCAT(c.Subject_Code, ' ', c.Course_Number) AS full_code, api.CREDIT_HR_LOW
             FROM Student_Course_Relation scr
             JOIN Courses_Table c ON scr.CourseID = c.CourseID
@@ -720,6 +717,10 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             JOIN Student_Table s ON scr.`student.id` = s.id
             WHERE s.YearID = ?
         ");
+        //selectte term de koyarsan , a1,a2.. kontorlünde bir de terms kontrol
+        //B kategoride sadece 4 dönem
+        
+        //suID 40,000-5,000 olunca TA veya student
 
         //YEAR ID OLAYINI DÜZELT
         $stmt->execute([$yearID]);
@@ -733,6 +734,8 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
             $cgpa = (float)$row['CGPA'];
             $code = $row['full_code'];
             $creditHrLow  = (int)$row['CREDIT_HR_LOW']; 
+            $crseNumb     = $row['CRSE_NUMB'];
+            $crseNumbInit = substr($crseNumb,0,1);
 
             $categoryID = null;
 
@@ -740,15 +743,15 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
                 $categoryID = 1;
             } elseif (in_array($code, ['SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192']) && $class === 'Freshman') {
                 $categoryID = 2;
-            } elseif (in_array($code, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'])) {
+            } elseif (in_array($code, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004', 'ENG 0005'])) {
                 $categoryID = 4;
-            } elseif (in_array($code, ['CIP 101N', 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
+            } elseif (in_array($code, [ 'IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D']) && $class === 'Freshman') {
                 $categoryID = 5;
             } elseif (!in_array($code, ['TLL 101', 'TLL 102', 'AL 102',
-                                       'SPS 101', 'SPS 102', 'MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
-                                       'CIP 101N','NS 101R', 'NS 102R', 'SPS 101D', 'SPS 102D',
-                                       'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192',
-                                       'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0) {
+                                       'SPS 101', 'SPS 102','SPS 101D', 'SPS 102D','MATH 101', 'MATH 102','MATH 101R', 'MATH 102R',
+                                       'CIP 101N','NS 101R', 'NS 102R', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192','IF 100', 'IF 100R',
+                                       'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004','ENG 0005']) && $cgpa >= 2 && $class === 'Senior' && $creditHrLow > 0 
+                                       &&  in_array($crseNumbInit, ['1','2','3','4']) && ! in_array($code, ['PROJ 201'])) {
                 $categoryID = 3;
             }
 
@@ -831,31 +834,28 @@ function updateStudentCategories(PDO $pdo, int $yearID): array {
 //
 function synchronizeCandidates(PDO $pdo, int $yearID): array {
     $response = [
-        'inserted' => 0,
-        'updated' => 0,
-        'deleted' => 0,
+        'inserted'     => 0,
+        'updated'      => 0,
+        'deleted'      => 0,
         'insertedRows' => [],
-        'updatedRows' => [],
-        'deletedRows' => []
+        'updatedRows'  => [],
+        'deletedRows'  => []
     ];
 
     try {
         $statusMapping = [
-            'Active' => 'Etkin',
-            'Inactive' => 'İşten ayrıldı',
-            'Terminated' => 'İşten ayrıldı',
-            'İşten ayrıldı' => 'İşten ayrıldı' // Handles if status is already mapped
+            'Active'       => 'Etkin',
+            'Inactive'     => 'İşten ayrıldı',
+            'Terminated'   => 'İşten ayrıldı',
+            'İşten ayrıldı' => 'İşten ayrıldı'
         ];
 
-        $candidatesApiData = []; 
-        
+        $candidatesApiData = [];
 
-        $academicYear = getAcademicYearFromID($pdo, $yearID);
+        $academicYear        = getAcademicYearFromID($pdo, $yearID);
         if (!$academicYear) {
             return ['status' => 'error', 'message' => 'Invalid yearID or academic year not found.'];
         }
-        
-        //$validTermCodes = [$academicYear . '01', $academicYear . '02'];
         $previousAcademicYear = $academicYear - 1;
         $validTermCodes = [
             $previousAcademicYear . '01',
@@ -864,76 +864,104 @@ function synchronizeCandidates(PDO $pdo, int $yearID): array {
             $academicYear . '02'
         ];
 
-
-        // Build valid SU_IDs from TERM_CODE filtering
+        //Collect which SU_IDs appear in those terms as TA or Instructor
         $validSuIdsFromTerms = [];
-
-        $stmtApiTerms = $pdo->query("SELECT DISTINCT TA_ID, TERM_CODE FROM API_TAS WHERE TA_ID IS NOT NULL");
-        while ($row = $stmtApiTerms->fetch(PDO::FETCH_ASSOC)) {
-            if (in_array($row['TERM_CODE'], $validTermCodes)) {
-                $validSuIdsFromTerms[$row['TA_ID']] = 'TA';
+        $stmt = $pdo->query("SELECT DISTINCT TA_ID, TERM_CODE FROM API_TAS WHERE TA_ID IS NOT NULL");
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (in_array($r['TERM_CODE'], $validTermCodes, true)) {
+                $validSuIdsFromTerms[$r['TA_ID']] = 'TA';
             }
         }
-        $stmtApiTerms->closeCursor();
+        $stmt->closeCursor();
 
-        $stmtApiTerms = $pdo->query("SELECT DISTINCT INST_ID, TERM_CODE FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
-        while ($row = $stmtApiTerms->fetch(PDO::FETCH_ASSOC)) {
-            if (in_array($row['TERM_CODE'], $validTermCodes)) {
-                $validSuIdsFromTerms[$row['INST_ID']] = 'Instructor';
+        $stmt = $pdo->query("SELECT DISTINCT INST_ID, TERM_CODE FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (in_array($r['TERM_CODE'], $validTermCodes, true)) {
+                $validSuIdsFromTerms[$r['INST_ID']] = 'Instructor';
             }
         }
-        $stmtApiTerms->closeCursor();
+        $stmt->closeCursor();
 
-        // Fetch TA data
-        $stmtTas = $pdo->query("SELECT TA_ID, TA_FIRST_NAME, TA_MI_NAME, TA_LAST_NAME, TA_EMAIL, EMPL_STATUS FROM API_TAS WHERE TA_ID IS NOT NULL");
+        //Precompute total credit‐hours per instructor in one aggregated query
+        $placeholders = implode(',', array_fill(0, count($validTermCodes), '?'));
+        $sql = "
+            SELECT i.INST_ID,
+                   COALESCE(SUM(c.CREDIT_HR_LOW),0) AS total_credit
+              FROM API_INSTRUCTORS i
+              JOIN API_COURSES     c
+                ON i.TERM_CODE = c.TERM_CODE
+               AND i.CRN       = c.CRN
+             WHERE i.TERM_CODE IN ($placeholders)
+             GROUP BY i.INST_ID
+        ";
+        $stmtCredits = $pdo->prepare($sql);
+        $stmtCredits->execute($validTermCodes);
+        $creditMap = [];
+        while ($r = $stmtCredits->fetch(PDO::FETCH_ASSOC)) {
+            // ENG 0 ile başlıyorsa kredi + 1, sps101D instructor olanlar TA e çevrilmeyecek -- son iki dönem
+            $creditMap[$r['INST_ID']] = (int)$r['total_credit'];
+        }
+        $stmtCredits->closeCursor();
+
+        //Fetch all TAs
+        $stmtTas = $pdo->query("
+            SELECT TA_ID, TA_FIRST_NAME, TA_MI_NAME, TA_LAST_NAME, TA_EMAIL, EMPL_STATUS
+              FROM API_TAS
+             WHERE TA_ID IS NOT NULL
+        ");
         while ($row = $stmtTas->fetch(PDO::FETCH_ASSOC)) {
             $su_id = $row['TA_ID'];
-
-            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'TA') continue;
-
+            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'TA') {
+                continue;
+            }
             $fullName = trim(
-                $row['TA_FIRST_NAME'] .
-                ($row['TA_MI_NAME'] ? ' ' . $row['TA_MI_NAME'] : '') .
-                ' ' . $row['TA_LAST_NAME']
+                $row['TA_FIRST_NAME']
+              . ($row['TA_MI_NAME'] ? ' ' . $row['TA_MI_NAME'] : '')
+              . ' ' . $row['TA_LAST_NAME']
             );
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
-
             $candidatesApiData[$su_id] = [
-                'SU_ID' => $su_id,
-                'Name' => $fullName,
-                'Mail' => $row['TA_EMAIL'] ?: null,
-                'Role' => 'TA',
+                'SU_ID'  => $su_id,
+                'Name'   => $fullName,
+                'Mail'   => $row['TA_EMAIL'] ?: null,
+                'Role'   => 'TA',
                 'Status' => $status
             ];
         }
         $stmtTas->closeCursor();
 
-        // Fetch Instructor data
-        $stmtInst = $pdo->query("SELECT INST_ID, INST_FIRST_NAME, INST_MI_NAME, INST_LAST_NAME, INST_EMAIL, EMPL_STATUS FROM API_INSTRUCTORS WHERE INST_ID IS NOT NULL");
+        // 5) Fetch all Instructors, then demote to TA if no credit‐hour courses
+        $stmtInst = $pdo->query("
+            SELECT INST_ID, INST_FIRST_NAME, INST_MI_NAME, INST_LAST_NAME,
+                   INST_EMAIL, EMPL_STATUS
+              FROM API_INSTRUCTORS
+             WHERE INST_ID IS NOT NULL
+        ");
         while ($row = $stmtInst->fetch(PDO::FETCH_ASSOC)) {
             $su_id = $row['INST_ID'];
-            // Only consider Instructors active in the valid terms
-            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'Instructor') continue;
+            if (!isset($validSuIdsFromTerms[$su_id]) || $validSuIdsFromTerms[$su_id] !== 'Instructor') {
+                continue;
+            }
+            $totalCredit = $creditMap[$su_id] ?? 0;
+            $role        = $totalCredit > 0 ? 'Instructor' : 'TA';
 
             $fullName = trim(
-                $row['INST_FIRST_NAME'] .
-                ($row['INST_MI_NAME'] ? ' ' . $row['INST_MI_NAME'] : '') .
-                ' ' . $row['INST_LAST_NAME']
+                $row['INST_FIRST_NAME']
+              . ($row['INST_MI_NAME'] ? ' ' . $row['INST_MI_NAME'] : '')
+              . ' ' . $row['INST_LAST_NAME']
             );
             $status = $statusMapping[$row['EMPL_STATUS']] ?? 'Etkin';
 
-            if (isset($candidatesApiData[$su_id]) && $candidatesApiData[$su_id]['Role'] === 'TA') {
-                 // 
-            }
             $candidatesApiData[$su_id] = [
-                'SU_ID' => $su_id,
-                'Name' => $fullName,
-                'Mail' => $row['INST_EMAIL'] ?: null,
-                'Role' => 'Instructor',
+                'SU_ID'  => $su_id,
+                'Name'   => $fullName,
+                'Mail'   => $row['INST_EMAIL'] ?: null,
+                'Role'   => $role,
                 'Status' => $status
             ];
         }
         $stmtInst->closeCursor();
+
 
         // Handle Exceptions
         $exceptionStmt = $pdo->query("SELECT CandidateID FROM Exception_Table"); 
@@ -1106,19 +1134,42 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
     $processedRelationKeysInThisRun = [];
 
 
-    $mapCategoryID = function($subject, $course, $role, $status) {
+    $mapCategoryID = function($subject, $course, $role, $status, $credit) {
+        $courseNumInit = substr(strtoupper(trim($course)),0,1);
         $full = strtoupper(trim($subject)) . ' ' . strtoupper(trim($course));
+
+        $categorizedCourses = [
+            'TLL 101', 'TLL 102', 'AL 102',
+            'SPS 101', 'SPS 102', 'SPS 101D', 'SPS 102D',
+            'MATH 101', 'MATH 102', 'MATH 101R', 'MATH 102R',
+            'CIP 101N', // CIP olmYcK
+            'NS 101R', 'NS 102R', 'NS 101', 'NS 102',
+            'HIST 191', 'HIST 192',
+            'IF 100', 'IF 100R',
+            'ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004', 'ENG 0005'
+        ];
+
         if ($role === 'Instructor' && $status === 'Etkin') {
-            if (in_array($full, ['TLL 101', 'TLL 102', 'AL 102','SPS 101D', 'SPS 102D'])) return '1';
-            if (in_array($full, ['SPS 101', 'SPS 102', 'MATH 101', 'MATH 102', 'IF 100', 'NS 101', 'NS 102', 'HIST 191', 'HIST 192'])) return '2';
-            if (in_array($full, ['ENG 0001', 'ENG 0002', 'ENG 0003', 'ENG 0004'])) return '4';
-            return '3';
+            if ($full === 'TLL 101' || $full === 'TLL 102' || $full === 'AL 102' || $full === 'SPS 101D' || $full === 'SPS 102D') return '1';
+            if ($full === 'SPS 101' || $full === 'SPS 102' || $full === 'MATH 101' || $full === 'MATH 102' || $full === 'IF 100' || $full === 'NS 101' || $full === 'NS 102' || $full === 'HIST 191' || $full === 'HIST 192') return '2';
+            if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004' || $full === 'ENG 0005' ) return '4';
+            // fallback: instructor not matching any of the above courses
+            if (!in_array($full, $categorizedCourses) && in_array($courseNumInit, ['1','2','3','4']) && $credit > 0) return '3'; 
+            //ilk digit 1-4 arası olmalı
+
+
         }
+
         if ($role === 'TA' && $status === 'Etkin') {
-            if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D'])) return '5';
+            if (in_array($full, ['CIP 101N','IF 100R', 'MATH 101R', 'MATH 102R', 'NS 101R', 'NS 102R','NS 101', 'NS 102', 'SPS 101D', 'SPS 102D'])) {
+                return '5';
+            }
+            if ($full === 'ENG 0001' || $full === 'ENG 0002' || $full === 'ENG 0003' || $full === 'ENG 0004' || $full === 'ENG 0005' ) return '4';
         }
+
         return null;
     };
+
 
 
     try {
@@ -1186,9 +1237,11 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
         $sources = ['API_INSTRUCTORS' => 'INST_ID', 'API_TAS' => 'TA_ID'];
         foreach ($sources as $apiTable => $idField) {
             $apiStmt = $pdo->prepare("
-                SELECT TERM_CODE, CRN, SUBJ_CODE, CRSE_NUMB, {$idField} AS SU_ID
-                FROM {$apiTable}
+                SELECT A.TERM_CODE, A.CRN, A.SUBJ_CODE, A.CRSE_NUMB, C.CREDIT_HR_LOW, {$idField} AS SU_ID
+                FROM {$apiTable} AS A
+                    JOIN API_COURSES AS C ON C.TERM_CODE = A.TERM_CODE AND C.CRN = A.CRN
                 WHERE {$idField} IS NOT NULL
+
             ");
             $apiStmt->execute();
 
@@ -1200,6 +1253,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $suIdFromAPI = strtoupper(trim($apiRow['SU_ID']));
                 $subjectFromAPI = strtoupper(trim($apiRow['SUBJ_CODE']));
                 $courseNumFromAPI = strtoupper(trim($apiRow['CRSE_NUMB']));
+                $courseCreditFromAPI = strtoupper(trim($apiRow['CREDIT_HR_LOW']));
 
                 $courseKey = "{$termFromAPI}_{$subjectFromAPI}_{$courseNumFromAPI}_{$crnFromAPI}";
                 $courseData = $courses[$courseKey] ?? null;
@@ -1219,7 +1273,7 @@ function synchronizeCandidateCourses(PDO $pdo, int $targetInternalYearID): array
                 $processedRelationKeysInThisRun[$currentRelationKey] = true;
                 $validKeysForDeletionCheck[$currentRelationKey] = true;
 
-                $categoryID = $mapCategoryID($subjectFromAPI, $courseNumFromAPI, $candidateData['Role'], $candidateData['Status']);
+                $categoryID = $mapCategoryID($subjectFromAPI, $courseNumFromAPI, $candidateData['Role'], $candidateData['Status'],$courseCreditFromAPI);
                 if (!$categoryID) continue;
 
                 // Extract the 4-digit year prefix from TERM_CODE
