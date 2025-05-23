@@ -6,11 +6,7 @@
 // Include phpCAS
 require './phpCAS/source/CAS.php';
 require_once 'api/commonFunc.php';
-<<<<<<< HEAD
-=======
 require_once 'database/dbConnection.php';
-
->>>>>>> b196c20 (loginCAS basitleştirildi.)
 prep_session();
 
 // Include configuration
