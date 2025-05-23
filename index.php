@@ -1,7 +1,7 @@
 <?php
-session_start();
 require_once 'api/commonFunc.php';
 require_once 'database/dbConnection.php'; 
+prep_session();
 $pageTitle= "Teaching Awards";
 require_once 'api/header.php';
 
@@ -244,7 +244,7 @@ footer {
                             <a href="#" class="btn btn-secondary unified-button" data-toggle="modal" data-target="#rulesModal"> View the Rules </a>
                             <a href="loginCAS.php?redirect=nominate.php" class="btn btn-secondary unified-button">Nominate a TA</a>
                             <a href="loginCAS.php?redirect=voteCategory.php" class="btn btn-secondary unified-button">Vote   <i class="fas fa-vote-yea"></i></a>
-                            <a href="viewWinners.php" class="btn btn-secondary unified-button">View Previous Winners</a>
+                            <a href="https://teachingawards.sabanciuniv.edu/en/excellence-teaching-awards-year" class="btn btn-secondary unified-button">View Previous Winners</a>
                             <a href="acknowledgements.php" class="btn btn-secondary unified-button">Acknowledgements</a>
                         </div>
 

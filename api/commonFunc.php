@@ -14,7 +14,7 @@ function enforceAdminAccess(PDO $pdo): void {
 function init_session(): void {
     //TO DO: session cookie 
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        prep_session();
     }
 
     // Optionally, enforce login here
@@ -25,6 +25,23 @@ function init_session(): void {
 
     // Error reporting (you can toggle this based on environment)
     require_once dirname(__FILE__) . '/errorInit.php';
+}
+
+function prep_session(){
+	
+		// Set cookie parameters BEFORE session_start()
+
+		session_name('awards_session');
+		
+		session_set_cookie_params([
+			'lifetime' => 0, // 1 hour or you can keep 24*60*60 for 24h
+			'path' => '/courses/awards', // <-- only under this subfolder
+			'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+			'httponly' => true,
+			'samesite' => 'Lax'
+		]);
+		session_start();
+		
 }
 
 function deleteExcludedCandidate(PDO $pdo, int $candidateID): array {
