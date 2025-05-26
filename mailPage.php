@@ -10,7 +10,7 @@ require_once 'api/commonFunc.php';
 init_session();
 // only admins may proceed
 enforceAdminAccess($pdo);
-set_time_limit(0);
+ini_set('max_execution_time', '1200'); //1200 seconds = 20 minutes
 ignore_user_abort(true);
 
 // PHPMailer
