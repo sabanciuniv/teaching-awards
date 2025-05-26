@@ -1,7 +1,8 @@
 <?php
-die("***DISABLED***".__FILE__);
 
-session_start();
+require_once './commonFunc.php';
+init_session();
+
 require_once __DIR__ . '/../database/dbConnection.php'; 
 header('Content-Type: application/json');
 error_reporting(E_ALL);
