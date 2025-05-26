@@ -4,6 +4,7 @@ init_session();
 ini_set('memory_limit', '512M'); 
 ini_set('max_execution_time', 1200); // 20 minutes
 
+die("***DISABLED***".__FILE__);
 
 $config = require __DIR__ . '/../config.php';
 require_once '../database/dbConnection.php';
