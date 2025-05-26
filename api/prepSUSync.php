@@ -215,7 +215,7 @@ function syncStudents($acadYear){
 
 
             // Prepare insert statement
-            $insertStmt = $pdo->prepare("INSERT INTO api_students (TERM_CODE, STU_ID, STU_FIRST_NAME, STU_MI_NAME, STU_LAST_NAME, STU_USERNAME, STU_EMAIL, STU_STS_CODE, STU_STS_TERM_CODE_EFF, STU_CUM_GPA_SU_TERM, STU_CUM_GPA_SU, STU_CUM_GPA_SU_ELIGIBLE,STU_CLASS_CODE, STU_FACULTY_CODE, STU_PROGRAM_CODE) VALUES(:TERM_CODE, :STU_ID, :STU_FIRST_NAME, :STU_MI_NAME, :STU_LAST_NAME, :STU_USERNAME, :STU_EMAIL, :STU_STS_CODE, :STU_STS_TERM_CODE_EFF, :STU_CUM_GPA_SU_TERM, :STU_CUM_GPA_SU,:STU_CUM_GPA_SU_ELIGIBLE, :STU_CLASS_CODE, :STU_FACULTY_CODE, :STU_PROGRAM_CODE);");
+            $insertStmt = $pdo->prepare("INSERT INTO api_students (TERM_CODE, STU_ID, STU_FIRST_NAME, STU_MI_NAME, STU_LAST_NAME, STU_USERNAME, STU_EMAIL, STU_STS_CODE, STU_STS_TERM_CODE_EFF, STU_CUM_GPA_SU_TERM, STU_CUM_GPA_SU, STU_CUM_GPA_SU_ELIGIBLE,STU_CLASS_CODE, STU_FACULTY_CODE, STU_PROGRAM_CODE,STU_LEVEL) VALUES(:TERM_CODE, :STU_ID, :STU_FIRST_NAME, :STU_MI_NAME, :STU_LAST_NAME, :STU_USERNAME, :STU_EMAIL, :STU_STS_CODE, :STU_STS_TERM_CODE_EFF, :STU_CUM_GPA_SU_TERM, :STU_CUM_GPA_SU,:STU_CUM_GPA_SU_ELIGIBLE, :STU_CLASS_CODE, :STU_FACULTY_CODE, :STU_PROGRAM_CODE,:STU_LEVEL);");
 
             // Insert each course
             foreach($arr as $row) {
@@ -236,7 +236,8 @@ function syncStudents($acadYear){
                         ':STU_CUM_GPA_SU_ELIGIBLE' => $row['STU_CUM_GPA_SU_ELIGIBLE'],
                         ':STU_CLASS_CODE' => $row['STU_CLASS_CODE'],
                         ':STU_FACULTY_CODE' => $row['STU_FACULTY_CODE'],
-                        ':STU_PROGRAM_CODE' => $row['STU_PROGRAM_CODE']
+                        ':STU_PROGRAM_CODE' => $row['STU_PROGRAM_CODE'],
+                        ':STU_LEVEL' => $row['STU_LEVEL']
                     ]);
 
                     $insertCount++;
@@ -595,7 +596,7 @@ $acadYear = $acadYearRow['Academic_year'];
 
 // $acadYear='2024';
 
-// syncTAs($acadYear); die('ok');
+// syncStudents($acadYear); die('ok');
 
 $startTime=time();
 
