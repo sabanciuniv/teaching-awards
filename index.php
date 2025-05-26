@@ -294,7 +294,7 @@ footer {
         <p><strong>Eligibility:</strong></p>
         <ul>
             <li>The nominee must be a current graduate student</li>
-            <li>The nominee must be a TA in at least one course during the 2023–2024 academic year</li>
+            <li>The nominee must be a TA in at least one course during current academic year</li>
         </ul>
 
         <p><strong>Criteria:</strong></p>
