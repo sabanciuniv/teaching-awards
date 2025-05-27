@@ -10,7 +10,7 @@ require_once __DIR__ . '/api/commonFunc.php';
 init_session();
 // only admins may send notifications
 enforceAdminAccess($pdo);
-set_time_limit(0);
+ini_set('max_execution_time', '1200'); //1200 seconds = 20 minutes
 ignore_user_abort(true);
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -71,10 +71,11 @@ try {
     $mail->SMTPAuth   = true;
     $mail->Username   = $config['mail']['username'];
     $mail->Password   = $config['mail']['password'];
+    $mail->CharSet 	  = "UTF-8";	
     // Map encryption
     if ($config['mail']['encryption'] === 'ssl') {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    } else {
+    } elseif ($config['mail']['encryption'] === 'tls') {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     }
     $mail->Port         = $config['mail']['port'];
