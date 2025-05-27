@@ -120,6 +120,7 @@ if (
     $mail->SMTPAuth   = true;
     $mail->Username   = $config['mail']['username'];
     $mail->Password   = $config['mail']['password'];
+	$mail->CharSet = "UTF-8";
     // map encryption setting
 
 
