@@ -230,7 +230,6 @@ $mailLogs = $pdo->prepare("
     l.StudentName,
     t.MailType,
     t.MailHeader,
-    l.MailContent AS MailBody,
     l.SentTime
   FROM MailLog_Table l
   LEFT JOIN MailTemplate_Table t
@@ -381,7 +380,7 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
       <thead>
         <tr>
           <th>LogID</th><th>Sender</th><th>StudentEmail</th><th>StudentName</th>
-          <th>MailType</th><th>Mail Subject</th><th>Mail Body</th><th>SentTime</th>
+          <th>MailType</th><th>Mail Subject</th><th>SentTime</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -469,11 +468,11 @@ $mailLogs = $mailLogs->fetchAll(PDO::FETCH_ASSOC);
       data: logs,
       destroy: true,
       dom: 'Bfrtip',
-      order: [[7,'desc']],
+      order: [[0,'desc']],
       buttons:[{ extend:'excelHtml5', className:'btn btn-sm btn-outline-primary' }],
       columns:[
         {data:'LogID'}, {data:'Sender'}, {data:'StudentEmail'}, {data:'StudentName'},
-        {data:'MailType'}, {data:'MailHeader'}, {data:'MailBody'}, {data:'SentTime'}
+        {data:'MailType'}, {data:'MailHeader'}, {data:'SentTime'}
       ]
     });
     new bootstrap.Modal($('#logModal')).show();
