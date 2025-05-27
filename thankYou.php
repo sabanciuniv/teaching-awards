@@ -1,11 +1,12 @@
 <?php
 
-require_once 'api/authMiddleware.php';
+
 // If the user is not logged in, redirect to the login page
 require_once 'api/commonFunc.php';
+init_session();
 $pageTitle= "Thank You";
 require_once 'api/header.php';
-init_session();
+
 
 // Determine context: "nominate" or "vote"
 $context = isset($_GET['context']) ? htmlspecialchars($_GET['context']) : 'vote'; // Default to "vote"

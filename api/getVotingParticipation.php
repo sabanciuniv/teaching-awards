@@ -1,7 +1,11 @@
 <?php
-die("***DISABLED***".__FILE__);
+require_once 'commonFunc.php';
+init_session();
 
 require_once '../database/dbConnection.php';
+
+enforceAdminAccess($pdo);
+
 header('Content-Type: application/json');
 
 $selectedYear = $_GET['yearID'] ?? null;

@@ -165,7 +165,7 @@ try {
                                     <p><strong>Uploaded Documents:</strong></p>
                                     <ul class="document-list">
                                         <li>
-                                        <a href="downloads.php?nominationID=<?php echo urlencode($nomination['nominationID']); ?>">
+                                        <a hrefDISABLED="downloads.php?nominationID=<?php echo urlencode($nomination['nominationID']); ?>">
                                             <?php echo htmlspecialchars($nomination['DocumentOriginalName']); ?>
                                         </a>
 

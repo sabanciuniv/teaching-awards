@@ -1,5 +1,7 @@
 <?php
-require_once 'api/authMiddleware.php';
+require_once 'api/commonFunc.php';
+init_session();
+
 require_once 'config.php'; // Load config file
 
 require_once __DIR__ . '/api/impersonationLogger.php';
@@ -7,8 +9,6 @@ require_once __DIR__ . '/api/impersonationLogger.php';
 $config = require 'config.php'; // Fetch configuration
 $uploadDir = $config['upload_directory']; // Get the upload directory path
 
-require_once 'api/commonFunc.php';
-init_session();
 
 require_once 'api/errorInit.php';
 

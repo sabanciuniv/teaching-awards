@@ -1,6 +1,6 @@
 <?php
-require_once 'api/authMiddleware.php';
 require_once 'database/dbOracleConnection.php';
+require_once 'database/dbConnection.php';
 require_once 'api/commonFunc.php';
 $pageTitle= "Vote Screen";
 require_once 'api/header.php';
